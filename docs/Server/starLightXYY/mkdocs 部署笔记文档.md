@@ -178,6 +178,30 @@ theme:
         - navigation.sections                       ## 展开侧边导航
         - navigation.indexes                        ## 启用章节概览 index.md
         - navigation.top                            ## 启用回到顶部按钮
+    palette:
+
+        # Palette toggle for automatic mode
+        - media: "(prefers-color-scheme)"
+          toggle:
+            icon: material/brightness-auto
+            name: Switch to light mode
+
+        # Palette toggle for light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: default 
+          toggle:
+            icon: material/brightness-7
+            name: Switch to dark mode
+
+        # Palette toggle for dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          toggle:
+            icon: material/brightness-4
+            name: Switch to system preference
+
+
+
 
 ## Documentation Layout
 nav:
@@ -187,8 +211,8 @@ nav:
             - 'Linux Command': 'Server/Fundamental/Linux Command.md'
             - 'vim': 'Server/Fundamental/vim.md'
             - 'git':
-                - '常见操作': 'Server/Fundamental/git/常见操作.md'
-                - '常见问题': 'Server/Fundamental/git/常见问题.md'
+                - '常见操作': 'Server/Fundamental/Git-learning/常见操作.md'
+                - '常见问题': 'Server/Fundamental/Git-learning/常见问题.md'
             - 'WSL': 'Server/Fundamental/WSL.md'
             - 'Docker': 'Server/Fundamental/Docker.md'
             - 'Caddy': 'Server/Fundamental/Caddy.md'
@@ -204,12 +228,14 @@ nav:
         - 'react': 'Front End/react.md'
         - 'antd': 'Front End/antd.md'
     - 'Programming Tools':
-        - 'LaTeX': 'Programming Tools/LATEX/LATEX.md'
+        - 'LaTeX':
+            - 'Programming Tools/LATEX/index.md'
         - 'Python':
             - 'Python': 'Programming Tools/Python/python.md'
             - 'Numpy': 'Programming Tools/Python/Numpy.md'
     - 'Projects':
-        - 'box-2021 项目总结': 'Projects/box-2021 项目总结.md'
+        - 'box-2021':
+            - '项目总结': 'Projects/box-2021 项目总结.md'
         - 'rop-neo-front':
             - '内训笔记': 'Projects/rop-neo-front/内训笔记.md'
             - '项目笔记': 'Projects/rop-neo-front/项目笔记.md'
@@ -221,21 +247,57 @@ nav:
             - '论文相关': 'College Courses/Tools/论文相关.md'
         - '网安导':
             - '笔记': 'College Courses/网安导/笔记.md'
-            - '实验报告': 'College Courses/网安导/README.md'
+            - '实验报告': 'College Courses/网安导/实验报告.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
             - '寒假社会实践经验总结': 'Others/经验/寒假社会实践经验总结.md'
             - '职规学长学姐经验分享': 'Others/经验/职规学长学姐经验分享.md'
-            - '竺院学长经验分享-兴趣': 'Others/经验/竺院学长经验分享-兴趣.md'
+            - '图灵学长经验分享-兴趣': 'Others/经验/图灵学长经验分享-兴趣.md'
         - '兴趣':
             - 'AE学习': 'Others/兴趣/AE学习.md'
             - 'pr小技巧': 'Others/兴趣/pr小技巧.md'
             - '篮球运球': 'Others/兴趣/篮球运球.md'
             - '素描课程笔记（知识点篇）': 'Others/兴趣/素描课程笔记（知识点篇）.md'
             - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
-        - 'Something to read': 'Others/something to read.md'
+        - 'Something to read':
+            - 'Others/something to read/index.md'
 
+# Extensions
+markdown_extensions:
+
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - toc:
+      permalink: true
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
 ```
 
 ### navigation config
@@ -273,7 +335,7 @@ nav:
     - 高亮某几行
     - 脚注（可展开收起）
     - 高亮行内代码
-3. 
+3. [dark mode](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/)
 
 ### 附加代码
 
