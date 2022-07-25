@@ -21,8 +21,8 @@ nav:
             - 'Linux Command': 'Server/Fundamental/Linux Command.md'
             - 'vim': 'Server/Fundamental/vim.md'
             - 'git':
-                - '常见操作': 'Server/Fundamental/Git/常见操作.md'
-                - '常见问题': 'Server/Fundamental/Git/常见问题.md'
+                - '常见操作': 'Server/Fundamental/Git-learning/常见操作.md'
+                - '常见问题': 'Server/Fundamental/Git-learning/常见问题.md'
             - 'WSL': 'Server/Fundamental/WSL.md'
             - 'Docker': 'Server/Fundamental/Docker.md'
             - 'Caddy': 'Server/Fundamental/Caddy.md'
