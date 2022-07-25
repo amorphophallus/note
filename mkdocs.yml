@@ -2,6 +2,7 @@ site_name: XYY's Notebook
 site_url: https://note.starlightxyy.cn
 repo_url: https://github.com/amorphophallus/note
 repo_name: GitHub
+edit_uri: edit/main/docs
 site_description: Note about everything.
 theme:
     name: material
