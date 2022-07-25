@@ -1,3 +1,5 @@
+# Docker
+
 [TOC]
 
 ## 参考文档
@@ -20,7 +22,7 @@
 
 ## 基本操作
 
-###### docker run
+### docker run
 
 1. `docker run <image> <command>`
    - e.g. `docker run ubuntu:15.10 /bin/echo "Hello world"`  
@@ -38,7 +40,7 @@
    - `-v`：修改挂载点（VOLUME）
    - `--rm`：
 
-###### 容器查看
+### 容器查看
 
 1. `docker ps`：查看运行的容器
    
@@ -55,7 +57,7 @@
 
 4. `docker top <container ID or name>`：查看容器内部运行的进程
 
-###### 容器操作
+### 容器操作
 
 1. `docker stop <container ID or name>`：停止容器
    
@@ -76,13 +78,13 @@
    - `docker export <container ID> > <export_image_name>.tar`
    - `docker import <file or URL or -> <REPOSITORY[:TAG]>`
 
-############ e.g. 运行一个 web app
+#### e.g. 运行一个 web app
 
 1. `docker run -d -P training/webapp python app.py`
 2. `docker ps -a`，在 **PORTS** 栏得到端口映射信息
 3. 浏览器访问：`<IP>:<port>`
 
-###### 镜像查看
+### 镜像查看
 
 1. `docker images`：列出本地主机上的镜像
    - Repository
@@ -90,7 +92,7 @@
 2. `docker search <repo name>`
    - official
 
-###### 镜像创建
+### 镜像创建
 
 1. `docker commit <container ID> <image name>:<tag>`
    - e.g. `docker commit -m="has update" -a="runoob" e218edb10161 runoob/ubuntu:v2`
@@ -102,7 +104,7 @@
    - **注意**：上下文路径下不要放无用的文件，因为会一起打包发送给 docker 引擎，如果文件过多会造成过程缓慢。
 3. `docker tag <image ID> <image name>:<tag>`
 
-###### DockerFile
+### DockerFile
 
 - FROM
 
@@ -211,7 +213,7 @@ RUN yum -y install wget \
 
 Compose 是用于定义和运行多容器 Docker 应用程序的工具。
 
-###### YAML
+### YAML
 
 参考文章：[YAML 菜鸟](https://www.runoob.com/w3cnote/yaml-intro.html)，[YAML 阮一峰](https://www.ruanyifeng.com/blog/2016/07/yaml.html)
 
@@ -223,7 +225,7 @@ Compose 是用于定义和运行多容器 Docker 应用程序的工具。
    - 数组
    - 纯量
 
-###### docker-compose.yml
+### docker-compose.yml
 
 [docker-compose教程](https://blog.csdn.net/pushiqiang/article/details/78682323)，不会的可以查这个博客
 
@@ -266,7 +268,7 @@ networks:
     external: true
 ```
 
-############ 用 docker-compose 创建容器
+### 用 docker-compose 创建容器
 
 1. `docker-compose up -d` 后台运行
 
@@ -276,12 +278,12 @@ networks:
 
 ## 其他
 
-###### docker machine
+### docker machine
 
-###### docker swarm
+### docker swarm
 
 ## 常见问题
 
-###### driver failed programming external connectivity on endpoint quirky_allen
+### driver failed programming external connectivity on endpoint quirky_allen
 
 外部端口被占用。

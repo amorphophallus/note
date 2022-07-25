@@ -1,4 +1,4 @@
-## XYY's Notebook
+# XYY's Notebook
 
 My homepage: [StarLightXYY](https://starlightxyy.cn/)
 

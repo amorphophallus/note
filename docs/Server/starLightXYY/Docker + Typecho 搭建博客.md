@@ -1,10 +1,12 @@
+# Docker + Typecho + Caddy 搭建博客
+
 [TOC]
 
 ## docker + typecho
 
 用 `docker-compose` 自动下载镜像和生成容器
 
-###### 创建网络
+### 创建网络
 
 ```shell
 $ docker network create blog
@@ -13,7 +15,7 @@ $ docker network creeate db_admin
 ## db_admin 用于连接 phpmyadmin 和 mariadb，可以通过前者在网页上管理数据库
 ```
 
-###### mariaDB
+### mariaDB
 
 docker-compose.yml
 
@@ -40,7 +42,7 @@ networks:
     external: true
 ```
 
-###### phpMyAdmin
+### phpMyAdmin
 
 docker-compose.yml
 
@@ -64,7 +66,7 @@ networks:
     external: true
 ```
 
-###### typecho
+### typecho
 
 1. 在 dockerhub 上找镜像[joyqi/typecho - Docker Image | Docker Hub](https://hub.docker.com/r/joyqi/typecho)
 2. 把文档里的 `docker run` 翻译成 `docker compose` 文件
@@ -94,13 +96,13 @@ networks:
 
 ## caddy 反向代理
 
-###### 参考文档
+### 参考文档
 
 1. 官方文档：[Welcome — Caddy Documentation (caddyserver.com)](https://caddyserver.com/docs/)
 2. 中文文档：[Caddy中文文档 - Caddy中文文档 (dengxiaolong.com)](https://dengxiaolong.com/caddy/zh/)
 3. 简略版：[更好用的 Web 服务器：Caddy - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/144208057)
 
-###### 操作步骤
+### 操作步骤
 
 1. `vim /etc/caddy/CaddyFile`
 
@@ -120,7 +122,7 @@ networks:
 
 3. `caddy reload`
 
-###### 常见问题
+### 常见问题
 
 1. 样式表加载失败：静态资源引用问题，在博客管理界面修改**站点地址**为 `https://starlightxyy.cn`
 2. 申请子域名：在阿里云后台>域名管理，添加记录（[阿里云网站运维检测平台](https://zijian.aliyun.com/)可以检测是否申请成功）

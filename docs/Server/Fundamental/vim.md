@@ -343,7 +343,7 @@ set encoding=utf-8
 
 ## 一些问题
 
-############ unix格式和dos格式
+### unix格式和dos格式
 
 出现 `Illegal character <^M>`。我是在 WSL 里面使用 vim，然后粘贴外界内容图方便用了记事本。于是就 unix 格式和 dos 格式混在一起了。
 
@@ -370,7 +370,7 @@ map <F6> :e ++ff=dos<CR>:e ++ff=unix<CR>:%s/\r//g<CR>
 
 其中 `<CR>` 代表换行符
 
-############ vim 和外界的复制粘贴
+### vim 和外界的复制粘贴
 
 windows terminal 配置：
 
@@ -394,7 +394,7 @@ windows terminal 配置：
 }
 ```
 
-###### 多行注释和删除注释
+### 多行注释和删除注释
 
 1. `ctrl+v` 选择多行
 2. `I` 进行编辑，或者 `del` 删除注释

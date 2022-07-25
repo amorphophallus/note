@@ -1,15 +1,13 @@
+# CSS
+
 [TOC]
 
+## 开始
 
 
 [CSS 课件](https://scratched-antimatter-2e3.notion.site/CSS-e18457e1c3364fb79cfdbb90fa0c224d)
 
 有用 ： [flex 布局的基本概念 - CSS（层叠样式表）](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox##元素间的对齐和空间分配)
-
-
-
-## 开始
-
 
 
 ```js
@@ -22,7 +20,7 @@ import './styles/style.css' // 记得引入
 
 ## 基础
 
-############ 对象
+### 对象
 
 ```
 h1
@@ -51,7 +49,7 @@ h1 + p{
 
 
 
-############ padding, border & margin
+### padding, border & margin
 
 ![](https://img-blog.csdn.net/20180726145644500?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MDkyNjYyOQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
@@ -59,7 +57,7 @@ h1 + p{
 
 
 
-############ 字体
+### 字体
 
 `font` 简写
 
@@ -87,13 +85,13 @@ h1 + p{
 
 
 
-############ justify-content
+### justify-content
 
 `justyfy-content` 主轴上的排列 `space-around/space-between`（但配合 wrap 食用的时候效果并不好）
 
 不如用 `center` 加上 `margin=xxx%` 效果好
 
-############ 其他
+### 其他
 
 `align-items` 交叉轴上的排列
 
@@ -105,7 +103,7 @@ h1 + p{
 
 
 
-############ 伸缩
+### 伸缩
 
 
 

@@ -1,3 +1,5 @@
+# HTML
+
 [TOC]
 
 ## 所有元素参考
@@ -36,7 +38,7 @@ placeholder：文本框内没有文字的时候用灰色字体显示
 
 event：input / change / beforeinput [HTMLElement: input event - Web APIs | MDN (mozilla.org)](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/input_event)
 
-############ radio
+### radio
 
 单选
 
@@ -44,13 +46,13 @@ event：input / change / beforeinput [HTMLElement: input event - Web APIs | MDN 
 
 [radio对象自带的属性和方法](https://www.w3school.com.cn/jsref/dom_obj_radio.asp)
 
-############ textarea 和 file
+### textarea 和 file
 
 [将 file 中的文字取出放在 textarea中](https://blog.csdn.net/zxl_1996/article/details/105781714)
 
 
 
-############ button 的一般形式
+### button 的一般形式
 
 ```html
 <input type="button" value="Click me" onclick="msg()" />
@@ -81,7 +83,7 @@ label："for" 属性可把 label 绑定到另外一个元素。请把 "for" 属�
 
 ## canvas
 
-############ 如何用 canvas 做 background
+### 如何用 canvas 做 background
 
 position 设成 absolute
 
@@ -89,6 +91,6 @@ position 设成 absolute
 
 
 
-############ 一些注意事项
+### 一些注意事项
 
 1. 尽量不要贴着边画，不然会看起来边上的线细一点（实际上是超出画布了）

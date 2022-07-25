@@ -1,10 +1,12 @@
+# Docker + Mkdocs + Github 部署文档网页
+
 [TOC]
 
 ## 前置芝士
 
 官方文档：[Getting started - Material for MkDocs (squidfunk.github.io)](https://squidfunk.github.io/mkdocs-material/getting-started/)
 
-###### 静态网页
+### 静态网页
 
 1. 所有网页内容都提前渲染好（比如都放在 `path/to/mkdocs/site` 里面）
 
@@ -12,15 +14,15 @@
 
 3. 用 web server 部署，需要一个 `index.html` 作为开始页面
 
-###### 一些指令
+### 一些指令
 
-############ `docker run --rm -v -p -it`
+#### `docker run --rm -v -p -it`
 
-############ `${PWD}`
+#### `${PWD}`
 
 打印当前路径
 
-###### caddyfile
+### caddyfile
 
 1. `encode zstd gzip` 表示打开 gzip 和 Zstandard 压缩功能，这样网站在传输网页时降低流量
 
@@ -30,7 +32,7 @@
 
 ## 安装
 
-###### 基本安装
+### 基本安装
 
 1. 下载 mkdocs（自动下载依赖）：`pip install mkdocs-material`
 
@@ -63,7 +65,7 @@ note.starlightxyy.cn {
 
 7. 重启 caddy 服务：`caddy reload`
 
-###### Docker 安装
+### Docker 安装
 
 *Docker 部署的好处是修改文档之后不用 build 直接就可以生效，稍微方便一点。*
 
@@ -114,7 +116,7 @@ note.starlightxyy.cn {
    
    - `curl https://note.starlightxyy.cn -v`
 
-###### 关联 GitHub 仓库
+### 关联 GitHub 仓库
 
 1. 新建仓库
 
@@ -128,7 +130,7 @@ note.starlightxyy.cn {
 
 然后就可以多端共享文件啦！
 
-###### 自动同步 github 仓库
+### 自动同步 github 仓库
 
 1. 在本地仓库外面新建 `pull.sh`
    
@@ -236,13 +238,13 @@ nav:
 
 ```
 
-###### navigation config
+### navigation config
 
 [Setting up navigation - Material for MkDocs ](https://squidfunk.github.io/mkdocs-material/setup/setting-up-navigation/)，主要是关于顶端导航、侧边栏和文章目录的设置
 
 ## 更新
 
-###### 更新 mkdocs
+### 更新 mkdocs
 
 1. 更新 python：`apt-get update && apt-get upgrade`
 
@@ -250,7 +252,7 @@ nav:
 
 3. 查看版本：`pip show mkdocs-material` 
 
-###### 安装插件
+### 安装插件
 
 1. 修改 DockerFile
 
@@ -258,10 +260,10 @@ nav:
 
 3. 修改 `mkdocs.yml` 增加 `extensions`
 
-###### 新增文档
+### 新增文档
 
 ## 常见问题
 
-###### 403
+### 403
 
 静态网页文件访问需要 root 权限。把文件 mv 到其他位置即可。

@@ -1,3 +1,5 @@
+# React
+
 [TOC]
 
 
@@ -53,7 +55,7 @@ yarn add $package-name$
 
 
 
-############ 常见 import 文件
+### 常见 import 文件
 
 
 
@@ -64,7 +66,7 @@ yarn add $package-name$
 
 
 
-############ tips
+### tips
 
 1. [create-react-app app安装报错的解决办法](https://blog.csdn.net/chenkeyu1997/article/details/100556513)
 2. 整个 react 文件的本体是 `index.js` 
@@ -75,7 +77,7 @@ yarn add $package-name$
 
 
 
-############ 举个例子
+### 举个例子
 
 
 
@@ -93,7 +95,7 @@ ReactDOM.render(
 
 
 
-############ 传参
+### 传参
 
 
 
@@ -110,7 +112,7 @@ parseInt(string s, [int radix]) // 可以指定基数
 
 
 
-############ 跨文件
+### 跨文件
 
 
 
@@ -144,7 +146,7 @@ React.render(<Timer />, document.getElementById("root")) // 组件引用的方�
 
 
 
-############ 组合组件
+### 组合组件
 
 
 
@@ -186,7 +188,7 @@ function Comment(props) { // 显示头像、信息、评论
 
 
 
-############ tips
+### tips
 
 1. React 组件首字母大写
 2. props 是只读的
@@ -198,7 +200,7 @@ function Comment(props) { // 显示头像、信息、评论
 
 
 
-############ 举个例子
+### 举个例子
 
 构造 class 和使用 state
 
@@ -245,7 +247,7 @@ reactDOM.render( // 渲染方法和函数组件一样
 
 
 
-############ 事件处理
+### 事件处理
 
 可用事件参考：[合成事件 – React (reactjs.org)](https://zh-hans.reactjs.org/docs/events.html##clipboard-events)
 
@@ -296,7 +298,7 @@ ReactDOM.render(
 
 
 
-############ 关于 bind 的说明
+### 关于 bind 的说明
 
 
 
@@ -320,7 +322,7 @@ obj.fun(); // this.name + this.age 其中 this 是 obj
 
 
 
-############ 关于 super 的说明
+### 关于 super 的说明
 
 
 
@@ -330,7 +332,7 @@ super() -> 继承父类型（中的函数等等）
 
 
 
-############ tips
+### tips
 
 
 
@@ -346,7 +348,7 @@ super() -> 继承父类型（中的函数等等）
 
 
 
-############ 举个例子
+### 举个例子
 
 
 
@@ -393,7 +395,7 @@ ReactDOM.render(
 
 
 
-############ {} 内表达式的写法
+### {} 内表达式的写法
 
 
 
@@ -416,7 +418,7 @@ ReactDOM.render(
 
 
 
-############ 举个例子 
+### 举个例子 
 
 
 
@@ -449,7 +451,7 @@ ReactDOM.render(
 
 
 
-############ tips
+### tips
 
 
 
@@ -465,7 +467,7 @@ ReactDOM.render(
 
 
 
-############ state hook
+### state hook
 
 
 
@@ -504,7 +506,7 @@ c:'yyy'
 
 
 
-############ effect hook
+### effect hook
 
 可以把 `useEffect` Hook 看做 `componentDidMount`，`componentDidUpdate` 和 `componentWillUnmount` 这三个函数的组合。
 
@@ -542,7 +544,7 @@ function Example() {
 
 
 
-############ 自定义 hook
+### 自定义 hook
 
 用于避免重复逻辑，简化代码
 
@@ -592,7 +594,7 @@ function FriendListItem(props) { // 第二次调用
 
 
 
-############ tips
+### tips
 
 1. react 通过调用顺序来判断每个 hook 对应的是哪个 state 和 effect，所以只能在 react 函数的顶层调用 hook
 
@@ -602,7 +604,7 @@ function FriendListItem(props) { // 第二次调用
 
 
 
-############ 开始
+### 开始
 
 下载 react-router-dom
 
@@ -612,7 +614,7 @@ yarn add react-router-dom
 
 
 
-############ BrowserRouter , Routes & Route
+### BrowserRouter , Routes & Route
 
 1. 写在 render 函数里面
 2. BrowserRouter 和 Routes 套在最外面
@@ -651,7 +653,7 @@ root.render(
 
 
 
-############ Route 之间的嵌套(Nested)
+### Route 之间的嵌套(Nested)
 
 操作：
 
@@ -687,7 +689,7 @@ root.render(
 
 
 
-############ Link
+### Link
 
 1. 写在函数组件里面，生成一个跳转链接
 2. to 里面是跳转链接
@@ -720,7 +722,7 @@ export default function App() {
 
 
 
-############ useParams
+### useParams
 
 在 render 中这么写，表示所有形如 /invoices/xxx 的网页的 xxx 都会被当做参数，可以被 xxx 渲染的函数组件调用
 
@@ -754,7 +756,7 @@ export default function Invoice() {
 
 
 
-############ index route
+### index route
 
 相当于在父 route 中再加点东西，这些东西在进入他的子 route 时消失
 
@@ -774,7 +776,7 @@ export default function Invoice() {
 
 
 
-############ useSearchParams & useLocation
+### useSearchParams & useLocation
 
 用法和 state 类似
 
@@ -798,7 +800,7 @@ let filter = searchParams.get("filter");
 
 
 
-###### 用数组生成 ReactDom 元素
+### 用数组生成 ReactDom 元素
 
 
 

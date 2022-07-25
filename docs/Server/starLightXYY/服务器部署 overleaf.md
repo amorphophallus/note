@@ -1,3 +1,5 @@
+# Docker 部署 Overleaf
+
 [TOC]
 
 ## 整体步骤
@@ -51,7 +53,7 @@
 
 
 
-###### nginx proxy
+### nginx proxy
 
 
 
@@ -89,7 +91,7 @@
 
 
 
-###### caddy
+### caddy
 
 
 
@@ -118,7 +120,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### 报错："The container name "/mongo" is already in use by Creating redis"
+### 报错："The container name "/mongo" is already in use by Creating redis"
 
 
 
@@ -128,7 +130,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### 修改 admin 邮箱
+### 修改 admin 邮箱
 
 
 
@@ -136,7 +138,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### 可以编译但是无法渲染 pdf
+### 可以编译但是无法渲染 pdf
 
 
 
@@ -144,7 +146,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### pdfLatex 可以编译但是 XeTeX 不能编译 
+### pdfLatex 可以编译但是 XeTeX 不能编译 
 
 
 
@@ -152,7 +154,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### 支持中文字体
+### 支持中文字体
 
 
 
@@ -204,7 +206,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### minted 代码高亮
+### minted 代码高亮
 
 
 
@@ -212,7 +214,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### favicon.ico 变成奇怪的图像
+### favicon.ico 变成奇怪的图像
 
 
 
@@ -226,7 +228,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-###### A previous compile is still running. Please wait a minute and try compiling again.
+### A previous compile is still running. Please wait a minute and try compiling again.
 
 
 

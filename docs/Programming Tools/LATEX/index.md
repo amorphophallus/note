@@ -1,3 +1,5 @@
+# $\LaTeX$ 学习笔记
+
 [TOC]
 
 ## 语法
@@ -8,7 +10,7 @@
 4. 参考数学符号：[mohu](http://mohu.org/info/symbols/symbols.htm)
 5. 带目录的文档：[中文版Latex常用语法大全教程](https://blog.csdn.net/tianzong2019/article/details/106521432)
 
-###### 基本结构
+### 基本结构
 
 ```latex
 \documentclass{article}
@@ -22,9 +24,9 @@ This is the main content.
 \end{document}
 ```
 
-###### 导言区
+### 导言区
 
-############ 文档类型
+#### 文档类型
 
 ```latex
 \documentclass{article}
@@ -40,7 +42,7 @@ This is the main content.
 
 4. 
 
-############ 标题、作者、日期、摘要、目录
+#### 标题、作者、日期、摘要、目录
 
 ```latex
 \title{My First LaTex Document}
@@ -86,21 +88,21 @@ LaTex is an elegant typesetting tool.
 > 
 > ```
 
-############ 调用宏包
+#### 调用宏包
 
 ```latex
 
 ```
 
-############ 支持中文
+#### 支持中文
 
 ```latex
 \usepackage{ctex}
 ```
 
-###### 正文区
+### 正文区
 
-############ 章节、段落
+#### 章节、段落
 
 ```latex
 % in article
@@ -116,11 +118,11 @@ LaTex is an elegant typesetting tool.
 \part{}
 ```
 
-############ 数学公式
+#### 数学公式
 
-############ 插入图片
+#### 插入图片
 
-############ 插入列表
+#### 插入列表
 
 参考文档：[技术|LaTeX 排版（1）：列表 (linux.cn)](https://linux.cn/article-13112-1.html)
 
@@ -133,7 +135,7 @@ LaTex is an elegant typesetting tool.
 \end{enumerate}
 ```
 
-############ 插入代码
+#### 插入代码
 
 使用宏包 `listlings`
 
@@ -185,7 +187,7 @@ int main()
 > texcl=true,           % 设置注释的代码用 latex 解析显示
 > ```
 
-############ 插入流程图
+#### 插入流程图
 
 参考文档：
 
@@ -274,23 +276,23 @@ int main()
 > \node[multiple_line] (start) {Line1 \\ Line2 \\ Line3};
 > ```
 
-###### 文末区
+### 文末区
 
-############ 脚注
+#### 脚注
 
-############ 参考文献
+#### 参考文献
 
-############ 索引
+#### 索引
 
-###### 注意事项和常见错误
+### 注意事项和常见错误
 
-############ 空白区域
+#### 空白区域
 
-############ BibTex 报错 "I found no \citation commands---while reading file lab1_report.aux"
+#### BibTex 报错 "I found no \citation commands---while reading file lab1_report.aux"
 
 在导言区加入 `\usepackage[backend=bibtex]{biblatex}`
 
-############ 特殊字符
+#### 特殊字符
 
 `\## \$ \% \^{} \& \_ \{ \} \~{}` 需要加反斜杠。
 
@@ -304,11 +306,11 @@ int main()
    - **重点看这篇：**[配置文件解读](https://zhuanlan.zhihu.com/p/166523064)
 3. [Overleaf：在线 LATEX编辑器](https://www.overleaf.com/project)
 
-###### 报错和解决办法
+### 报错和解决办法
 
 1. [Recipe terminated with fatal error: spawn xelatex ENOENT](https://blog.csdn.net/mengxt169/article/details/110126235)
 
-###### settings
+### settings
 
 1. 右下角错误弹窗：`latex-workshop.message.error.show`
 2. 中文路径： `%DOCFILE%` 和 `%DOC%`
@@ -317,7 +319,7 @@ int main()
 5. 在右键菜单栏中显示正向查找：`latex-workshop.showContextMenu`
 6. 反向查找：`latex-workshop.view.pdf.internal.synctex.keybinding`
 
-###### 操作
+### 操作
 
 1. 编译：选择编译链->双击->左下角显示 √ 或者 × 
 2. 正向搜索：右键菜单 或者 `ctrl+alt+J`

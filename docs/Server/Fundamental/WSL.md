@@ -1,3 +1,5 @@
+# WSL 安装和使用
+
 [TOC]
 
 ## 安装和配置
@@ -21,11 +23,11 @@
 
 ## Debian 修改环境变量
 
-###### 临时修改
+### 临时修改
 
 命令行`export PATH=$PATH:/usr/bin`
 
-###### 当前用户
+### 当前用户
 
 `sudo vim ~/.bashrc`：
 
@@ -37,7 +39,7 @@ export PATH
 
 `source ~/.bashrc`
 
-###### 所有用户
+### 所有用户
 
 `sudo vim /etc/profile`：
 
@@ -49,6 +51,6 @@ export PATH
 
 `source /etc/profile`
 
-###### tips
+### tips
 
 1. `PATH` 等号前后不能有空格
