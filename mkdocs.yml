@@ -1,9 +1,38 @@
-site_name: XYY's Notebook
-site_url: https://note.starlightxyy.cn
-repo_url: https://github.com/amorphophallus/note
-repo_name: GitHub
-edit_uri: edit/main/docs
+# Project Information
+site_name: XYY's Notebook							# 显示在左上角和标签页上的站点名字
+site_url: https://note.starlightxyy.cn				# 点击站点名字跳转到的网址
+repo_url: https://github.com/amorphophallus/note	# 右上角 icon 的跳转地址
+repo_name: note-github								# 右上角 icon 的备注文字
+edit_uri: edit/main/docs							# 文章目录左侧的编辑按钮的跳转地址
 site_description: Note about everything.
 theme:
     name: material
+	features:
+		- navigation.tabs							# 启用顶端导航
+		- navigation.sections						# 展开侧边导航
+		- navigation.indexes						# 启用章节概览 index.md
+		- navigation.top							# 启用
 
+# Documentation Layout
+nav:
+	- 'About': 'index.md'
+	- 'Server':
+		- 'Fundamental':
+			- 'Linux Command': 'Server/Fundamental/Linux Command.md'
+			- 'vim': 'Server/Fundamental/vim.md'
+			- 'git':
+				- '常见操作': 'Server/Fundamental/git/常见操作.md'
+				- '常见问题': 'Server/Fundamental/git/常见问题.md'
+			- 'WSL': 'Server/Fundamental/WSL.md'
+			- 'Docker': 'Server/Fundamental/Docker.md'
+			- 'Caddy': 'Server/Fundamental/Caddy.md'
+		- 'StarLightXYY':
+			- 'Server/starLightXYY/index.md'													# 章节概览使用方式:index.md
+			- 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
+			- '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
+			- 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
+	- 'Front End':
+	- 'Programming Tools':
+	- 'Projects':
+	- 'College Courses':
+	- 'Others':
