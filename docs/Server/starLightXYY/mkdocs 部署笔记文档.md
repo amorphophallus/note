@@ -159,7 +159,80 @@ note.starlightxyy.cn {
 
 调试：可以在本地装一个 `mkdocs-material`，使用 `mkdocs serve`
 
+我的 `mkdocs.yml` 文档
+
 ```yaml
+# Project Information
+site_name: XYY's Notebook                           # 显示在左上角和标签页上的站点名字
+site_url: https://note.starlightxyy.cn              # 点击站点名字跳转到的网址
+repo_url: https://github.com/amorphophallus/note    # 右上角 icon 的跳转地址
+repo_name: note-github                              # 右上角 icon 的备注文字
+edit_uri: edit/main/docs                            # 文章目录左侧的编辑按钮的跳转地址
+site_description: Note about everything.
+theme:
+    name: material
+    features:
+        - navigation.tabs                           # 启用顶端导航
+        - navigation.sections                       # 展开侧边导航
+        - navigation.indexes                        # 启用章节概览 index.md
+        - navigation.top                            # 启用回到顶部按钮
+
+# Documentation Layout
+nav:
+    - 'About': 'index.md'
+    - 'Server':
+        - 'Fundamental':
+            - 'Linux Command': 'Server/Fundamental/Linux Command.md'
+            - 'vim': 'Server/Fundamental/vim.md'
+            - 'git':
+                - '常见操作': 'Server/Fundamental/git/常见操作.md'
+                - '常见问题': 'Server/Fundamental/git/常见问题.md'
+            - 'WSL': 'Server/Fundamental/WSL.md'
+            - 'Docker': 'Server/Fundamental/Docker.md'
+            - 'Caddy': 'Server/Fundamental/Caddy.md'
+        - 'StarLightXYY':
+            - 'Server/starLightXYY/index.md'                                                    # 章节概览使用方式:index.md
+            - 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
+            - '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
+            - 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
+    - 'Front End':
+        - 'html': 'Front End/html.md'
+        - 'javascript': 'Front End/javascript.md'
+        - 'css': 'Front End/css.md'
+        - 'react': 'Front End/react.md'
+        - 'antd': 'Front End/antd.md'
+    - 'Programming Tools':
+        - 'LaTeX': 'Programming Tools/LATEX/LATEX.md'
+        - 'Python':
+            - 'Python': 'Programming Tools/Python/python.md'
+            - 'Numpy': 'Programming Tools/Python/Numpy.md'
+    - 'Projects':
+        - 'box-2021 项目总结': 'Projects/box-2021 项目总结.md'
+        - 'rop-neo-front':
+            - '内训笔记': 'Projects/rop-neo-front/内训笔记.md'
+            - '项目笔记': 'Projects/rop-neo-front/项目笔记.md'
+        - 'android':
+            - '笔记': 'Projects/android/笔记.md'
+    - 'College Courses':
+        - 'Tools':
+            - 'word学习笔记': 'College Courses/Tools/word学习笔记.md'
+            - '论文相关': 'College Courses/Tools/论文相关.md'
+        - '网安导':
+            - '笔记': 'College Courses/网安导/笔记.md'
+            - '实验报告': 'College Courses/网安导/README.md'
+    - 'Others':
+        - '经验':
+            - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
+            - '寒假社会实践经验总结': 'Others/经验/寒假社会实践经验总结.md'
+            - '职规学长学姐经验分享': 'Others/经验/职规学长学姐经验分享.md'
+            - '竺院学长经验分享-兴趣': 'Others/经验/竺院学长经验分享-兴趣.md'
+        - '兴趣':
+            - 'AE学习': 'Others/兴趣/AE学习.md'
+            - 'pr小技巧': 'Others/兴趣/pr小技巧.md'
+            - '篮球运球': 'Others/兴趣/篮球运球.md'
+            - '素描课程笔记（知识点篇）': 'Others/兴趣/素描课程笔记（知识点篇）.md'
+            - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
+        - 'Something to read': 'Others/something to read.md'
 
 ```
 
