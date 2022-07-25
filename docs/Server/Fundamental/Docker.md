@@ -1,13 +1,13 @@
 [TOC]
 
-# 参考文档
+## 参考文档
 
 1. 菜鸟教程：[Docker 教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/docker/docker-tutorial.html)
 2. [前言 - Docker — 从入门到实践 (gitbook.io)](https://yeasy.gitbook.io/docker_practice/)
 3. Docker Compose 官方文档：[Compose specification | Docker Documentation](https://docs.docker.com/compose/compose-file/)
 4. 资源汇总：[Docker 资源汇总 | 菜鸟教程 (runoob.com)](https://www.runoob.com/docker/docker-resources.html)
 
-# 基础知识
+## 基础知识
 
 | 概念                   | 说明                                                                                                                                                                                                                                                                                                  |
 |:-------------------- |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,9 +18,9 @@
 | Docker Registry      | Docker 仓库用来保存镜像，可以理解为代码控制中的代码仓库。Docker Hub([https://hub.docker.com](https://hub.docker.com/)) 提供了庞大的镜像集合供使用。一个 Docker Registry 中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像。通常，一个仓库会包含同一个软件不同版本的镜像，而标签就常用于对应该软件的各个版本。我们可以通过 **<仓库名>:<标签>** 的格式来指定具体是这个软件哪个版本的镜像。如果不给出标签，将以 **latest** 作为默认标签。 |
 | Docker Machine       | Docker Machine是一个简化Docker安装的命令行工具，通过一个简单的命令行即可在相应的平台上安装Docker，比如VirtualBox、 Digital Ocean、Microsoft Azure。                                                                                                                                                                                          |
 
-# 基本操作
+## 基本操作
 
-## docker run
+###### docker run
 
 1. `docker run <image> <command>`
    - e.g. `docker run ubuntu:15.10 /bin/echo "Hello world"`  
@@ -38,7 +38,7 @@
    - `-v`：修改挂载点（VOLUME）
    - `--rm`：
 
-## 容器查看
+###### 容器查看
 
 1. `docker ps`：查看运行的容器
    
@@ -55,7 +55,7 @@
 
 4. `docker top <container ID or name>`：查看容器内部运行的进程
 
-## 容器操作
+###### 容器操作
 
 1. `docker stop <container ID or name>`：停止容器
    
@@ -76,13 +76,13 @@
    - `docker export <container ID> > <export_image_name>.tar`
    - `docker import <file or URL or -> <REPOSITORY[:TAG]>`
 
-### e.g. 运行一个 web app
+############ e.g. 运行一个 web app
 
 1. `docker run -d -P training/webapp python app.py`
 2. `docker ps -a`，在 **PORTS** 栏得到端口映射信息
 3. 浏览器访问：`<IP>:<port>`
 
-## 镜像查看
+###### 镜像查看
 
 1. `docker images`：列出本地主机上的镜像
    - Repository
@@ -90,7 +90,7 @@
 2. `docker search <repo name>`
    - official
 
-## 镜像创建
+###### 镜像创建
 
 1. `docker commit <container ID> <image name>:<tag>`
    - e.g. `docker commit -m="has update" -a="runoob" e218edb10161 runoob/ubuntu:v2`
@@ -102,7 +102,7 @@
    - **注意**：上下文路径下不要放无用的文件，因为会一起打包发送给 docker 引擎，如果文件过多会造成过程缓慢。
 3. `docker tag <image ID> <image name>:<tag>`
 
-## DockerFile
+###### DockerFile
 
 - FROM
 
@@ -117,13 +117,13 @@
 构建镜像时运行的指令：
 
 ```dockerfile
-# shell 格式
+## shell 格式
 RUN <命令行命令>
 RUN ./test.php dev offline
-# exec 格式
+## exec 格式
 RUN ["可执行文件", "参数1", "参数2"]
 RUN ["./test.php", "dev", "offline"]
-# 用 && 连接命令防止层数过多
+## 用 && 连接命令防止层数过多
 RUN yum -y install wget \
     && wget -O redis.tar.gz "http://download.redis.io/releases/redis-5.0.3.tar.gz" \
     && tar -xvf redis.tar.gz
@@ -173,7 +173,7 @@ RUN yum -y install wget \
 
 运行容器时执行的shell命令
 
-# Docker Network
+## Docker Network
 
 1. 作用：容器互联
 
@@ -207,11 +207,11 @@ RUN yum -y install wget \
    
    - check：`docker run -it --rm  ubuntu  cat etc/resolv.conf`
 
-# Docker Compose
+## Docker Compose
 
 Compose 是用于定义和运行多容器 Docker 应用程序的工具。
 
-## YAML
+###### YAML
 
 参考文章：[YAML 菜鸟](https://www.runoob.com/w3cnote/yaml-intro.html)，[YAML 阮一峰](https://www.ruanyifeng.com/blog/2016/07/yaml.html)
 
@@ -223,7 +223,7 @@ Compose 是用于定义和运行多容器 Docker 应用程序的工具。
    - 数组
    - 纯量
 
-## docker-compose.yml
+###### docker-compose.yml
 
 [docker-compose教程](https://blog.csdn.net/pushiqiang/article/details/78682323)，不会的可以查这个博客
 
@@ -266,7 +266,7 @@ networks:
     external: true
 ```
 
-### 用 docker-compose 创建容器
+############ 用 docker-compose 创建容器
 
 1. `docker-compose up -d` 后台运行
 
@@ -274,14 +274,14 @@ networks:
    
    - 常用的 shell 有 sh, bash, zsh
 
-# 其他
+## 其他
 
-## docker machine
+###### docker machine
 
-## docker swarm
+###### docker swarm
 
-# 常见问题
+## 常见问题
 
-## driver failed programming external connectivity on endpoint quirky_allen
+###### driver failed programming external connectivity on endpoint quirky_allen
 
 外部端口被占用。

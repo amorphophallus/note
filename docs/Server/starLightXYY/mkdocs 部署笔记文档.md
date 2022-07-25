@@ -1,10 +1,10 @@
 [TOC]
 
-# 前置芝士
+## 前置芝士
 
 官方文档：[Getting started - Material for MkDocs (squidfunk.github.io)](https://squidfunk.github.io/mkdocs-material/getting-started/)
 
-## 静态网页
+###### 静态网页
 
 1. 所有网页内容都提前渲染好（比如都放在 `path/to/mkdocs/site` 里面）
 
@@ -12,15 +12,15 @@
 
 3. 用 web server 部署，需要一个 `index.html` 作为开始页面
 
-## 一些指令
+###### 一些指令
 
-### `docker run --rm -v -p -it`
+############ `docker run --rm -v -p -it`
 
-### `${PWD}`
+############ `${PWD}`
 
 打印当前路径
 
-## caddyfile
+###### caddyfile
 
 1. `encode zstd gzip` 表示打开 gzip 和 Zstandard 压缩功能，这样网站在传输网页时降低流量
 
@@ -28,9 +28,9 @@
 
 3. `root` 是指定网站的根目录
 
-# 安装
+## 安装
 
-## 基本安装
+###### 基本安装
 
 1. 下载 mkdocs（自动下载依赖）：`pip install mkdocs-material`
 
@@ -63,7 +63,7 @@ note.starlightxyy.cn {
 
 7. 重启 caddy 服务：`caddy reload`
 
-## Docker 安装
+###### Docker 安装
 
 *Docker 部署的好处是修改文档之后不用 build 直接就可以生效，稍微方便一点。*
 
@@ -114,7 +114,7 @@ note.starlightxyy.cn {
    
    - `curl https://note.starlightxyy.cn -v`
 
-## 关联 GitHub 仓库
+###### 关联 GitHub 仓库
 
 1. 新建仓库
 
@@ -128,12 +128,12 @@ note.starlightxyy.cn {
 
 然后就可以多端共享文件啦！
 
-## 自动同步 github 仓库
+###### 自动同步 github 仓库
 
 1. 在本地仓库外面新建 `pull.sh`
    
    ```shell
-   #!/bin/bash
+   ##!/bin/bash
    while true
    do
        git -C ./docs/ pull origin main
@@ -153,7 +153,7 @@ note.starlightxyy.cn {
 
 然后就可以每隔一段时间同步一下上传的文件了！
 
-# 编辑
+## 编辑
 
 官方配置指南：[Configuration - MkDocs](https://www.mkdocs.org/user-guide/configuration/)
 
@@ -162,22 +162,22 @@ note.starlightxyy.cn {
 我的 `mkdocs.yml` 文档
 
 ```yaml
-# Project Information
-site_name: XYY's Notebook                           # 显示在左上角和标签页上的站点名字
-site_url: https://note.starlightxyy.cn              # 点击站点名字跳转到的网址
-repo_url: https://github.com/amorphophallus/note    # 右上角 icon 的跳转地址
-repo_name: note-github                              # 右上角 icon 的备注文字
-edit_uri: edit/main/docs                            # 文章目录左侧的编辑按钮的跳转地址
+## Project Information
+site_name: XYY's Notebook                           ## 显示在左上角和标签页上的站点名字
+site_url: https://note.starlightxyy.cn              ## 点击站点名字跳转到的网址
+repo_url: https://github.com/amorphophallus/note    ## 右上角 icon 的跳转地址
+repo_name: note-github                              ## 右上角 icon 的备注文字
+edit_uri: edit/main/docs                            ## 文章目录左侧的编辑按钮的跳转地址
 site_description: Note about everything.
 theme:
     name: material
     features:
-        - navigation.tabs                           # 启用顶端导航
-        - navigation.sections                       # 展开侧边导航
-        - navigation.indexes                        # 启用章节概览 index.md
-        - navigation.top                            # 启用回到顶部按钮
+        - navigation.tabs                           ## 启用顶端导航
+        - navigation.sections                       ## 展开侧边导航
+        - navigation.indexes                        ## 启用章节概览 index.md
+        - navigation.top                            ## 启用回到顶部按钮
 
-# Documentation Layout
+## Documentation Layout
 nav:
     - 'About': 'index.md'
     - 'Server':
@@ -191,7 +191,7 @@ nav:
             - 'Docker': 'Server/Fundamental/Docker.md'
             - 'Caddy': 'Server/Fundamental/Caddy.md'
         - 'StarLightXYY':
-            - 'Server/starLightXYY/index.md'                                                    # 章节概览使用方式:index.md
+            - 'Server/starLightXYY/index.md'                                                    ## 章节概览使用方式:index.md
             - 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
             - '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
             - 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
@@ -236,13 +236,13 @@ nav:
 
 ```
 
-## navigation config
+###### navigation config
 
 [Setting up navigation - Material for MkDocs ](https://squidfunk.github.io/mkdocs-material/setup/setting-up-navigation/)，主要是关于顶端导航、侧边栏和文章目录的设置
 
-# 更新
+## 更新
 
-## 更新 mkdocs
+###### 更新 mkdocs
 
 1. 更新 python：`apt-get update && apt-get upgrade`
 
@@ -250,7 +250,7 @@ nav:
 
 3. 查看版本：`pip show mkdocs-material` 
 
-## 安装插件
+###### 安装插件
 
 1. 修改 DockerFile
 
@@ -258,10 +258,10 @@ nav:
 
 3. 修改 `mkdocs.yml` 增加 `extensions`
 
-## 新增文档
+###### 新增文档
 
-# 常见问题
+## 常见问题
 
-## 403
+###### 403
 
 静态网页文件访问需要 root 权限。把文件 mv 到其他位置即可。

@@ -4,15 +4,15 @@
 
 
 
-# 常用组件和头文件
+## 常用组件和头文件
 
 
 
-## Layout
+###### Layout
 
 
 
-### 头文件
+############ 头文件
 
 
 
@@ -24,7 +24,7 @@ import 'antd/dist/antd.css';
 
 
 
-### 常用技巧
+############ 常用技巧
 
 
 
@@ -52,7 +52,7 @@ import 'antd/dist/antd.css';
 
 
 
-### tips
+############ tips
 
 
 
@@ -61,11 +61,11 @@ import 'antd/dist/antd.css';
 
 
 
-## Radio
+###### Radio
 
 
 
-### 基本用法
+############ 基本用法
 
 
 
@@ -91,11 +91,11 @@ const onChange = (e: RadioChangeEvent) => {
 
 
 
-## Checkbox
+###### Checkbox
 
 
 
-### 头文件
+############ 头文件
 
 
 
@@ -105,7 +105,7 @@ import { Checkbox } from 'antd'; // 多选
 
 
 
-### 常见用法
+############ 常见用法
 
 
 
@@ -161,7 +161,7 @@ onChange 的逻辑比较怪，在调用 onChange 函数的时候，`e.target.che
 
 
 
-### tips
+############ tips
 
 1. 把同一个系列的所有 Checkbox 放在同一个函数组件里，用一个 `state hook：checked` 数组记录有哪些已经选中了
 2. CheckBox 有没有 checked 和 value 数组并不影响其本身相应点击，这两个参数是为了方便导出数据和方便外部控制 Checkbox（**value的作用是强制设置哪几个元素被选中**）
@@ -172,11 +172,11 @@ onChange 的逻辑比较怪，在调用 onChange 函数的时候，`e.target.che
 
 
 
-## 菜单 Menu
+###### 菜单 Menu
 
 
 
-### 头文件和基本使用
+############ 头文件和基本使用
 
 
 
@@ -214,7 +214,7 @@ const items = [
 
 
 
-### 其他参数
+############ 其他参数
 
 
 
@@ -228,7 +228,7 @@ Menu: defaultOpenKeys={数组} // 保存一些 key，默认不折叠
 
 
 
-### tips
+############ tips
 
 1. **Menu 嵌套**：label 的类型是 React.ReactNode，所以一切可以被渲染的元素都可以作为 label。比如说 Menu 可以嵌套 Checkbox / Radio 等等
 2. 几个容易用到的属性： `label, key, type, mode`
@@ -239,11 +239,11 @@ Menu: defaultOpenKeys={数组} // 保存一些 key，默认不折叠
 
 
 
-## Popover
+###### Popover
 
 
 
-### 基本使用
+############ 基本使用
 
 
 
@@ -268,7 +268,7 @@ const handleVisibleChange = (newVisible) => {
 
 
 
-### API
+############ API
 
 
 
@@ -281,11 +281,11 @@ const handleVisibleChange = (newVisible) => {
 
 
 
-## Button
+###### Button
 
 
 
-### 基本使用
+############ 基本使用
 
 
 
@@ -299,7 +299,7 @@ import { Button } from 'antd';
 
 
 
-### API
+############ API
 
 
 
@@ -308,7 +308,7 @@ import { Button } from 'antd';
 
 
 
-### tips
+############ tips
 
 
 
@@ -318,11 +318,11 @@ import { Button } from 'antd';
 
 
 
-## Input
+###### Input
 
 
 
-### 基本使用
+############ 基本使用
 
 
 
@@ -337,11 +337,11 @@ import { Button } from 'antd';
 
 
 
-## 弹出对话框 Modal
+###### 弹出对话框 Modal
 
 
 
-### 基本使用
+############ 基本使用
 
 
 
@@ -400,11 +400,11 @@ tips：
 
 
 
-## 表单 Form
+###### 表单 Form
 
 
 
-### 基本使用
+############ 基本使用
 
 
 
@@ -450,17 +450,17 @@ const inputChange = () => {
 
 
 
-### 
+############ 
 
 
 
 
 
-## DatePicker
+###### DatePicker
 
 
 
-### 基本使用
+############ 基本使用
 
 
 

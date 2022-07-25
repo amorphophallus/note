@@ -1,19 +1,19 @@
 [TOC]
 
-# docker + typecho
+## docker + typecho
 
 用 `docker-compose` 自动下载镜像和生成容器
 
-## 创建网络
+###### 创建网络
 
 ```shell
 $ docker network create blog
-# blog 用于连接 typecho 的容器和 mariadb
+## blog 用于连接 typecho 的容器和 mariadb
 $ docker network creeate db_admin
-# db_admin 用于连接 phpmyadmin 和 mariadb，可以通过前者在网页上管理数据库
+## db_admin 用于连接 phpmyadmin 和 mariadb，可以通过前者在网页上管理数据库
 ```
 
-## mariaDB
+###### mariaDB
 
 docker-compose.yml
 
@@ -40,7 +40,7 @@ networks:
     external: true
 ```
 
-## phpMyAdmin
+###### phpMyAdmin
 
 docker-compose.yml
 
@@ -64,7 +64,7 @@ networks:
     external: true
 ```
 
-## typecho
+###### typecho
 
 1. 在 dockerhub 上找镜像[joyqi/typecho - Docker Image | Docker Hub](https://hub.docker.com/r/joyqi/typecho)
 2. 把文档里的 `docker run` 翻译成 `docker compose` 文件
@@ -82,7 +82,7 @@ services:
     networks:
       - blog
     ports:
-      - "5120:80" # 服务器的 5120 提供给容器的 80 端口
+      - "5120:80" ## 服务器的 5120 提供给容器的 80 端口
     restart: unless-stopped
 
 networks:
@@ -92,15 +92,15 @@ networks:
 
 然后就可以用端口 5120 访问 typecho 主页，注册账号。可以用 5210 端口访问 phpmyadmin 管理数据库。
 
-# caddy 反向代理
+## caddy 反向代理
 
-## 参考文档
+###### 参考文档
 
 1. 官方文档：[Welcome — Caddy Documentation (caddyserver.com)](https://caddyserver.com/docs/)
 2. 中文文档：[Caddy中文文档 - Caddy中文文档 (dengxiaolong.com)](https://dengxiaolong.com/caddy/zh/)
 3. 简略版：[更好用的 Web 服务器：Caddy - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/144208057)
 
-## 操作步骤
+###### 操作步骤
 
 1. `vim /etc/caddy/CaddyFile`
 
@@ -109,7 +109,7 @@ networks:
         reverse_proxy localhost:5120
     }
    
-    www.starlightxyy.cn { # www 是算作一个子域名的，也需要做反向代理
+    www.starlightxyy.cn { ## www 是算作一个子域名的，也需要做反向代理
         reverse_proxy localhost:5120
     }
    
@@ -120,14 +120,14 @@ networks:
 
 3. `caddy reload`
 
-## 常见问题
+###### 常见问题
 
 1. 样式表加载失败：静态资源引用问题，在博客管理界面修改**站点地址**为 `https://starlightxyy.cn`
 2. 申请子域名：在阿里云后台>域名管理，添加记录（[阿里云网站运维检测平台](https://zijian.aliyun.com/)可以检测是否申请成功）
 
-# 主题和插件
+## 主题和插件
 
-# 补充芝士
+## 补充芝士
 
 1. 静态博客和动态博客：[从零开始折腾博客(0)：静态？动态？ - idealclover](https://idealclover.top/archives/237/)
 2. yml 文件的编写：[YAML 入门教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/w3cnote/yaml-intro.html)

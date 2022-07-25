@@ -1,6 +1,6 @@
 [TOC]
 
-# 基本操作
+## 基本操作
 
 1. `caddy start`：后台运行 caddy
 
@@ -8,7 +8,7 @@
 
 3. `/etc/caddy/Caddyfile` ：*Caddyfile* 的位置
 
-# 反向代理
+## 反向代理
 
 ```yaml
 starlightxyy.cn {
@@ -16,7 +16,7 @@ starlightxyy.cn {
 }
 ```
 
-# 静态网页
+## 静态网页
 
 ```yaml
 note.starlightxyy.cn {
@@ -27,16 +27,16 @@ note.starlightxyy.cn {
 
 **注意！！！** 静态网页根目录不要放在需要 root 权限的地方，否则会 403。
 
-# 检查网络 (curl)
+## 检查网络 (curl)
 
 命令：`curl https://note.starlightxyy.cn -v` （`-v`会显示详细信息）
 
 显示：
 
 ```shell
-root@allenVPS:/etc/caddy# curl https://note.starlightxyy.cn -v
+root@allenVPS:/etc/caddy## curl https://note.starlightxyy.cn -v
 *   Trying 144.34.242.8:443...
-* Connected to note.starlightxyy.cn (144.34.242.8) port 443 (#0)
+* Connected to note.starlightxyy.cn (144.34.242.8) port 443 (##0)
 * ALPN, offering h2
 * ALPN, offering http/1.1
 * successfully set certificate verify locations:
@@ -75,7 +75,7 @@ root@allenVPS:/etc/caddy# curl https://note.starlightxyy.cn -v
 < content-length: 0
 < date: Mon, 25 Jul 2022 01:45:59 GMT
 <
-* Connection #0 to host note.starlightxyy.cn left intact
+* Connection ##0 to host note.starlightxyy.cn left intact
 ```
 
 重要信息：

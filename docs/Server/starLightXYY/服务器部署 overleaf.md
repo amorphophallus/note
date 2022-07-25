@@ -1,6 +1,6 @@
 [TOC]
 
-# 整体步骤
+## 整体步骤
 
 
 
@@ -10,7 +10,7 @@
 
 
 
-# 下载 docker 镜像
+## 下载 docker 镜像
 
 
 
@@ -25,7 +25,7 @@
 
 
 
-# 启动容器
+## 启动容器
 
 
 
@@ -47,11 +47,11 @@
 
 
 
-# 反向代理
+## 反向代理
 
 
 
-## nginx proxy
+###### nginx proxy
 
 
 
@@ -66,9 +66,9 @@
 从 curl 的报错里发现问题
 
 ```shell
-# curl -H "Host: whoami.local" localhost -v
+## curl -H "Host: whoami.local" localhost -v
 *   Trying ::1:80...
-* Connected to localhost (::1) port 80 (#0)
+* Connected to localhost (::1) port 80 (##0)
 > GET / HTTP/1.1
 > Host: whoami.local
 > User-Agent: curl/7.74.0
@@ -78,7 +78,7 @@
 < HTTP/1.1 308 Permanent Redirect
 < Connection: close
 < Location: https://whoami.local/
-< Server: Caddy # web server 用的是 Caddy
+< Server: Caddy ## web server 用的是 Caddy
 < Date: Sat, 09 Jul 2022 08:20:09 GMT
 < Content-Length: 0
 <
@@ -89,7 +89,7 @@
 
 
 
-## caddy
+###### caddy
 
 
 
@@ -114,11 +114,11 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-# 常见问题
+## 常见问题
 
 
 
-## 报错："The container name "/mongo" is already in use by Creating redis"
+###### 报错："The container name "/mongo" is already in use by Creating redis"
 
 
 
@@ -128,7 +128,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## 修改 admin 邮箱
+###### 修改 admin 邮箱
 
 
 
@@ -136,7 +136,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## 可以编译但是无法渲染 pdf
+###### 可以编译但是无法渲染 pdf
 
 
 
@@ -144,15 +144,15 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## pdfLatex 可以编译但是 XeTeX 不能编译 
+###### pdfLatex 可以编译但是 XeTeX 不能编译 
 
 
 
-有问题去 github 上看 issue，重新下载 `scheme-full` [XeLaTeX unable to compile · Issue #703 · overleaf/overleaf (github.com)](https://github.com/overleaf/overleaf/issues/703)
+有问题去 github 上看 issue，重新下载 `scheme-full` [XeLaTeX unable to compile · Issue ##703 · overleaf/overleaf (github.com)](https://github.com/overleaf/overleaf/issues/703)
 
 
 
-## 支持中文字体
+###### 支持中文字体
 
 
 
@@ -204,7 +204,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## minted 代码高亮
+###### minted 代码高亮
 
 
 
@@ -212,7 +212,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## favicon.ico 变成奇怪的图像
+###### favicon.ico 变成奇怪的图像
 
 
 
@@ -226,7 +226,7 @@ export SHARELATEX_BEHIND_PROXY=true
 
 
 
-## A previous compile is still running. Please wait a minute and try compiling again.
+###### A previous compile is still running. Please wait a minute and try compiling again.
 
 
 

@@ -8,24 +8,24 @@
 
 
 
-# 输出中文
+## 输出中文
 
 
 
 ```python
-f=open('test1.txt','a+',encoding="utf-8")  # open file -> encoding
-json.dumps({'text':"你好"},ensure_ascii=False,indent=2) # json -> ensure_ascii
-# -*- coding: UTF-8 -*-
-print( "你好，世界" ) # print -> 
+f=open('test1.txt','a+',encoding="utf-8")  ## open file -> encoding
+json.dumps({'text':"你好"},ensure_ascii=False,indent=2) ## json -> ensure_ascii
+## -*- coding: UTF-8 -*-
+print( "你好，世界" ) ## print -> 
 ```
 
 
 
-# socket
+## socket
 
 
 
-## send的参数
+###### send的参数
 
 
 
@@ -40,7 +40,7 @@ ret_string = str(sk.recv(6666), 'utf-8')
 
 
 
-# 文件 I/O
+## 文件 I/O
 
 
 
@@ -51,7 +51,7 @@ ret_string = str(sk.recv(6666), 'utf-8')
 
 
 
-# JSON
+## JSON
 
 
 
@@ -75,7 +75,7 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
 
 
 
-# tips
+## tips
 
 
 
