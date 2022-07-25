@@ -6,39 +6,39 @@
 
 - [x] 买域名
 - [ ] 学习部分
-  - [x] docker compose
-  - [x] docker network：network 如何把容器连接在一起
-  - [x] web server 的工作原理（nginx，caddy）
-    - [ ] 静态资源引用
-    - [ ] 端口映射
-    - [x] 反向代理
-    - [ ] CORS（跨域资源共享）
-  - [x] YAML：[YAML 入门教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/w3cnote/yaml-intro.html)
-  - [ ] python flask：web app 框架
-  - [ ] [跟着 MDN 学后端](https://developer.mozilla.org/en-US/docs/Learn/Server-side)
-  - [ ] 传输文件(FTP,SFTP)：超算课程的 Linux 基本操作那节课
+    - [x] docker compose
+    - [x] docker network：network 如何把容器连接在一起
+    - [x] web server 的工作原理（nginx，caddy）
+        - [ ] 静态资源引用
+        - [ ] 端口映射
+        - [x] 反向代理
+        - [ ] CORS（跨域资源共享）
+    - [x] YAML：[YAML 入门教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/w3cnote/yaml-intro.html)
+    - [ ] python flask：web app 框架
+    - [ ] [跟着 MDN 学后端](https://developer.mozilla.org/en-US/docs/Learn/Server-side)
+    - [ ] 传输文件(FTP,SFTP)：超算课程的 Linux 基本操作那节课
 - [ ] typecho 
-  - [ ] php 语言
-    - [ ] `.php` 文件及其作用
-  - [ ] 数据库
-    - [ ] database 的数据管理模式
-    - [ ] 怎么用 phpMyAdmin 或者命令行管理数据库（建立表格，建立连接？）
-    - [ ] 博客怎么引用数据库里的信息
-    - [ ] 写一个多层分类插件
-  - [ ] 主题
-  - [ ] 插件
-  - [ ] 管理文章的方式：一个类似文件夹管理系统的 + tag
+    - [ ] php 语言
+        - [ ] `.php` 文件及其作用
+    - [ ] 数据库
+        - [ ] database 的数据管理模式
+        - [ ] 怎么用 phpMyAdmin 或者命令行管理数据库（建立表格，建立连接？）
+        - [ ] 博客怎么引用数据库里的信息
+        - [ ] 写一个多层分类插件
+    - [ ] 主题
+    - [ ] 插件
+    - [ ] 管理文章的方式：一个类似文件夹管理系统的 + tag
 - [x] caddy：反向代理，用域名访问博客，子域名访问 overleaf（[Caddyfile Tutorial](https://caddyserver.com/docs/caddyfile-tutorial)）
 - [x] [docsify](https://docsify.js.org/##/)：做一个文档网页，用于存放曾经做过的笔记（改用 mkdocs）
 - [ ] markmap：部署一个可以在线编辑，把文件保存在数据库里的 mindmap web app
 - [ ] 又拍云 CDN，海外加速
-  - [ ] 学学 CDN 是什么东西
+    - [ ] 学学 CDN 是什么东西
 - [ ] 腾讯云买服务器
 - [ ] 搭建私人邮件服务器
-  - [ ] 学习 RSS
-  - [ ] 腾讯企业邮箱：实现订阅功能
+    - [ ] 学习 RSS
+    - [ ] 腾讯企业邮箱：实现订阅功能
 - [x] 嵌入 overleaf
-  - [ ] overleaf 实现用户注册登录功能：[实践自部署Overleaf | Sparktour's](https://sparktour.me/2021/04/02/self-host-overleaf/##完整宏包支持（完整版TexLive）)**（有空做）**
+    - [ ] overleaf 实现用户注册登录功能：[实践自部署Overleaf | Sparktour's](https://sparktour.me/2021/04/02/self-host-overleaf/##完整宏包支持（完整版TexLive）)**（有空做）**
 - [ ] 搞个在线文档阅读器（可以上传文档 + 保存到服务器）
 
 ## Done
