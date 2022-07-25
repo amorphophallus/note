@@ -1,19 +1,19 @@
-# Project Information
-site_name: XYY's Notebook                           # 显示在左上角和标签页上的站点名字
-site_url: https://note.starlightxyy.cn              # 点击站点名字跳转到的网址
-repo_url: https://github.com/amorphophallus/note    # 右上角 icon 的跳转地址
-repo_name: note-github                              # 右上角 icon 的备注文字
-edit_uri: edit/main/docs                            # 文章目录左侧的编辑按钮的跳转地址
+## Project Information
+site_name: XYY's Notebook                           ## 显示在左上角和标签页上的站点名字
+site_url: https://note.starlightxyy.cn              ## 点击站点名字跳转到的网址
+repo_url: https://github.com/amorphophallus/note    ## 右上角 icon 的跳转地址
+repo_name: note-github                              ## 右上角 icon 的备注文字
+edit_uri: edit/main/docs                            ## 文章目录左侧的编辑按钮的跳转地址
 site_description: Note about everything.
 theme:
     name: material
     features:
-        - navigation.tabs                           # 启用顶端导航
-        - navigation.sections                       # 展开侧边导航
-        - navigation.indexes                        # 启用章节概览 index.md
-        - navigation.top                            # 启用回到顶部按钮
+        - navigation.tabs                           ## 启用顶端导航
+        - navigation.sections                       ## 展开侧边导航
+        - navigation.indexes                        ## 启用章节概览 index.md
+        - navigation.top                            ## 启用回到顶部按钮
 
-# Documentation Layout
+## Documentation Layout
 nav:
     - 'About': 'index.md'
     - 'Server':
@@ -27,7 +27,7 @@ nav:
             - 'Docker': 'Server/Fundamental/Docker.md'
             - 'Caddy': 'Server/Fundamental/Caddy.md'
         - 'StarLightXYY':
-            - 'Server/starLightXYY/index.md'                                                    # 章节概览使用方式:index.md
+            - 'Server/starLightXYY/index.md'                                                    ## 章节概览使用方式:index.md
             - 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
             - '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
             - 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
@@ -57,13 +57,13 @@ nav:
             - '论文相关': 'College Courses/Tools/论文相关.md'
         - '网安导':
             - '笔记': 'College Courses/网安导/笔记.md'
-            - '实验报告': 'College Courses/网安导/README.md'
+            - '实验报告': 'College Courses/网安导/实验报告.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
             - '寒假社会实践经验总结': 'Others/经验/寒假社会实践经验总结.md'
             - '职规学长学姐经验分享': 'Others/经验/职规学长学姐经验分享.md'
-            - '竺院学长经验分享-兴趣': 'Others/经验/竺院学长经验分享-兴趣.md'
+            - '图灵学长经验分享-兴趣': 'Others/经验/图灵学长经验分享-兴趣.md'
         - '兴趣':
             - 'AE学习': 'Others/兴趣/AE学习.md'
             - 'pr小技巧': 'Others/兴趣/pr小技巧.md'
@@ -73,3 +73,7 @@ nav:
         - 'Something to read':
             - 'Others/something to read/index.md'
 
+# Extensions
+markdown_extensions:
+    - pymdownx.tasklist:
+        custom_checkbox: true
