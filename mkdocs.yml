@@ -13,25 +13,29 @@ theme:
         - navigation.indexes                        ## 启用章节概览 index.md
         - navigation.top                            ## 启用回到顶部按钮
     palette:
+
         # Palette toggle for automatic mode
         - media: "(prefers-color-scheme)"
-            toggle:
-                icon: material/brightness-auto
-                name: Switch to light mode
+          toggle:
+            icon: material/brightness-auto
+            name: Switch to light mode
 
         # Palette toggle for light mode
         - media: "(prefers-color-scheme: light)"
-            scheme: default 
-            toggle:
-                icon: material/brightness-7
-                name: Switch to dark mode
+          scheme: default 
+          toggle:
+            icon: material/brightness-7
+            name: Switch to dark mode
 
         # Palette toggle for dark mode
         - media: "(prefers-color-scheme: dark)"
-            scheme: slate
-            toggle:
-                icon: material/brightness-4
-                name: Switch to system preference
+          scheme: slate
+          toggle:
+            icon: material/brightness-4
+            name: Switch to system preference
+
+
+
 
 ## Documentation Layout
 nav:
