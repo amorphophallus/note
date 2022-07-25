@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 [Python 基础教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/python/python-tutorial.html)
 
