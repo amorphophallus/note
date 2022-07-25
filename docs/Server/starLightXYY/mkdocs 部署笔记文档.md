@@ -157,6 +157,8 @@ note.starlightxyy.cn {
 
 官方配置指南：[Configuration - MkDocs](https://www.mkdocs.org/user-guide/configuration/)
 
+调试：可以在本地装一个 `mkdocs-material`，使用 `mkdocs serve`
+
 ```yaml
 
 ```
