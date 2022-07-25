@@ -75,5 +75,10 @@ nav:
 
 # Extensions
 markdown_extensions:
-    - pymdownx.tasklist:
+    - pymdownx.tasklist:            # task list
         custom_checkbox: true
+  - pymdownx.highlight:             # code block
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

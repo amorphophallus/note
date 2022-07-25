@@ -266,7 +266,8 @@ nav:
 ### 插件
 
 1. [task list](https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown-extensions/#tasklist)
-2. 
+2. [code blocks](https://squidfunk.github.io/mkdocs-material/reference/code-blocks/)
+3. 
 
 ### 附加代码
 
