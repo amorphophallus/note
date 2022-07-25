@@ -266,7 +266,13 @@ nav:
 ### 插件
 
 1. [task list](https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown-extensions/#tasklist)
-2. [code blocks](https://squidfunk.github.io/mkdocs-material/reference/code-blocks/)
+2. [code blocks](https://squidfunk.github.io/mkdocs-material/reference/code-blocks/)：代码块可以添加
+    - 标题
+    - 行号
+    - 高亮
+    - 高亮某几行
+    - 脚注（可展开收起）
+    - 高亮行内代码
 3. 
 
 ### 附加代码
