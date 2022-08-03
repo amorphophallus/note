@@ -1,12 +1,12 @@
-[toc]
+# CUDA C/C++
+
+[TOC]
+
+## 基础知识
 
 
 
-# 基础知识
-
-
-
-## hardware
+### hardware
 
 
 
@@ -17,7 +17,7 @@
 
 
 
-## software
+### software
 
 
 
@@ -31,7 +31,7 @@
 
 
 
-# 运行 CUDA C 程序
+## 运行 CUDA C 程序
 
 
 
@@ -53,7 +53,7 @@
 
 
 
-# 参数
+## 参数
 
 
 
@@ -68,7 +68,7 @@
 
 
 
-# 分配内存
+## 分配内存
 
 
 
@@ -86,7 +86,7 @@
 
 
 
-# 数据大小和 grid 大小不匹配
+## 数据大小和 grid 大小不匹配
 
 
 
@@ -95,7 +95,7 @@
 
 
 
-# 错误检查
+## 错误检查
 
 
 
@@ -123,7 +123,7 @@ cudaGetErrorString()
 
 
 
-# 分析性能
+## 分析性能
 
 
 
@@ -133,11 +133,11 @@ cudaGetErrorString()
 
 
 
-# 性能优化
+## 性能优化
 
 
 
-## 利用 SM / warp 优化
+### 利用 SM / warp 优化
 
 
 
@@ -169,11 +169,11 @@ int warpSize = props.warpSize; // warp 大小
 
 
 
-# 优化访存
+### 优化访存
 
 
 
-### preFetch 异步预取
+#### preFetch 异步预取
 
 
 
@@ -201,7 +201,7 @@ int warpSize = props.warpSize; // warp 大小
 
         
 
-### 利用 shared-memory
+#### 利用 shared-memory
 
 
 
@@ -214,7 +214,7 @@ int warpSize = props.warpSize; // warp 大小
 
 
 
-## 利用 CUDA Streams 优化
+### 利用 CUDA Streams 优化
 
 
 
@@ -231,11 +231,11 @@ cudaStreamDestroy(stream); // 值
 
 
 
-## 利用 tensor core 优化
+### 利用 tensor core 优化
 
 
 
-# 常见错误
+## 常见错误
 
 
 
