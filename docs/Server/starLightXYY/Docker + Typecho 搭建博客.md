@@ -66,6 +66,13 @@ networks:
     external: true
 ```
 
+设置：
+1. 登录 phpMyAdmin `vpshost:5210`
+2. 新增用户账户 `typecho`
+3. 登录博客页面，进行初始化设置
+    - 数据库地址：`mariadb` (和 typecho 在同一网络内，用容器名标识地址)
+    - 数据库用户名和密码用刚刚创建的
+
 ### typecho
 
 1. 在 dockerhub 上找镜像[joyqi/typecho - Docker Image | Docker Hub](https://hub.docker.com/r/joyqi/typecho)
@@ -86,6 +93,8 @@ services:
     ports:
       - "5120:80" ## 服务器的 5120 提供给容器的 80 端口
     restart: unless-stopped
+    volumes:
+      - /root/dockers/typecho/data:/app
 
 networks:
   blog:
@@ -127,7 +136,34 @@ networks:
 1. 样式表加载失败：静态资源引用问题，在博客管理界面修改**站点地址**为 `https://starlightxyy.cn`
 2. 申请子域名：在阿里云后台>域名管理，添加记录（[阿里云网站运维检测平台](https://zijian.aliyun.com/)可以检测是否申请成功）
 
-## 主题和插件
+## 博客搬运
+
+### csdn
+
+
+
+
+## 主题
+
+选用 [Amaze](https://github.com/spiritree/typecho-theme-amaze)
+
+### 安装
+
+1. `docker exec -it typecho bash`
+2. `cd /app/usr/themes`
+3. `apt-get update && apt-get install wget && apt-get install unzip`
+4. `wget https://github.com/spiritree/typecho-theme-amaze/archive/refs/heads/master.zip`
+5. `unzip master.zip`
+6. `mv typecho-theme-amaze-master/ amaze/`
+7. 在博客后台(`/admin`)启用主题
+
+### 自定义
+
+1. 
+
+
+## 插件
+
 
 ## 补充芝士
 
