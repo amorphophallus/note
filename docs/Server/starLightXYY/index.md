@@ -30,6 +30,7 @@
     - [ ] 管理文章的方式：一个类似文件夹管理系统的 + tag
 - [x] caddy：反向代理，用域名访问博客，子域名访问 overleaf（[Caddyfile Tutorial](https://caddyserver.com/docs/caddyfile-tutorial)）
 - [x] [docsify](https://docsify.js.org/##/)：做一个文档网页，用于存放曾经做过的笔记（改用 mkdocs）
+    - [ ] mkdocs foam 插件
 - [ ] markmap：部署一个可以在线编辑，把文件保存在数据库里的 mindmap web app
 - [ ] 又拍云 CDN，海外加速
     - [ ] 学学 CDN 是什么东西
