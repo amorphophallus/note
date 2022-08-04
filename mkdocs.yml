@@ -12,6 +12,7 @@ theme:
         - navigation.sections                       ## 展开侧边导航
         - navigation.indexes                        ## 启用章节概览 index.md
         - navigation.top                            ## 启用回到顶部按钮
+        - content.tabs.link                         ## 
     palette:
 
         # Palette toggle for automatic mode
@@ -67,6 +68,8 @@ nav:
         - 'Python':
             - 'Python': 'Programming Tools/Python/python.md'
             - 'Numpy': 'Programming Tools/Python/Numpy.md'
+        - 'VScode':
+            - 'plugins': ''Programming Tools/VScode/plugins.md'
     - 'Projects':
         - 'box-2021':
             - '项目总结': 'Projects/box-2021 项目总结.md'
@@ -134,4 +137,6 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
-
+  - pymdownx.superfences            # content tabs
+  - pymdownx.tabbed:
+      alternate_style: true 
