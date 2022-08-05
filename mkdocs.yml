@@ -69,7 +69,7 @@ nav:
             - 'Python': 'Programming Tools/Python/python.md'
             - 'Numpy': 'Programming Tools/Python/Numpy.md'
         - 'VScode':
-            - 'plugins': ''Programming Tools/VScode/plugins.md'
+            - 'plugins': 'Programming Tools/VScode/plugins.md'
     - 'Projects':
         - 'box-2021':
             - '项目总结': 'Projects/box-2021 项目总结.md'
