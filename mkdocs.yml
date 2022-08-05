@@ -40,7 +40,9 @@ theme:
 
 ## Documentation Layout
 nav:
-    - 'About': 'index.md'
+    - 'About': 
+        - 'index.md'
+        - 'TAG': 'tags.md'
     - 'Server':
         - 'Fundamental':
             - 'Linux Command': 'Server/Fundamental/Linux Command.md'
@@ -56,6 +58,9 @@ nav:
             - 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
             - '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
             - 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
+            - 'Reference':
+                - 'tags': 'Server/starLightXYY/Reference/mkdocs-tags.md'
+                - 'roamlinks': 'Server/starLightXYY/Reference/mkdocs-roamlinks-plugin.md'
     - 'Front End':
         - 'html': 'Front End/html.md'
         - 'javascript': 'Front End/javascript.md'
@@ -70,6 +75,7 @@ nav:
             - 'Numpy': 'Programming Tools/Python/Numpy.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
+            - 'foam': 'Programming Tools/VScode/VScode-foam.md'
     - 'Projects':
         - 'box-2021':
             - '项目总结': 'Projects/box-2021 项目总结.md'
@@ -101,6 +107,10 @@ nav:
             - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
         - 'Something to read':
             - 'Others/something to read/index.md'
+        - '社会实践':
+            - '计划': 'Others/社会实践/暑假社会实践计划.md'
+            - '答疑': 'Others/社会实践/答疑.md'
+            - '直播内容': 'Others/社会实践/直播内容.md'
 
 # Extensions
 markdown_extensions:
@@ -143,5 +153,7 @@ markdown_extensions:
 
 # plugins
 plugins:
-  - search
-  - roamlinks
+    - search
+    - roamlinks
+    - tags:
+        tags_file: tags.md

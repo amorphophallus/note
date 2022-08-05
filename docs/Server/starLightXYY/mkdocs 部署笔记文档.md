@@ -198,7 +198,8 @@ note.starlightxyy.cn {
     - 高亮行内代码
 3. [dark mode](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/)
 4. [content tab](https://squidfunk.github.io/mkdocs-material/reference/content-tabs/)：去官方文档查看语法
-5. [roam-links](https://github.com/Jackiexiao/mkdocs-roamlinks-plugin)：支持链接语法
+5. [[mkdocs-roamlinks-plugin#mkdocs-roamlinks-plugin]]：支持链接语法
+6. [[mkdocs-roamlinks-plugin#tags]]：打标签 + `[TAGS]` 标签目录 + 搜索标签
 
 ### 附加代码
 
