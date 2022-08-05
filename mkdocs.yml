@@ -140,3 +140,8 @@ markdown_extensions:
   - pymdownx.superfences            # content tabs
   - pymdownx.tabbed:
       alternate_style: true 
+
+# plugins
+plugins:
+  - search
+  - roamlinks

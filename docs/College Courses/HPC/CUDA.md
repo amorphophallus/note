@@ -213,6 +213,10 @@ int warpSize = props.warpSize; // warp 大小
 4. `global memory` 连续访问：同一个 **warp** 内访问的内存连续
 
 
+#### 减少 bank conflict
+
+
+
 
 ### 利用 CUDA Streams 优化
 
