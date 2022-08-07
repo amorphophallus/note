@@ -107,11 +107,6 @@ nav:
             - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
         - 'Something to read':
             - 'Others/something to read/index.md'
-        - '社会实践':
-            - '计划': 'Others/社会实践/暑假社会实践计划.md'
-            - '答疑': 'Others/社会实践/答疑.md'
-            - '直播内容': 'Others/社会实践/直播内容.md'
-            - '行程': 'Others/社会实践/行程.md'
 
 # Extensions
 markdown_extensions:
