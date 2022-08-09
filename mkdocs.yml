@@ -61,6 +61,7 @@ nav:
             - 'Reference':
                 - 'tags': 'Server/starLightXYY/Reference/mkdocs-tags.md'
                 - 'roamlinks': 'Server/starLightXYY/Reference/mkdocs-roamlinks-plugin.md'
+                - 'content tabs': 'Server/starLightXYY/Reference/mkdocs-contenttabs.md'
     - 'Front End':
         - 'html': 'Front End/html.md'
         - 'javascript': 'Front End/javascript.md'

@@ -200,6 +200,7 @@ note.starlightxyy.cn {
 4. [content tab](https://squidfunk.github.io/mkdocs-material/reference/content-tabs/)：去官方文档查看语法
 5. [[mkdocs-roamlinks-plugin#mkdocs-roamlinks-plugin]]：支持链接语法
 6. [[mkdocs-roamlinks-plugin#tags]]：打标签 + `[TAGS]` 标签目录 + 搜索标签
+7. [[mkdocs-contenttabs]]：内嵌标签页
 
 ### 附加代码
 
