@@ -220,23 +220,23 @@ int warpSize = props.warpSize; // warp 大小
 
 === "先 block 后 thread"
 
-```cpp
-for (int n = blockIdx.x; n < batch_size; n += grid_size)
-    for (int x = blockIdx.y; x < size; x += grid_size)
-        for (int y = threadIdx.x; y < size; y += block_size)
-            for (int co = threadIdx.y; co < out_channel; co += block_size)
-                access a[n][x][y][co];
-```
+    ```cpp
+    for (int n = blockIdx.x; n < batch_size; n += grid_size)
+        for (int x = blockIdx.y; x < size; x += grid_size)
+            for (int y = threadIdx.x; y < size; y += block_size)
+                for (int co = threadIdx.y; co < out_channel; co += block_size)
+                    access a[n][x][y][co];
+    ```
 === "打乱顺序"
 
-```cpp
+    ```cpp
 
-for (int n = blockIdx.x; n < batch_size; n += grid_size)
-    for (int x = threadIdx.y; x < size; x += block_size)
-        for (int y = threadIdx.x; y < size; y += block_size)
-            for (int co = blockIdx.y; co < out_channel; co += grid_size)
-                access a[n][x][y][co];
-```
+    for (int n = blockIdx.x; n < batch_size; n += grid_size)
+        for (int x = threadIdx.y; x < size; x += block_size)
+            for (int y = threadIdx.x; y < size; y += block_size)
+                for (int co = blockIdx.y; co < out_channel; co += grid_size)
+                    access a[n][x][y][co];
+    ```
 
 
 ### 利用 CUDA Streams 优化
