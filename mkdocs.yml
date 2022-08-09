@@ -93,7 +93,8 @@ nav:
             - '笔记': 'College Courses/网安导/笔记.md'
             - '实验报告': 'College Courses/网安导/实验报告.md'
         - '超算 HPC':
-            - 'CUDA': 'College Courses/HPC/CUDA.md'
+            - 'CUDA 基础': 'College Courses/HPC/CUDA 基础.md'
+            - 'CUDA 优化': 'College Courses/HPC/CUDA 优化.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
