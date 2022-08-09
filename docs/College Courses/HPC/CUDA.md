@@ -121,6 +121,9 @@ cudaGetErrorString()
 */
 ```
 
+### CUDA-GDB
+
+
 
 
 ## 分析性能
@@ -215,7 +218,25 @@ int warpSize = props.warpSize; // warp 大小
 
 #### 减少 bank conflict
 
+=== "先 block 后 thread"
 
+```cpp
+for (int n = blockIdx.x; n < batch_size; n += grid_size)
+    for (int x = blockIdx.y; x < size; x += grid_size)
+        for (int y = threadIdx.x; y < size; y += block_size)
+            for (int co = threadIdx.y; co < out_channel; co += block_size)
+                access a[n][x][y][co];
+```
+=== "打乱顺序"
+
+```cpp
+
+for (int n = blockIdx.x; n < batch_size; n += grid_size)
+    for (int x = threadIdx.y; x < size; x += block_size)
+        for (int y = threadIdx.x; y < size; y += block_size)
+            for (int co = blockIdx.y; co < out_channel; co += grid_size)
+                access a[n][x][y][co];
+```
 
 
 ### 利用 CUDA Streams 优化
@@ -241,12 +262,17 @@ cudaStreamDestroy(stream); // 值
 
 ## 常见错误
 
-
+### 原子操作
 
 1. 并行写入
     - 产生原因：在GPU中，线程在并行时，每个**线程（Thread）**都会有一组专供自己的用的寄存器。对同一个显存变量进行“读-计算-写”的操作时，虽然期望读到的数据是经过另一个线程操作的，但实际读的操作可能是同时进行的，没有先后。
     - 方法一：逻辑上避免
     - 方法二：原子操作（[CUDA 手册](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-functions)）
-2. 优化方法论：最首要的任务是找到**性能瓶颈**
+
+
+### 优化方法论
+
+
+优化方法论：最首要的任务是找到 **性能瓶颈**
     - 有两层循环的，就不要先想着优化一层循环
 
