@@ -109,6 +109,9 @@ nav:
             - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
         - 'Something to read':
             - 'Others/something to read/index.md'
+        - '杭州':
+            - 'Others/杭州/index.md'
+            - 'Plan A': 'Others/杭州/PlanA.md'
 
 # Extensions
 markdown_extensions:

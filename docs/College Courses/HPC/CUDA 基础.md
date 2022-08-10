@@ -5,6 +5,11 @@
 ## 基础知识
 
 
+### 参考
+
+[Nvidia 官网 thread 介绍](https://www.tutorialspoint.com/cuda/cuda_threads.htm)
+[Nvidia 官网 shared-memory 介绍](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)
+
 
 ### hardware
 
@@ -13,8 +18,15 @@
 1. SISD
 2. SIMD（体系结构类别）
 3. SIMT：可实现分支结构，SIMD 不行
-4. SM：streaming mutiprocessor 流多处理器
+4. *SM* ：streaming mutiprocessor 流多处理器
+    - SM 和 thread 的关系：In recent CUDA devices, a SM can accommodate up to 1536 threads. This can be in the form of 3 blocks of 512 threads each, 6 blocks of 256 threads each or 12 blocks of 128 threads each.
+    - SM 数量和算力的关系：Thus, *the number of threads that can run parallel on a CUDA device* is simply the number of SM multiplied by the maximum number of threads each SM can support.
+5. *warp* : a unit of thread scheduling in SMs.
+    - threads are always scheduled in a group.
+    - All threads in a warp follow the SIMD model. In SIMD, each thread is executing the same instruction of a kernel at any given time. But the data is always different.
 
+
+> 一点浅薄的理解：在硬件层面，用 SM 和 warp 划分 thread。面向编程者则用 grid 和 block 划分，便于编写。所以如果两者能够匹配，效率会有所提高。
 
 
 ### software
@@ -25,7 +37,6 @@
 2. thread block
 3. grid
 4. kernel：核函数
-5. warp：32 个 thread
 
 
 
@@ -123,7 +134,7 @@ cudaGetErrorString()
 
 ### CUDA-GDB
 
-
+[知乎](https://zhuanlan.zhihu.com/p/444172426)
 
 
 ## 分析性能

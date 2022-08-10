@@ -67,12 +67,21 @@ int warpSize = props.warpSize; // warp 大小
 
 ### 利用 shared-memory
 
+[Nvidia 官网 shared-memory 介绍](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)
 
+Threads can access data in shared memory loaded from global memory by other threads within the same thread block.
+
+`__syncthreads()` ：When the method is encountered in the kernel, all threads in a block will be blocked at the calling location until each of them reaches the location.
 
 
 ### 减少 bank conflict
 
-32 个内存一个 bank
+32 个内存一个 bank，怎么查看一个 bank 的大小
+
+
+### Cooperative Fetching
+
+为了减少单个线程的内存访问量，可以让每个线程块中的线程合作访问有共同依赖的部分；共享内存是有限的，将访存重叠度高的线程安排在单个线程块中，从全局内存中加载访问更密集的数据到共享内存，都可以提升程序效率。
 
 === "先 block 后 thread"
 
