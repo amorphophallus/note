@@ -77,6 +77,7 @@ nav:
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
+        - 'Others': 'Programming Tools/others.md'
     - 'Projects':
         - 'box-2021':
             - '项目总结': 'Projects/box-2021 项目总结.md'

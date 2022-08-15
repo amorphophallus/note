@@ -99,6 +99,8 @@
 
 ![](img/%E8%A5%BF%E6%B9%96%E6%B8%B8%E8%88%B9.png)
 
+[游船攻略](https://www.mafengwo.cn/wenda/detail-10547255-10559654.html)
+
 ### 白塔公园
 
 1. 小火车

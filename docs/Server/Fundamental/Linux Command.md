@@ -52,3 +52,14 @@ apt-get install vim // 下载应用
 ## shell 脚本
 
 [(7条消息) shell脚本语言(超全超详细)_看见代码就想敲的博客-CSDN博客_shell脚本](https://blog.csdn.net/weixin_43288201/article/details/105643692)
+
+## 查看系统软硬件信息
+
+1. cpu 使用率
+
+```shell
+top # 类似于 ctrl+alt+delete
+dstat --top-cpu # 实时更新占用率最高的程序
+```
+
+2. 
