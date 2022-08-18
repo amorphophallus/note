@@ -4,5 +4,5 @@
 2. 图床：[sm.ms](https://sm.ms/)
 3. 相似网站查询：[similarSites](https://cn.similarsites.com/)
 4. [wikiHow](https://www.wikihow.com/Main-Page)
-
-<font color=white>1. 次元小镇：[dimtown](https://dimtown.com/)<font>
+5. 次元小镇：[dimtown](https://dimtown.com/)
+6. 正经漫画网站：[mangaSite](https://18comic.org/)
