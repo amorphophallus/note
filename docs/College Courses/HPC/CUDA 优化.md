@@ -69,7 +69,7 @@ int warpSize = props.warpSize; // warp 大小
 
 [Nvidia 官网 shared-memory 介绍](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)
 
-Threads can access data in shared memory loaded from global memory by other threads within the same thread block.
+`__shared__`: Threads can access data in shared memory loaded from global memory by other threads within the same thread block.
 
 `__syncthreads()` ：When the method is encountered in the kernel, all threads in a block will be blocked at the calling location until each of them reaches the location.
 
