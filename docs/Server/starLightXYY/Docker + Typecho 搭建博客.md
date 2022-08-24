@@ -11,7 +11,7 @@
 ```shell
 $ docker network create blog
 ## blog 用于连接 typecho 的容器和 mariadb
-$ docker network creeate db_admin
+$ docker network create db_admin
 ## db_admin 用于连接 phpmyadmin 和 mariadb，可以通过前者在网页上管理数据库
 ```
 
@@ -32,7 +32,7 @@ services:
     environment:
       - MARIADB_ROOT_PASSWORD=NhwaJU8tW7UZ5u
     volumes:
-      - /data/mysql:/var/lib/mysql
+      - ./data:/var/lib/mysql
     restart: unless-stopped
 
 networks:
@@ -41,6 +41,8 @@ networks:
   db_admin:
     external: true
 ```
+
+挂载最好在同一个目录下面，方便搬运
 
 ### phpMyAdmin
 
@@ -94,7 +96,7 @@ services:
       - "5120:80" ## 服务器的 5120 提供给容器的 80 端口
     restart: unless-stopped
     volumes:
-      - /root/dockers/typecho/data:/app
+      - ./data:/app
 
 networks:
   blog:
@@ -102,6 +104,8 @@ networks:
 ```
 
 然后就可以用端口 5120 访问 typecho 主页，注册账号。可以用 5210 端口访问 phpmyadmin 管理数据库。
+
+
 
 ## caddy 反向代理
 

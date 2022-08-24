@@ -18,7 +18,7 @@
 
 
 
-1. 依赖：curl**（好像很厉害，不知道是个什么东西）**
+1. 依赖：curl **（好像很厉害，不知道是个什么东西）**
 
 2. 依赖：pip（[Python pip 安装与使用 | 菜鸟教程 (runoob.com)](https://www.runoob.com/w3cnote/python-pip-install-usage.html)）**（不知道是个什么东西）**
 
@@ -37,7 +37,7 @@
 
 
 
-**p.s. **
+**p.s.**
 
 
 

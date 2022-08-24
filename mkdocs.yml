@@ -53,11 +53,13 @@ nav:
             - 'WSL': 'Server/Fundamental/WSL.md'
             - 'Docker': 'Server/Fundamental/Docker.md'
             - 'Caddy': 'Server/Fundamental/Caddy.md'
+            - 'SSH': 'Server/Fundamental/SSH.md'
         - 'StarLightXYY':
             - 'Server/starLightXYY/index.md'                                                    ## 章节概览使用方式:index.md
             - 'Docker + Typecho 搭建博客': 'Server/starLightXYY/Docker + Typecho 搭建博客.md'
             - '服务器部署 overleaf': 'Server/starLightXYY/服务器部署 overleaf.md'
             - 'mkdocs 部署笔记文档': 'Server/starLightXYY/mkdocs 部署笔记文档.md'
+            - '服务器数据迁移': 'Server/starLightXYY/服务器数据迁移.md'
             - 'Reference':
                 - 'tags': 'Server/starLightXYY/Reference/mkdocs-tags.md'
                 - 'roamlinks': 'Server/starLightXYY/Reference/mkdocs-roamlinks-plugin.md'

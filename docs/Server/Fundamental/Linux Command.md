@@ -4,14 +4,24 @@
 
 目前服务器用的是 Debian Linux
 
-## 常用指令
+## 用户相关指令
 
 ```shell
 passwd ## 改密码
-netstat -nultp ## 查看端口占用情况
+useradd # 新增用户，记得修改密码
+su <userid> # 切换用户
 ```
 
-## 进程
+## 文件相关指令
+
+[菜鸟教程 chmod](https://www.runoob.com/linux/linux-comm-chmod.html)，chmod 后面三个 0 到 7 之间的整数（3
+ bit 二进制数），分别表示 owner / group / other users 的 read / write / execute 权限。
+
+```shell
+chmod 777 filename # 修改文件权限
+```
+
+## 进程查看
 
 [Linux 下后台运行程序，查看和关闭后台运行程序](https://blog.csdn.net/u013846293/article/details/74003051)
 
@@ -29,6 +39,26 @@ ps -aux | grep "command" ## 在所有进程中搜索
 apt-get update // 更新可以抓的包
 apt-get install vim // 下载应用
 ```
+
+## mv
+
+[菜鸟教程](https://www.runoob.com/linux/linux-comm-mv.html)
+
+1. 重命名
+
+```shell
+mv aaa bbb
+```
+
+2. 搬运文件
+
+```shell
+mv source_file(文件) dest_directory(目录)
+mv source_directory(目录) dest_directory(目录)
+mv -i # 在覆盖之前询问，否则会直接覆盖
+```
+
+注意检查隐藏文件是否 mv 成功
 
 ## 添加可执行程序到环境变量
 
@@ -62,4 +92,8 @@ top # 类似于 ctrl+alt+delete
 dstat --top-cpu # 实时更新占用率最高的程序
 ```
 
-2. 
+2. 查看网络配置
+
+```cpp
+netstat -nultp ## 查看端口占用情况
+```

@@ -2,6 +2,10 @@
 
 [TOC]
 
+## 安装
+
+[官网教程](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)，一句一句复制粘贴就好了
+
 ## 基本操作
 
 1. `caddy start`：后台运行 caddy

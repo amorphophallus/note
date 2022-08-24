@@ -9,6 +9,15 @@
 3. Docker Compose 官方文档：[Compose specification | Docker Documentation](https://docs.docker.com/compose/compose-file/)
 4. 资源汇总：[Docker 资源汇总 | 菜鸟教程 (runoob.com)](https://www.runoob.com/docker/docker-resources.html)
 
+## 安装
+
+[docker教程](https://blog.csdn.net/pushiqiang/article/details/78682323)
+
+[菜鸟教程](https://www.runoob.com/docker/debian-docker-install.html)
+
+
+先卸载，再安装
+
 ## 基础知识
 
 | 概念                   | 说明                                                                                                                                                                                                                                                                                                  |
@@ -212,6 +221,10 @@ RUN yum -y install wget \
 ## Docker Compose
 
 Compose 是用于定义和运行多容器 Docker 应用程序的工具。
+
+### 安装
+
+`sudo pip install docker-compose` 用 pip 安装
 
 ### YAML
 
