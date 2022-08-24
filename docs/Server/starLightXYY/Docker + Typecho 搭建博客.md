@@ -29,8 +29,9 @@ services:
     networks:
       - blog
       - db_admin
-    environment:
-      - MARIADB_ROOT_PASSWORD=NhwaJU8tW7UZ5u
+    # Do not need password if there's alreasy 
+    # environment:
+    #   - MARIADB_ROOT_PASSWORD=NhwaJU8tW7UZ5u
     volumes:
       - ./data:/var/lib/mysql
     restart: unless-stopped
@@ -42,7 +43,7 @@ networks:
     external: true
 ```
 
-挂载最好在同一个目录下面，方便搬运
+挂载最好在同一个目录下面，方便搬运, 记得用 **相对路径**
 
 ### phpMyAdmin
 
