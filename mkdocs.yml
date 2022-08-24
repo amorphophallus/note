@@ -79,6 +79,7 @@ nav:
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
+        - 'markdown转pdf': 'Programming Tools/markdown转pdf.md'
         - 'Others': 'Programming Tools/others.md'
     - 'Projects':
         - 'box-2021':
@@ -98,6 +99,7 @@ nav:
         - '超算 HPC':
             - 'CUDA 基础': 'College Courses/HPC/CUDA 基础.md'
             - 'CUDA 优化': 'College Courses/HPC/CUDA 优化.md'
+            - '手写 SIMD 向量化': 'College Courses/HPC/手写 SIMD 向量化.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
