@@ -120,6 +120,8 @@ nav:
             - 'Others/杭州/index.md'
             - 'Plan A': 'Others/杭州/PlanA.md'
             # - 'Plan B': 'Others/杭州/PlanB.md'
+        - '旅游':
+            - '贵州游记': 'Others/旅游/贵州游记.md'
 
 # Extensions
 markdown_extensions:
