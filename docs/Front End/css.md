@@ -69,7 +69,12 @@ h1 + p{
 
 [font - CSS（层叠样式表） | MDN (mozilla.org)](https://developer.mozilla.org/zh-CN/docs/Web/CSS/font)
 
+**CSS 字体相关属性：**
 
+1. 字体大小：font-size
+2. 字体颜色：color
+3. 字体横向居中：`text-align: center;`
+4. 字体纵向居中：用行宽曲线救国 `line-height:xxx`
 
 ## 盒子大小
 
@@ -117,7 +122,9 @@ h1 + p{
 
 ## position
 
+[LC3School 教程](https://www.w3school.com.cn/css/css_positioning.asp)
 
+注意 fixed 和 absolute 的区别。
 
 - `static`
 
@@ -166,4 +173,23 @@ border-style
 | `ridge`  | 显示为有浮雕效果的边框，样式与 `groove` 相反。               |
 | `inset`  | 显示为有陷入效果的边框，样式与 `outset` 相反。当它指定到 [`border-collapse`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/border-collapse) 为 `collapsed` 的单元格时，会显示为 `groove` 的样式。 |
 | `outset` | 显示为有突出效果的边框，样式与 `inset` 相反。当它指定到 [`border-collapse`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/border-collapse) 为 `collapsed` 的单元格时，会显示为 `ridge` 的样式。 |
+
+## animation
+
+[一篇学懂 css 动画](http://c.biancheng.net/css3/animation.html)
+
+1. 定义动画：`@keyframes animationName {}`
+    1. 用百分数表示动画关键帧
+    2. 常用 [transform](https://developer.mozilla.org/zh-CN/docs/Web/CSS/transform) ，translate 等表示动画关键帧的状态
+2. 使用动画：`animation: name duration timing-function delay iteration-count direction;`
+    1. animation-name：设置需要绑定到元素的动画名称；
+    2. animation-duration：设置完成动画所需要花费的时间，单位为秒或毫秒，默认为 0；
+    3. animation-timing-function：设置动画的速度曲线，默认为 ease；
+    4. animation-fill-mode：设置当动画不播放时（动画播放完或延迟播放时）的状态；
+    5. animation-delay：设置动画开始之前的延迟时间，默认为 0；
+    6. animation-iteration-count：设置动画被播放的次数，默认为 1；
+    7. animation-direction：设置是否在下一周期逆向播放动画，默认为 normal；
+    8. animation-play-state：设置动画是正在运行还是暂停，默认是 running；
+    9. animation：所有动画属性的简写属性。
+
 
