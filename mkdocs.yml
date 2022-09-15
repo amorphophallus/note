@@ -77,6 +77,8 @@ nav:
             - 'Python': 'Programming Tools/Python/python.md'
             - 'Numpy': 'Programming Tools/Python/Numpy.md'
             - 'PyCharm + Anaconda 配置环境': 'Programming Tools/Python/PyCharm + Anaconda.md'
+            - 'Pytorch 实现 Lenet-5 网络模型': 'Programming Tools/Python/Pytorch 实现 Lenet 网络模型.md'
+            - 'Pytorch 实现 GPT-2 网络模型': 'Programming Tools/Python/Pytorch 实现 GPT-2 网络模型.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
