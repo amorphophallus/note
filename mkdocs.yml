@@ -112,6 +112,8 @@ nav:
             - '手写 SIMD 向量化': 'College Courses/HPC/手写 SIMD 向量化.md'
         - 'Introduction to Computing System':
             - '复习提纲': 'College Courses/Introduction to Computing System/复习提纲.md'
+        - '课程计划':
+            - '大二秋冬学期学习计划': 'College Courses/课程计划/大二秋冬学期学习计划.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
