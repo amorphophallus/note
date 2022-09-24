@@ -79,9 +79,14 @@ nav:
             - 'PyCharm + Anaconda 配置环境': 'Programming Tools/Python/PyCharm + Anaconda.md'
             - 'Pytorch 实现 Lenet-5 网络模型': 'Programming Tools/Python/Pytorch 实现 Lenet 网络模型.md'
             - 'Pytorch 实现 GPT-2 网络模型': 'Programming Tools/Python/Pytorch 实现 GPT-2 网络模型.md'
+        - 'C#':
+            - 'C# Basic': 'Programming Tools/C#/basic.md'
+            - 'C# 执行 JS 代码 并实现异步': 'Programming Tools/C#/C# 执行 JS 代码.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
+        - 'Visual Studio':
+            - 'Programming Tools/VS/index.md'
         - '微信小程序':
             - '基础知识': 'Programming Tools/WX miniprogram/基础知识.md'
         - 'markdown转pdf': 'Programming Tools/markdown转pdf.md'
