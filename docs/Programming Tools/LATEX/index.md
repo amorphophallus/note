@@ -64,14 +64,7 @@ LaTex is an elegant typesetting tool.
 > 
 > 2. 目录居中 `\begin{center} ... \end{center}`
 > 
-> 3. 目录起始页码设置
->    
->    ```latex
->    \setcounter{page}{0}
->    \thispagestyle{empty}
->    \newpage
->    %<---从这里开始是正文--->%
->    ```
+
 > 
 > 4. 目录数字字体设置
 >    
@@ -87,6 +80,23 @@ LaTex is an elegant typesetting tool.
 > ```latex
 > 
 > ```
+
+##### 目录起始页码设置
+
+ 
+```latex
+\setcounter{page}{0}
+\thispagestyle{empty}
+\newpage
+%<---从这里开始是正文--->%
+```
+
+##### 修改目录的标题
+
+```latex
+\renewcommand*\contentsname{Contents}
+```
+
 
 #### 调用宏包
 
@@ -118,6 +128,15 @@ LaTex is an elegant typesetting tool.
 \part{}
 ```
 
+##### 无数字 section 标题
+
+无数字默认不加入目录中，需要手动设置
+
+```latex
+\addcontentsline{toc}{section}{Unnumbered Section}
+\section*{Unnumbered Section}
+```
+
 #### 数学公式
 
 #### 插入图片
@@ -137,9 +156,96 @@ LaTex is an elegant typesetting tool.
 
 #### 插入代码
 
-使用宏包 `listlings`
+##### 方法一：使用 minted
+
+> 相比于 listlings， minted 的代码高亮做的更好
+
+[参考博客](https://blog.nowcoder.net/n/eee24339a6b641068d08d7dc7d8cd750?from=nowcoder_improve#:~:text=LaTeX%20%E4%BD%BF%E7%94%A8%20minted%20%E9%9C%80%E8%A6%81%E5%85%88%E5%AE%89%E8%A3%85%20pygments%20%EF%BC%8C%E8%BF%99%E6%98%AF%E4%B8%80%E4%B8%AA%20Python,%E7%9A%84%E5%BA%93%EF%BC%8C%E5%9C%A8%20Ubuntu%20%E4%B8%8A%E5%8F%AF%E4%BB%A5%E9%80%9A%E8%BF%87%E4%B8%8B%E5%88%97%E5%91%BD%E4%BB%A4%E5%AE%89%E8%A3%85%EF%BC%8C%201%20sudo%20apt-get%20install%20python-pygments)
+
+> minted 官方文档在 Latex 文件夹下
+
+1. 下载依赖： `pip install pygments`
+2. 修改编译配置：`settings.json`，加入 `--shell-escape` 以使用外部工具，加入 `-8bit` 避免 tab 乱码
+   ```json
+   {
+      "name": "xelatex",
+      "command": "xelatex",
+      "args": [
+            "--shell-escape",
+            "-8bit",
+            "-synctex=1",
+            "-interaction=nonstopmode",
+            "-file-line-error",
+            "%DOCFILE%" // %DOC% 改成 %DOCFILE% 则路径可以是中文，但只能访问 root 目录下的文件（好像）
+      ]
+   }
+   ```
+3. 引用包：minted 支持的代码高亮格式可以使用 `pygmentize -L styles` 进行查看
+   ```latex
+   \usepackage{xcolor} % 自定义时可能会用到颜色
+   \usepackage{minted}
+   \usemintedstyle{material} % 修改高亮主题
+   ```
+4. 使用
+   - `pygmentize -L lexers` 查看支持的语言
+   1. 代码块
+      ```latex
+      \begin{minted}{python}
+      import numpy as np
+      \end{minted}
+      ```
+   2. 行内代码
+      ```latex
+      \mintinline{python}{import numpy as np}
+      ```
+   3. 引用外部文件
+      ```latex
+      \inputminted{cpp}{./main.cpp}
+      ```
+5. 配置
+   1. 单次配置：加中括号
+      ```latex
+      \mintinline{python}[bgcolor=bg,linenos]{import numpy as np}
+      ```
+   2. 全局配置
+      ```latex
+      % 行内代码
+      \newmintinline{python}{bgcolor=bg,breaklines,breakanywhere,python3}
+      \pythoninline{from numpy import sin,cos,tan,exp,pi}
+      % 代码块
+      \newminted{cpp}{linenos,bgcolor=bg}
+      \begin{cppcode}
+      \end{cppcode}
+      % 引用外部文件
+      \newmintedfile{python}{bgcolor=bg,breakanywhere,breaklines}
+      \pythonfile{test.py}
+      ```
+   3. 常用配置参数
+      - linenos:在代码前设置数字表示代码的第几行，为True或者False，默认不开启，开启使用[linenos=true]
+      - mathescape:用来在代码段中插入公式。因为代码段中的所有文字都当做字符，不受latex语法控制，所以$\Sigma$这样的文字被当做不同字符而不是Latex公式，使用上面的参数就可以在输入公式的时候避免被当做字符。
+      - breaklines:在minted环境中自动折断比较长的行，默认自动在供个字符折断。
+      - bgcolor:设置代码的背景色
+      - escapeinside:在escape制定的符号里面的内容不受minted环境影响，丽日escapeinside=|ex|表示||里面的内容不被当做minted的字符而是latex的公式
+      - firstline:整数。显示的第一行默认为1，在插入代码的时候有时候为了方面一行行讲解代码，比如说从第5行代码起为xx功能，这时候可以指定这个。通常也同时在代码前的数字也修改为对应的行（firstnumber）
+      - firstnumber:(auto|last|integer)指定代码前的数字标号。
+      - frame:(none|leftline|topline|bottomline|lines|single)代码附近放置的分隔，比如topline将在代码顶端防止一行直线。
+      - framerule:分隔线的宽度（默认为0.4pt）
+      - framesep:分割线和代码的距离(默认为\fboxsep)
+      - hightlightcolor（string）:为highlightlines设置颜色，使用xcolor预定义的颜色或者通过\definecolor指定的颜色设置代码高亮语法。
+      - highlightlines(字符串)：高亮单行或者某几行例如highlightlines={1,3-4},高亮第一行和3,4行，如果linenos=true,则根据linenos前面的行制定。
+      - lastline（整数）显示的末行
+      - python3 为python指定Python3高亮
+      - rulecolor(颜色命令)：分割线的颜色
+      - showspace(bool)显示空格为小的U型
+      - showtabs(bool)显示tab
+      - spacecolor空白的颜色
+      - tabcolor tab的颜色(默认为黑色)
+
+##### 方法二：使用宏包 `listlings`
 
 listlings 设置参考文档：[LaTeX listings 宏包使用说明 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/261667944)
+
+配置和美化 codeblock 参考 [overleaf 教程](https://www.overleaf.com/learn/latex/Code_listing)
 
 ```latex
 %<--------------------导言区-------------------->%
@@ -186,6 +292,7 @@ int main()
 > escapechar=\%,        % 设置被 % 包围的代码 escape
 > texcl=true,           % 设置注释的代码用 latex 解析显示
 > ```
+
 
 #### 插入流程图
 
@@ -276,9 +383,47 @@ int main()
 > \node[multiple_line] (start) {Line1 \\ Line2 \\ Line3};
 > ```
 
+#### 插入表格
+
+##### Excel2Latex 插件
+
+[github repo](https://github.com/ivankokan/Excel2LaTeX)
+
+使用方法是在打开 excel 之后再点击 `Excel2LaTeX.xla` 文件，在 excel 的顶部导航中会出现一个新的栏目。
+
+在自动转换之后还需要加上包依赖和格式
+
+```latex
+% 包依赖
+\usepackage{multirow} % 多行
+\usepackage{array} % 对齐
+\usepackage{graphicx} % 表格自动调整大小
+
+% 格式
+\begin{tabular}{| c | c | c | c | c | c | c | c |} % 表格竖线的样式
+\hline % 整行的横线
+\cline{x-y} % 长度从第 x 列到第 y 列的横线
+$(x+y)^n$ % 公式需要手动修改
+\resizebox{\textwidth}{!}{} % 用这个包含 tabular，自动缩放大小防止越界
+```
+
+##### 基本语法
+
+[overleaf 官方教程](https://www.overleaf.com/learn/latex/Tables#Creating_a_simple_table_in_LaTeX)
+
 ### 文末区
 
 #### 脚注
+
+```latex
+%  最简单的使用方法
+\footnote[number]{text for footnote}
+% 先标记，后写内容，使文档结构更清晰
+\footnotemark[number]
+\footnotetext[number]{text for footnote}
+```
+
+[overleaf 教程](https://www.overleaf.com/learn/latex/Footnotes)
 
 #### 参考文献
 
@@ -297,6 +442,7 @@ int main()
 `\## \$ \% \^{} \& \_ \{ \} \~{}` 需要加反斜杠。
 
 `() [] : '"` 不用加反斜杠。
+
 
 ## 安装
 
