@@ -1,5 +1,7 @@
 # C# Basic
 
+[TOC]
+
 > 参考资料：
 > 1. [菜鸟教程](https://www.runoob.com/csharp/csharp-tutorial.html)
 > todo:
@@ -22,6 +24,65 @@ https://api.nuget.org/v3/index.json
 ## 类型
 
 ### Task
+
+相当于 Promise
+
+```Csharp
+// no return value
+Task t1 = new Task(action, "alpha");
+// with return value
+var t = Task<int>.Run(action);
+```
+
+### delegate
+
+类似于 C 或 C++ 中函数的指针，是存有对某个方法的引用的一种引用类型变量
+
+Action 和 Func 都是 delegate。
+
+声明一个委托：
+
+```Csharp
+delegate <return type> <delegate-name> <parameter list>
+```
+
+### Action
+
+相当于函数
+
+不能输出（返回值）
+
+```Csharp
+public delegate void Action<in T>(T obj);
+```
+
+`Action.Invoke(args)` 相当于 `action(args)`，作用是传参
+
+### Func
+
+相当于函数
+
+1. 输入 & 输出
+2. 无输入，仅输出
+
+```csharp
+public delegate TResult Func<in T,out TResult>(T arg);
+public delegate TResult Func<out TResult>();
+```
+
+## Usage
+
+### Exception Handling
+
+`try...catch...finally`
+
+执行逻辑：执行 try 中的命令，一旦发现错误就跳转执行 catch 中的命令，最终结束执行并跳出 try...catch 语句。
+
+**注意：** 函数返回语句不能放在 finally 里，因为不管是否获取到错误 finally 一定会执行，与 catch 错误之后返回是矛盾的。
+
+### JS Error & C# Exception
+
+**注意：** throw new Exception 有 context
 
 ## Jint
 
@@ -91,3 +152,5 @@ https://api.nuget.org/v3/index.json
 - 有多个异步的函数需要执行，在所有异步函数运行结束后执行一个函数，即实现一个功能类似于 `Promise.all()` 的函数。
 
 解决办法：未完待续
+
+- 需要封装到 JS 内部只需要正常写代码，而能够完成错误获取和处理

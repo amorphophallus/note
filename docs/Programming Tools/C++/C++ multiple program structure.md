@@ -23,6 +23,18 @@
 
 [参考博客](https://blog.csdn.net/Lyncai/article/details/114698722)
 
+使用 `ifndef` 等命令，保证头文件最多只会被包含一次
+
+```cpp
+// function.h
+#ifndef FUNCTION_H
+#define FUNCTION_H
+
+/*Content of function.h*/
+
+#endif
+```
+
 ### 共享变量
 
 使用 extern 声明
