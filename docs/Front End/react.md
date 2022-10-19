@@ -97,20 +97,19 @@ ReactDOM.render(
 
 ### 传参
 
+#### tips
 
-
-只能用字符串作为参数，所以常用一些字符串和数字的转换函数
-
-
+1. 只能用字符串作为参数，所以常用一些字符串和数字的转换函数
 
 ```js
 parseInt(string s, [int radix]) // 可以指定基数
 
 ```
 
-
-
-
+2. 传参的方式
+  - props
+  - context
+  - redux
 
 ### 跨文件
 
@@ -791,10 +790,54 @@ let filter = searchParams.get("filter");
 (useLocation 还不会)
 
 
+## Context
+
+### 功能
+
+Context 设计目的是为了共享那些对于一个组件树而言是“全局”的数据。使用 context 的通用的场景包括管理当前的 locale，theme，或者一些缓存数据
+
+1. 组件间多级传参不用每级都写参数
+2. 没有直系关系（父子孙...）的组件之间传递数据
+
+### 工作原理
+
+1. 使用一个 Provider 并设定 value 来将当前的 Context 传递给以下的组件树
+2. Consumer 会往上找到最近的 Provider，然后使用它的值；如果没有对应的 Provider，value 取 defaultValue。
+3. 当 Provider 的 value 值发生变化时，它内部的所有 Consumer 都会重新渲染
+
+### 使用
+
+useContext 的作用和 Consumer 一样
+
+```js
+// 创建 Context
+const MyContext = React.createContext(defaultValue);
+
+// Provider
+<Context.Provider value={/*set context value here*/}>
+    {/* components that need this context */}
+</Context.Provider>
+
+// Consumer
+<MyContext.Consumer>
+    {value => /* 基于 context 值进行渲染*/}
+</MyContext.Consumer>
+
+// useContext
+const {n,setN} = useContext(Context_name);
+return(
+    <div>
+      n:{n}
+      <button onClick={()=>{setN(n+1)}}>+1</button>
+    </div>
+  )
+```
 
 
+### 常用技巧
 
-
+1. 修改 Context ：在 Context 中包含一个修改函数（推荐直接使用 useState）。在 Consumer 处修改数据，React 会从 state 所在组件开始更新整个组件树
+2. 
 
 ## 其他
 

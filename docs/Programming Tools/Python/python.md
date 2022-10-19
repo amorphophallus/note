@@ -370,6 +370,12 @@ finally:                    # 不管是否异常都执行
 
 意思是 python 有库可以操作 excel 文件。
 
+## 面向对象
+
+[python document clas](https://docs.python.org/zh-cn/3/tutorial/classes.html)
+
+1. 方法函数在声明时，有一个显式的参数代表本对象，该参数由调用隐式提供
+
 ## 其他问题
 
 ### 输出中文

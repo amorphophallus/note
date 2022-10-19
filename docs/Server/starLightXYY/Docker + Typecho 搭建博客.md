@@ -164,8 +164,15 @@ networks:
 
 ### 自定义
 
-1. 
+#### 添加备案号
 
+修改 `/data/usr/themes/amaze/footer.php`：
+
+```php
+ <img style="padding-top:2px;height:1.2rem;width:1.2rem" src="<?php $this->options->themeUrl('/img/gh.png')?>"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=备案编号"target="_blank">浙ICP备2022026654号</a>
+```
+
+typecho 的 php 文件是网页模板，会交给目标网页去渲染，所以需要用 php 找到静态资源的位置，而不是直接使用相对地址。
 
 ## 插件
 

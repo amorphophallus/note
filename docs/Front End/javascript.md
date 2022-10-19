@@ -122,12 +122,6 @@ appendChild + forEach
 
 记得处理错误，在调用函数之后 catch 一下 error
 
-### fetch
-
-[Fetch (javascript.info)](https://zh.javascript.info/fetch)
-
-目前只会用最基础的 fetch().json()，具体的等用到了再去网站上看
-
 ### Date 类型
 
 1. 不能直接输出，但有方法 time.toString()
@@ -160,3 +154,6 @@ alert('(${x}, ${y})')
 ## 异步
 
 1. JS 的异步代码默认是在同步代码执行完成之后运行的（非抢占式）
+
+## Fetch
+
