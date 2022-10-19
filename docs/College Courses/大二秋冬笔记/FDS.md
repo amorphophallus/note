@@ -33,7 +33,11 @@
     - 小 o：无穷小量（大 O 的反向操作）
     - if/else：选较大的那个分支算复杂度
     - 主定理
-3. ch3：
+3. ch4：
+    - traversal:
+        - preorder: 根左右
+        - inorder: 左根右
+        - postorder: 左右根
     - degree of tree: max degree of node
     - 任意树变成二叉树：倾斜 45 度，兄弟变儿子；i.e.左儿子是第一个儿子，右儿子是兄弟
     - threaded binary tree 线索二叉树：
@@ -41,3 +45,12 @@
         - 分类：前序 / 中序 / 后序
         - 构造：NULL 的左儿子换成（前序 / 中序 / 后序）遍历中的前驱节点，右儿子换成后继。
         - 遍历：不再需要回溯，只需要判断自身和左右儿子的输顺序即可
+4. ch5：
+    - BST: binary search tree
+        - delete:
+            - 1 degree: 儿子挪上来
+            - 2 degree: 用 largest in the left subtree 或者 smallest in the right subtree 来替换当前节点
+        - lazy tag: 标记删除但是不实际删除，用于删除操作不多的情况
+    - ADT: abstract data type
+    - decision tree:
+        - internal node & external node(leaf)
