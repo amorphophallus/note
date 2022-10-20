@@ -82,9 +82,14 @@ nav:
         - 'C#':
             - 'C# Basic': 'Programming Tools/C#/basic.md'
             - 'C#, JS 相互转化': 'Programming Tools/C#/C#, JS 相互转化.md'
+        - 'C++':
+            - 'C++技巧': 'Programming Tools/C++/C++技巧.md'
+            - 'C++多文件结构': 'Programming Tools/C++/C++ multiple program structure.md'
+            - 'Makefile': 'Programming Tools/C++/makefile.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
+            - 'VScode 调试 C/C++ 代码': 'Programming Tools/VScode/VScode 调试 C 和 C++ 代码.md'
         - 'Visual Studio':
             - 'Programming Tools/VS/index.md'
         - '微信小程序':
