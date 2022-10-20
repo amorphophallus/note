@@ -57,10 +57,11 @@
 
 0. **同一个数组可以存不同类型的数据**
 1. 运算符
-    - 定义: [] 或者 list(obj)
-        - `list()` 的参数可以是空、列表或者元组
+    - 定义: [] 或者 list([obj])
+        - `list()` 的参数可以是 **空、列表或者元组**，如果是单个元素需要用 [] 包裹起来
     - 加法: 相当于将两个列表按顺序连接
     - 乘法: 列表与整数相乘，相当于将列表重复相加
+        - **注意：如果列表内元素的赋值是传地址，则乘法得到的元素也是简单的复制地址**
 2. 函数
     - `len(arr)`
     - 添加；
@@ -260,6 +261,42 @@ Tuple
     output: [(1, 4), (2, 5), (3, 6)] # 元素个数与最短的列表一致
     ```
 
+2. random: 
+
+```py
+import random
+
+print( random.randint(1,10) )        # 产生 1 到 10 的一个整数型随机数  
+print( random.random() )             # 产生 0 到 1 之间的随机浮点数
+print( random.uniform(1.1,5.4) )     # 产生  1.1 到 5.4 之间的随机浮点数，区间可以不是整数
+print( random.choice('tomorrow') )   # 从序列中随机选取一个元素
+print( random.randrange(1,100,2) )   # 生成从1到100的间隔为2的随机整数
+```
+
+3. print:
+
+```py
+print("{} + {} = {}".format(1, 1, 1+1)) # 类似于 printf 的输出方式
+```
+
+#### 传参：传值 vs 引用
+
+1. 自定义类型传参是引用(赋值也是引用)
+
+```py
+class node:
+    x = 1
+
+def func(node):
+    node.x = 123
+
+node = node()
+func(node)
+print(node.x)
+```
+
+输出为 123
+
 ### 模块和包
 
 1. 导入
@@ -372,7 +409,7 @@ finally:                    # 不管是否异常都执行
 
 ## 面向对象
 
-[python document clas](https://docs.python.org/zh-cn/3/tutorial/classes.html)
+[python document class](https://docs.python.org/zh-cn/3/tutorial/classes.html)
 
 1. 方法函数在声明时，有一个显式的参数代表本对象，该参数由调用隐式提供
 
