@@ -275,6 +275,8 @@ print( random.randrange(1,100,2) )   # 生成从1到100的间隔为2的随机整
 
 3. print:
 
+[print 格式化输出](https://blog.csdn.net/sinat_28576553/article/details/81154912)：简而言之就是可以长得跟 C 很像，也可以长得跟 C# 很像
+
 ```py
 print("{} + {} = {}".format(1, 1, 1+1)) # 类似于 printf 的输出方式
 ```

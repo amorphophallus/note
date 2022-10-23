@@ -173,3 +173,18 @@ Box operator+(const Box&);
 // 定义为非成员函数
 Box operator+(const Box&, const Box&);
 ```
+
+备注：
+
+1. 在 operator 前加上 & 表示引用返回值，比如重载下标运算符 `Box & operator [] (...)` 之后就可以使用 `box[i] = 1` 进行赋值操作
+2. 重载运算符分为类内重载和类外重载（用友元函数的方法实现）
+3. [重载运算符中的 const 分析](https://blog.csdn.net/weixin_43734095/article/details/104465307)：`const Point operator+(const Point &point) const;`
+    - 第一个 const: 表示返回值是常量，不加这个 const `(p1 + p2) = Point(40, 50);` 不会报错，不符合语义
+    - 第二个 const: 扩大接受参数的范围，表示可以接收常数参数，不加这个 const 则 *变量+常量* 会报错
+    - 第三个 const: 使得该函数可以被 const 对象所调用，不加这个 const 则 *常量+变量* 会报错
+
+应用举例：
+
+```cpp
+
+```

@@ -240,3 +240,118 @@ int getBmpFile(BMP & bmp){
 9. RGB (0, 0, 0) 是黑，(255, 255, 255) 是白
 10. `(i/3) / (int)bmp.infoHeader.biWidth` 注意类型转换，不然当成 unsigned int 计算，unsigned int 强转 double 会出问题，首位会被当成符号位，char 直接参与计算会被当成带符号整数,
 11. 各种数据类型的内存大小，[struct 的内存分配](https://blog.csdn.net/weixin_41453492/article/details/101318522)
+
+
+
+
+
+
+## JPEG（10.4 网课）
+
+主要思路：用小块 patch 拼凑整个图像，可以设置粒度
+
+大幅面高质量打印：国外进口 -> 有研究空间
+
+缺点：文字等细节容易看出问题的，适合用矢量图
+
+补充：TIFF，用于 CAD、GIS(geographic information system)，分为 public 和 private （压缩方式或者加密方式），便于公司进行开发
+
+补充：GIF(graphics interchange format)，LZW encoding method
+
+
+## 存储图像的数据结构
+
+1. 矩阵：例如 multispectral image 多光谱图像
+2. 链表：例如 RLE(Run Length Encoding)
+    - 行 + (列开头 + 列结尾) + ...
+
+
+## 图像处理方法
+
+1. windows API DIB
+    - 逻辑屏幕 vs 物理屏幕
+2. VC++: 可以借鉴群文件里的库，自己进行扩充
+3. matlab: Image Processing Toolbox
+4. PhotoShop
+5. GIMP: 开源版本的 PhotoShop
+6. 光影魔术手：支持批处理
+
+（操作举例：直方图均衡化）
+
+## 二值图像和形态学操作(Binary Image and Morphological Operation)
+
+优点：只留下需要的信息，且在某些需要打印的场景更为低廉
+
+获取：设置阈值 threshold
+- 好的阈值：minimize 前景（背景）内部的方差 = maximize 两部分之间的差异
+- 大津算法：枚举所有的 threshold，计算并求最小值
+- 优化：全局大津法导致局部阴影无法识别 -> 扫描窗口，在每个 local window 中做大津法
+- 再优化：去噪声？形状简化？形态学操作
+
+应用：
+1. 绿幕
+2. 检测水淹的区域
+3. 人脸识别（基于颜色，容易受外部光照的影响）
+
+### dilation（膨胀）
+
+A: binary image
+B: structure element （结构元的选取非常灵活）
+
+符号：圆圈里一个加号
+
+实现： 若 A 和 B 有交，则把 B 的坐标原点放到图像中。
+
+效果：
+1. 补洞
+2. 扩展
+
+### erosion （腐蚀）
+
+符号：圆圈里一个减号
+
+实现：B 完全包含于 A 的前景中，则把 B 的坐标原点放到图像中。（考试中可以列表来判断是否包含）
+
+padding：
+1. 0 padding
+2. 复制第一行第一列做 padding
+
+效果：
+1. 去小噪点
+2. 去边界
+
+### erosion & dilation
+
+结合：erosion + dilation -> 去噪点 + 恢复边界大小
+
+对偶性(duality)：
+1. $(A-B)^c=A^c+B$
+2. $(A+B)^c=A^c-B$
+
+应用：
+1. 提取边界 ($A-(A-B)$减去腐蚀后的部分)
+2. 补洞
+3. structure extraction
+
+### opening
+
+开操作 = 先腐蚀，再膨胀
+
+符号：空心圆圈
+
+效果：去掉小块，棱角平滑，并且保持整体面积大致不变
+
+### closing
+
+闭操作 = 先膨胀，再腐蚀
+
+符号：小黑点
+
+效果：补小洞和断开的边界，并且保持整体面积大致不变
+
+---
+
+应用：指纹识别 -> 先做开操作，再做闭操作
+
+
+## 灰度图像操作

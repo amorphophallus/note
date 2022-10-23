@@ -137,6 +137,64 @@ LaTex is an elegant typesetting tool.
 \section*{Unnumbered Section}
 ```
 
+##### 修改字体大小、加粗、斜体、颜色等样式
+
+1. 修改字体大小的命令从小到大为：
+
+```latex
+\tiny{Hello!}
+\scriptsize
+\footnotesize
+\small
+\normalsize
+\large
+\Large
+\LARGE
+\huge
+\Huge
+```
+
+2. 加粗
+
+两种写法都可以
+
+```latex
+\textbf{Boldface Series Hello}
+{\bfseries Boldface Series Hello}
+```
+
+3. 斜体
+
+up是直立，it是斜体，sl伪斜体（字宽比斜体略大），小型大写是sc。两种写法都可以
+
+```latex
+\textup{Upright Shape Hello!}
+\textit{Italic Shape Hello!}
+\textsl{Slanted Shape Hello!}
+\textsc{Small Caps Shape}
+
+{\upshape Upright Shape Shape Hello!}
+{\itshape Italic Shape Shape Hello!}
+{\slshape Slanted  Shape Hello!}
+{\scshape Small Caps Shape  Shape Hello!}
+```
+
+4. 字体样式
+
+- 罗马字体，Roman Family，字体起始有装饰
+- 无衬线字体：Sans Serif 字体起始无装饰
+- 打字机字体:Typewriter Family字体宽度都相同
+
+```latex
+\textrm{Roman Family Hello Latex!}
+\textsf{Sans Serif Family Hello Latex!}
+\texttt{Typewriter Family Hello Latex!}
+
+{\rmfamily Roman Family Hello Latex!}
+{\sffamily Sans Serif Family  Hello Latex!}
+{\ttfamily Typewriter Family  Hello Latex!}
+```
+
 #### 数学公式
 
 #### 插入图片
@@ -151,6 +209,23 @@ LaTex is an elegant typesetting tool.
 \end{itemize}
 \begin{enumerate} % 有序列表
     \item Item
+\end{enumerate}
+```
+
+##### 修改列表样式
+
+首先要导入包
+
+```latex
+\usepackage{enumerate}
+\begin{enumerate}[i)]
+    \item one
+\end{enumerate}
+\begin{enumerate}[(1)]
+    \item one
+\end{enumerate}
+\begin{enumerate}[a.]
+    \item one
 \end{enumerate}
 ```
 
