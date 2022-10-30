@@ -2,8 +2,50 @@
 
 [TOC]
 
+## Chapter 1 基础知识
 
-## BMP
+图像格式：
+
+- PNG 常用于网络
+- BMP：可以压缩（rle），但是一般都不压缩
+    - color image: RGB 各一个 Byte，最常见的 BMP 就是 24 位真彩色图
+    - greyScale: 8 位 256 个灰度（业界规定， **所有设备的灰度只有 256 级** ）
+    - **dpi** = dot per inch （打印的参数）（200 dpi 显示效果足够优秀）
+- 视网膜屏幕：dpi 接近视网膜上的细胞数
+
+成像：
+- 小孔成像：孔太大，图像模糊；孔太小（光圈(Sperture)太小），进光量不够，产生衍射，且相机抖动对成像效果的影响更大
+- 透镜（胶卷相机）：
+    - circle of confusion: 未聚焦在像屏上
+    - depth of a field（景深）：相机能够清晰拍摄的距离范围
+        - 小光圈 -> 大景深 -> 风景照（需要清晰显示远近的信息）
+        - 大光圈 -> 小景深 -> 背景虚化
+        - 原理：进光少，circle of confusion 小，眼睛无法分辨则不认为是模糊
+- **数码相机** ：
+    - DSP：处理数字信号，降噪（ *国内核心技术落后* ）
+    - 处理过程：![](img/DC%20image%20process.PNG)
+
+颜色的物理意义：
+- 鸡尾酒会问题（图像、声音 etc） [科普](https://zhuanlan.zhihu.com/p/58505511)
+- **color vision** : the feeling of human brain when lights of different wavelengths reach retina.
+    - 棒状细胞(rod)：数量大，只感光
+    - 锥状细胞(cone)：数量少，在光照充足的情况下能感受颜色，有三种，分别对红、绿、蓝光最敏感 -> **三原色理论的生理基础**
+    - 色觉因人而异 + **人从对比度感知色彩** （如何让所有人看到相同的颜色 *目前仍未解决* ）
+    - 如何产生不同颜色的光：产生不同波长的光波 or 色光按比例混合 [色彩空间基础（这篇还是非常全面的）](https://blog.csdn.net/u010468553/article/details/79614229)
+
+- 紫边现象：胶片相机的边上因为透镜产生色散而导致的模糊
+- priority vs sensitivity
+    - priority 先 notice 到什么变化 : hue（色调）> saturation（饱和度）> lightness（亮度）
+    - sensitivity 能感知多小的变化：亮度最敏感 -> HDR
+    - *在视觉传达领域非常重要*
+- color space:
+    - device dependent model:
+        - RGB: additive，色光混合
+        - CMY: subtractive，吸收部分色光，反射剩下的色光，多用于打印设备（CMYK 增加黑色）
+        - HSV
+    - device independent model: CIE XYZ, CIE YUV
+
+## Chapter 1 BMP
 
 ### BMP 文件结构
 
@@ -16,7 +58,8 @@
 
 #### 位图文件头
 
-upd. 补充了一个构造函数，修改成 C++ 语法
+重要信息：
+- `bfOffBits`: 找到 bitmap 的开头
 
 ```c
 struct BITMAPFILEHEADER
@@ -39,9 +82,24 @@ struct BITMAPFILEHEADER
 // DWORD == unsigned int == 32bit
 ```
 
+upd. 补充了一个构造函数，修改成 C++ 语法
+
 #### 位图信息头
 
-upd. 补充了一个构造函数，修改成 C++ 语法
+重要信息：
+- `biWidth`: 单位是 **像素**
+- `biHeight`: 单位是 **像素**，`biHeight > 0` 表示图像是翻转的（在 bitmap 中依次存储的像素是 **左下到右上** ），`biHeight > 0` 则图像是正的
+- `biClrUsed`: 决定了调色板的文件大小， `biClrUsed == 0` 表示调色板上所有的颜色都使用，即 bitmap 中直接存储 RGB
+
+不重要信息：
+
+- `biCompression`: 因为一般的 BMP 都不压缩，所以可以默认这个变量为 0
+
+运算关系：
+- `bfSize = bfOffBits + biSizeImage`
+- 行字节数 `byteWidth = (biWidth * biBitCount / 8 + 3) / 4 * 4`，**byteWidth 必须是 4 的倍数** ，不够的字节用 `00` 补齐
+- `biSizeImage = biHeight * byteWidth`
+    - 常见错误：`biSizeImage != biHeight * biWidth * biBitCount`
 
 ```c
 struct BITMAPINFOHEADER
@@ -52,7 +110,7 @@ struct BITMAPINFOHEADER
     unsigned short  biPlanes;        // 表示bmp图片的平面属，显然显示器只有一个平面，所以恒等于1 (26-27字节)
     unsigned short  biBitCount;      // 一像素所占的位数，常用的值为1（黑白二色图）,4（16色图）,8（256色）,24（真彩色图）（新的.bmp格式支持32位色）   (28-29字节)
     unsigned int    biCompression;   // 指定位图是否压缩，有效的值为BI_RGB，BI_RLE8，BI_RLE4，BI_BITFIELDS（都是一些Windows定义好的常量）。我们今后所讨论的只有第一种不压缩的情况，即biCompression为BI_RGB的情况。 (30-33字节)
-    unsigned int    biSizeImage;     // 像素数据所占大小, biSizeImage=biWidth'*biHeight (34-37字节)
+    unsigned int    biSizeImage;     // 像素数据所占大小 (34-37字节)
     long            biXPelsPerMeter; // 说明水平分辨率，单位是象素/米。一般为0 (38-41字节)
     long            biYPelsPerMeter; // 说明垂直分辨率，单位是象素/米。一般为0 (42-45字节)
     unsigned int    biClrUsed;       // 指定本图象实际用到的颜色数，如果该值为零，则用到的颜色数为2的biBitCount次方，即使用所有调色板项。 (46-49字节)
@@ -76,7 +134,13 @@ struct BITMAPINFOHEADER
 // 要注意的是：上述公式中的biWidth'必须是4的整倍数（所以不是biWidth，而是biWidth'，表示大于或等于biWidth的，离4最近的整倍数。举个例子，如果biWidth=240，则biWidth'=240；如果biWidth=241，biWidth'=244）如果biCompression为BI_RGB，则该项可能为零
 ```
 
+upd. 补充了一个构造函数，修改成 C++ 语法
+
 #### 调色板
+
+注意事项：
+- 顺序是 **BGR** 而不是 RGB
+- `biClrUsed` 决定了调色板的大小，例如灰度图可以有一个大小为 256 的调色板
 
 ```c
 typedef struct _PIXELINFO {
@@ -91,11 +155,11 @@ typedef struct _PIXELINFO {
 
 #### 实际位图数据
 
-对于用到调色板的位图，图象数据就是该像素颜在调色板中的索引值，对于真彩色图，图象数据就是实际的R,G,B值。
+对于用到调色板的位图，图象数据就是该像素颜在调色板中的索引值。对于真彩色图，图象数据就是实际的R,G,B值。
 
 要注意两点：
-1. 每一行的字节数必须是4的整倍数，如果不是，则需要补齐。这在前面介绍biSizeImage时已经提到了。
-2. 一般来说，.BMP文件的数据从下到上，从左到右的。也就是说，从文件中最先读到的是图象最下面一行的左边第一个像素，然后是左边第二个像素…接下来是倒数第二行左边第一个像素，左边第二个像素…依次类推，最后得到的是最上面一行的最右一个像素。
+1. 每一行的字节数必须是 **4的整倍数**，如果不是，则需要用 0 补齐。
+2. 一般来说（biHeight > 0 时），.BMP文件的数据从下到上，从左到右的。也就是说，从文件中最先读到的是图象最下面一行的左边第一个像素，然后是左边第二个像素…接下来是倒数第二行左边第一个像素，左边第二个像素…依次类推，最后得到的是最上面一行的最右一个像素。
 
 #### BMP 类
 
@@ -232,9 +296,6 @@ int getBmpFile(BMP & bmp){
 3. struct BITMAPFILEHEADER 的大小是 16 而不是 14
 4. sizeof(指针) 返回的是指针的大小而不是数组的大小
 5. 指针类型转换的语法
-6. 文件大小 bfSize 错误的情况：
-    - bfSize 可以从文件属性中获取，可以 bfSize = bfOffset + ImageSize，可以直接用 ultraedit 修改文件大小
-    - 也可以通过 biSizeImage=biWidth'*biHeight 计算
 7. C++ 结构体内声明函数好像不能做，或许转向使用 class 封装会更好一点
 8. 重载 BMP 类的运算符或许会更好一点,[struct 的构造函数](https://zhuanlan.zhihu.com/p/392077524)
 9. RGB (0, 0, 0) 是黑，(255, 255, 255) 是白
@@ -280,7 +341,11 @@ int getBmpFile(BMP & bmp){
 
 ## 二值图像和形态学操作(Binary Image and Morphological Operation)
 
+### 结构定义
+
 优点：只留下需要的信息，且在某些需要打印的场景更为低廉
+
+### Binarization
 
 获取：设置阈值 threshold
 - 好的阈值：minimize 前景（背景）内部的方差 = maximize 两部分之间的差异
@@ -354,4 +419,40 @@ padding：
 应用：指纹识别 -> 先做开操作，再做闭操作
 
 
+### 实际操作中的问题
+
+#### padding
+
+
+#### 大津法分块过于小会导致失去全局性质，过大可能导致有部分特点被光线等外部调价掩盖
+
+#### 用 photoshop 获取 24 位 BMP 图像素材
+
+1. 图像 -> 模式 -> 选择格式和位数
+2. 文件 -> 存储为 -> 在窗口中选择格式和位深度
+
 ## 灰度图像操作
+
+### visibility & enhancement
+
+greyScale perception: 256 色已经超过了人眼可以分辨的
+
+Weber's Law: $\frac{\Delta I}{I}\approx 1...2\%$ 可见的灰度值差
+
+定理的定义范围有限
+
+$\gamma$ 校正： gamma 越大 对比度越高
+
+曝光值 E
+
+现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 -> Dynamic range compression
+
+色调映射 - tone mapping -> visibility enhancement（解决过曝和曝光不足）
+
+tone mapping 典型测试图像 * 2
+
+log 操作： $L_d = \frac{\log(L_w+1)}{\log(L_max+1)}$
+
+$L_w$ 是实际亮度， $L_d$ 是显示亮度
+
+### histogram 直方图 & histogram equalization 直方图均衡化

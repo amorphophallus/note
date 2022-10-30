@@ -54,3 +54,21 @@
     - ADT: abstract data type
     - decision tree:
         - internal node & external node(leaf)
+    - 特殊的树
+        - complete binary tree: 叶子节点深度差最大为 1
+        - full binary tree
+5. ch6：binary heap
+    - property：
+        - 每个节点都比儿子大（左右儿子之间没有限制）
+        - 一定是 complete binary tree
+        - 查找只能 $O(N)$
+        - 编号从 $\lfloor \frac{N}{2}\rfloor +1$ 开始就都没有儿子
+    - operation
+        - 建堆：保证操作每个节点时，他的两个儿子子树都是堆，然后将这个节点往下推。有 $\frac{N}{2}$ 个节点需要往下推至少一次，$\frac{N}{4}$ 个节点往下至少两次，以此类推 $T(N)=\frac{N}{2}+\frac{N}{4}+...=O(N)$
+        - push：在最大编号后面插入，依次往上交换
+        - pop：左右儿子挑一个大（小）的提上来
+    - d-heaps: 
+        - 单次操作 $O(d \log_dN)$，d 为 3 时时间复杂度最低
+        - 父亲：$father(i)$ 是一个阶梯函数，$father(1) = 0$，每过 d 个数函数值 +1，$father(i) = \lfloor (i+d-2)/d\rfloor$
+        - 最大的儿子：把最大的儿子后面的节点全去掉，则树上除了叶子之外全都是满儿子，$$father(son_{max}(i)) = [son_{max}(i)-1]/d = i$$ 所以 $son_{max}(i)=id+1$
+        - 最小的儿子： $son_{min}(i) = (i-1)d+2$

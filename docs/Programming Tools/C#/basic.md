@@ -150,7 +150,71 @@ public delegate TResult Func<out TResult>();
 
 - 要求抓取异步执行过程中可能产生的错误，并在最后实现一个类似 catch 的函数
 - 有多个异步的函数需要执行，在所有异步函数运行结束后执行一个函数，即实现一个功能类似于 `Promise.all()` 的函数。
-
-解决办法：未完待续
-
 - 需要封装到 JS 内部只需要正常写代码，而能够完成错误获取和处理
+
+问题：JS function 并不能完全转化为 C# delegate 类，在转化过程中报错的语句翻译不过来。所以不能将可能报错的 JS function 作为参数传到 C# 函数里进行执行，必须在 JS 转 C# 之前在 JS 代码中就把错误处理给做好。
+
+```js
+class PromType{
+    constructor(prom){
+        this.promData = prom;
+        this.then = function(func){
+            return new PromType(this.promData.Then((data) =>{
+                try{
+                    log('in JS then!!!!' + data);
+                    let ret = func(data);
+                    log(RetValue(ret, 0).ret + '@@@@@');
+                    return RetValue(ret, 0);
+                }catch(err){
+                    log('!!!!!');
+                    return RetValue(err.message, 1);
+                }
+            }));
+        };
+        this.catch = function(func){
+            return new PromType(this.promData.Catch((data) =>{
+                try{
+                    log('in JS catch!!!!' + data);
+                    let ret = func(data);
+                    log(RetValue(ret, 0).ret + '@@@@@');
+                    return RetValue(ret, 0);
+                }catch(err){
+                    log('!!!!!');
+                    return RetValue(err.message, 1);
+                }
+            }));
+        };
+    }
+}
+```
+
+```js
+(() =>{
+    Async().then(()=>{
+        log(1);
+        return 3;
+    }).then(()=>{
+        log(1);
+        return 3;
+    }).then((res) => {
+        log(2);
+        log(res);
+        log(res+1);
+        return res+2;
+    }).then((res)=>{
+        log (res);
+        log(abcde);
+        return res+1;
+    }).catch((err)=>{
+        log('Catch Error: '+err);
+    }).then((res)=>{
+        log(res);
+    })
+    log('function over')
+})();
+```
+
+学到的东西：
+
+1. JS 类（如果要用链式调用必须要递归的返回）
+2. JS error 有作用域，比如说语法错误的域比 try catch 广不能被捕捉到。可以深入探究一下。

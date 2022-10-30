@@ -459,7 +459,6 @@ ReactDOM.render(
 3. {} + 箭头函数 + map 可以直接嵌套在 jsx 里面
 
 
-
 ## hook
 
 和 class 中的 state 几乎功能一样，但是用在函数组件中
@@ -850,3 +849,125 @@ return(
 React.createElement
 
 [(34条消息) React.createElement的理解使用_小白变怪兽的博客-CSDN博客_react.createelement](https://blog.csdn.net/u013558749/article/details/80268449)
+
+
+### 重新渲染机理 + React.memo
+
+> 1. [详细说明](https://juejin.cn/post/7129670327725981732)
+> 2. [介绍一些 re-render 相关的现象](https://www.developerway.com/posts/react-elements-children-parents)
+
+组件自身重新渲染有四个原因：
+
+1. 状态更改 (state)
+2. 父级重新渲染
+3. 上下文更改 (context)
+4. hooks更改
+
+plus. 想要当且仅当组件的 props 发生变化时会发生重新渲染：在组件外套一层 `React.memo()`
+
+> memo 可以翻译为“记忆化组件”。在计算机领域，记忆化是一种主要用来提升计算机程序速度的优化技术方案。它将开销较大的函数调用的返回结果存储起来，当同样的输入再次发生时，则返回缓存好的数据，以此提升运算效率。
+
+### children 传参
+
+> [详细说明](https://www.jianshu.com/p/d1975493b5ea)
+
+
+使用举例：
+
+```js
+const MovingComponent = ({ children }) => {
+  const [state, setState] = useState({ x: 100, y: 100 });
+
+  return (
+    <div onMouseMove={(e) => setState({ x: e.clientX - 20, y: e.clientY - 20 })} style={{ left: state.x, top: state.y }}>
+      {children}
+    </div>
+  );
+};
+
+const SomeOutsideComponent = () => {
+  return (
+    <MovingComponent>
+      <ChildComponent />
+    </MovingComponent>
+  );
+};
+```
+注意事项：
+1. children 仅作为函数组件的 props 存在，而不算是子组件，在函数重新渲染时 **不会** 被重新渲染
+2. `{children}` 作为参数的写法相当于以 `props` 为参数并 `let children = props.children`。带大括号是指传递一个参数，参数类型为对象，里面有一个属性children, 不带大括号就是传递多个参数，这里的大括号不是块级作用域，就是单纯的表示一个对象。
+3. 可以传入函数作为 children，如下例
+
+```js
+const MovingComponent = ({ children }) => {
+  const [state, setState] = useState({ x: 100, y: 100 });
+
+  return (
+    <div onMouseMove={(e) => setState({ x: e.clientX - 20, y: e.clientY - 20 })} style={{ left: state.x, top: state.y }}>
+      // children as render function with some data
+      // data doesn't depend on the changed state!
+      {children({ data: 'something' })}
+    </div>
+  );
+};
+
+const SomeOutsideComponent = () => {
+  return (
+    <MovingComponent>
+      // ChildComponent re-renders when state in MovingComponent changes!
+      // even if it doesn't use the data that is passed from it
+      {() => <ChildComponent />}
+    </MovingComponent>
+  )
+}
+```
+
+---
+
+
+内置函数：
+
+1. `React.Children.map`: 类似 JS 数组的 map 方法
+    - e.g. 
+      ```js
+      React.Children.map(children, (child, i) => {
+        // Ignore the first child
+        if (i < 1) return
+        return child
+      })
+      ```
+2. `React.Children.forEach`: 类似 JS 数组的 forEach 方法
+3. `React.Children.count`: 返回 children 个数
+4. `React.Children.toArray`
+5. `React.Children.only` 如果有多个 children 则会报错
+    - e.g. `React.Children.only(props.children)()`
+
+---
+
+（批量）修改 children 属性：
+
+使用 `React.cloneElement` 方法
+
+```js
+React.Children.map(this.props.children, child => {
+    return React.cloneElement(child, {
+      name: this.props.name
+    })
+  })
+```
+
+
+### 大括号和解构语法
+
+> [参考第一个回答](https://segmentfault.com/q/1010000017062649)
+
+```js
+function({x,y,z}){
+}
+
+// 相当于
+
+function(obj){
+  var  x=obj.x, y=obj.y, z=obj.z
+}
+```

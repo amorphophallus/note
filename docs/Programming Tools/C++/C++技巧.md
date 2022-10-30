@@ -154,7 +154,9 @@ char* p = (char*)"abc"; // C++ 中不转类型会 warning
 
 两个报错的原因一样，都是内存溢出，使用了未分配并不存在的内存。
 
-## 重载运算符
+## class 操作
+
+### 重载运算符
 
 语法格式：
 
@@ -170,7 +172,7 @@ char* p = (char*)"abc"; // C++ 中不转类型会 warning
 ```cpp
 // 定义为成员函数
 Box operator+(const Box&);
-// 定义为非成员函数
+// 定义为非成员函数 
 Box operator+(const Box&, const Box&);
 ```
 
@@ -182,9 +184,39 @@ Box operator+(const Box&, const Box&);
     - 第一个 const: 表示返回值是常量，不加这个 const `(p1 + p2) = Point(40, 50);` 不会报错，不符合语义
     - 第二个 const: 扩大接受参数的范围，表示可以接收常数参数，不加这个 const 则 *变量+常量* 会报错
     - 第三个 const: 使得该函数可以被 const 对象所调用，不加这个 const 则 *常量+变量* 会报错
+4. [重载运算符中的 & 分析]():``
+    - to be continued
 
 应用举例：
 
 ```cpp
 
+```
+
+> 参考： [重载 [] + 两种不同返回值重载同一个运算符](http://c.biancheng.net/view/2312.html)
+
+### 构造函数
+
+> 参考：[重载构造函数教程](http://c.biancheng.net/view/2221.html)
+
+举例：
+
+```cpp
+
+```
+
+使用可选参数：注意只在函数声明处写默认值，在定义函数时不要再加
+
+```cpp
+class Box{
+public:
+    Box(int h=2,int w=2,int l=2);//在声明构造函数时指定默认参数
+private:
+    int height,width,length;
+};
+Box::Box(int h,int w,int len){//在定义函数时可以不指定默认参数
+    height=h;
+    width=w;
+    length=len;
+}
 ```
