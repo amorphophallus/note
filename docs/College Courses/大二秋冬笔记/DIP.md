@@ -4,14 +4,24 @@
 
 ## Chapter 1 基础知识
 
-图像格式：
+### 图像格式
 
 - PNG 常用于网络
 - BMP：可以压缩（rle），但是一般都不压缩
     - color image: RGB 各一个 Byte，最常见的 BMP 就是 24 位真彩色图
     - greyScale: 8 位 256 个灰度（业界规定， **所有设备的灰度只有 256 级** ）
     - **dpi** = dot per inch （打印的参数）（200 dpi 显示效果足够优秀）
-- 视网膜屏幕：dpi 接近视网膜上的细胞数
+        - 视网膜屏幕：dpi 接近视网膜上的细胞数
+- JPEG:
+    1. 压缩策略：
+        - Different manipulations for *high-frequency signal* and *low-frequency signal*.
+        - According to the requirement of compression ratio, remove information from high frequency to low frequency. 
+    2. 大幅面高质量打印：国外进口 -> 有研究空间
+    3. 缺点：文字等细节容易看出问题的，适合用矢量图
+- TIFF: 用于 CAD、GIS(geographic information system)，分为 public 和 private （压缩方式或者加密方式），便于公司进行开发
+- GIF(graphics interchange format): 使用LZW encoding method
+
+### 有关颜色、成像的生物和物理知识
 
 成像：
 - 小孔成像：孔太大，图像模糊；孔太小（光圈(Sperture)太小），进光量不够，产生衍射，且相机抖动对成像效果的影响更大
@@ -38,12 +48,45 @@
     - priority 先 notice 到什么变化 : hue（色调）> saturation（饱和度）> lightness（亮度）
     - sensitivity 能感知多小的变化：亮度最敏感 -> HDR
     - *在视觉传达领域非常重要*
-- color space:
-    - device dependent model:
-        - RGB: additive，色光混合
-        - CMY: subtractive，吸收部分色光，反射剩下的色光，多用于打印设备（CMYK 增加黑色）
-        - HSV
-    - device independent model: CIE XYZ, CIE YUV
+
+
+### 颜色空间 (color space)
+- device dependent model:
+    - RGB: additive，色光混合
+    - CMY: subtractive，吸收部分色光，反射剩下的色光，多用于打印设备（CMYK 增加黑色）
+    - HSV(HIS):
+        1. hue（色调）
+        1. saturation（饱和度）
+        1. value / intensity（光强），和 YUV 里的 Y 是一样的
+- device independent model:
+    - CIE XYZ
+    - CIE Lab
+    - CIE YUV
+- Transformation between color spaces
+    - RGB<->CMY: ![](img/%E5%B9%BB%E7%81%AF%E7%89%8773.PNG)
+    - RGB<->HSV: ![](img/%E5%B9%BB%E7%81%AF%E7%89%8774.PNG) ![](img/%E5%B9%BB%E7%81%AF%E7%89%8775.PNG) ![](img/%E5%B9%BB%E7%81%AF%E7%89%8776.PNG)
+    - RGB<->CIE XYZ: 查表 transformation tables ![](img/%E5%B9%BB%E7%81%AF%E7%89%8777.PNG)
+    - CIE XYZ<->CIE L*a*b* ![](img/%E5%B9%BB%E7%81%AF%E7%89%8778.PNG)
+    - RGB<->CIE YUV ![](img/%E5%B9%BB%E7%81%AF%E7%89%8779.PNG)
+
+
+## 存储图像的数据结构 & 图像处理方法
+
+1. 矩阵：例如 multispectral image 多光谱图像
+2. 链表：例如 RLE(Run Length Encoding)
+    - 行 + (列开头 + 列结尾) + ...
+
+---
+
+1. windows API DIB
+    - 逻辑屏幕 vs 物理屏幕
+2. VC++: 可以借鉴群文件里的库，自己进行扩充
+3. matlab: Image Processing Toolbox
+4. PhotoShop
+5. GIMP: 开源版本的 PhotoShop
+6. 光影魔术手：支持批处理
+
+（操作举例：直方图均衡化）
 
 ## Chapter 1 BMP
 
@@ -289,7 +332,7 @@ int getBmpFile(BMP & bmp){
 
 1. 调整亮度 Y 并重新计算得到一个 RGB 图
 
-## 问题
+### HW1 中遇到的问题
 
 1. 参数：指针的引用
 2. bfType：[低端字节序和高端字节序](https://www.cnblogs.com/Philip-Tell-Truth/articles/5173941.html#:~:text=%E5%B0%8F%E7%AB%AF%E5%AD%97%E8%8A%82%E5%BA%8F%E6%8C%87%E4%BD%8E%E5%AD%97%E8%8A%82%E6%95%B0%E6%8D%AE%E5%AD%98%E6%94%BE%E5%9C%A8%E5%86%85%E5%AD%98%E4%BD%8E%E5%9C%B0%E5%9D%80%E5%A4%84%EF%BC%8C%E9%AB%98%E5%AD%97%E8%8A%82%E6%95%B0%E6%8D%AE%E5%AD%98%E6%94%BE%E5%9C%A8%E5%86%85%E5%AD%98%E9%AB%98%E5%9C%B0%E5%9D%80%E5%A4%84%EF%BC%9B%E5%A4%A7%E7%AB%AF%E5%AD%97%E8%8A%82%E5%BA%8F%E6%98%AF%E9%AB%98%E5%AD%97%E8%8A%82%E6%95%B0%E6%8D%AE%E5%AD%98%E6%94%BE%E5%9C%A8%E4%BD%8E%E5%9C%B0%E5%9D%80%E5%A4%84%EF%BC%8C%E4%BD%8E%E5%AD%97%E8%8A%82%E6%95%B0%E6%8D%AE%E5%AD%98%E6%94%BE%E5%9C%A8%E9%AB%98%E5%9C%B0%E5%9D%80%E5%A4%84%E3%80%82,%E5%9F%BA%E4%BA%8EX86%E5%B9%B3%E5%8F%B0%E7%9A%84PC%E6%9C%BA%E6%98%AF%E5%B0%8F%E7%AB%AF%E5%AD%97%E8%8A%82%E5%BA%8F%E7%9A%84%EF%BC%8C%E8%80%8C%E6%9C%89%E7%9A%84%E5%B5%8C%E5%85%A5%E5%BC%8F%E5%B9%B3%E5%8F%B0%E5%88%99%E6%98%AF%E5%A4%A7%E7%AB%AF%E5%AD%97%E8%8A%82%E5%BA%8F%E7%9A%84%E3%80%82)
@@ -303,41 +346,6 @@ int getBmpFile(BMP & bmp){
 11. 各种数据类型的内存大小，[struct 的内存分配](https://blog.csdn.net/weixin_41453492/article/details/101318522)
 
 
-
-
-
-
-## JPEG（10.4 网课）
-
-主要思路：用小块 patch 拼凑整个图像，可以设置粒度
-
-大幅面高质量打印：国外进口 -> 有研究空间
-
-缺点：文字等细节容易看出问题的，适合用矢量图
-
-补充：TIFF，用于 CAD、GIS(geographic information system)，分为 public 和 private （压缩方式或者加密方式），便于公司进行开发
-
-补充：GIF(graphics interchange format)，LZW encoding method
-
-
-## 存储图像的数据结构
-
-1. 矩阵：例如 multispectral image 多光谱图像
-2. 链表：例如 RLE(Run Length Encoding)
-    - 行 + (列开头 + 列结尾) + ...
-
-
-## 图像处理方法
-
-1. windows API DIB
-    - 逻辑屏幕 vs 物理屏幕
-2. VC++: 可以借鉴群文件里的库，自己进行扩充
-3. matlab: Image Processing Toolbox
-4. PhotoShop
-5. GIMP: 开源版本的 PhotoShop
-6. 光影魔术手：支持批处理
-
-（操作举例：直方图均衡化）
 
 ## 二值图像和形态学操作(Binary Image and Morphological Operation)
 
@@ -419,40 +427,60 @@ padding：
 应用：指纹识别 -> 先做开操作，再做闭操作
 
 
-### 实际操作中的问题
+### HW2 中遇到的问题
 
-#### padding
-
-
-#### 大津法分块过于小会导致失去全局性质，过大可能导致有部分特点被光线等外部调价掩盖
+1. padding
+2. 大津法分块过于小会导致失去全局性质，过大可能导致有部分特点被光线等外部调价掩盖
+    - 解决方案：local 局部大津法，对每一个点单独求一个
 
 #### 用 photoshop 获取 24 位 BMP 图像素材
 
 1. 图像 -> 模式 -> 选择格式和位数
 2. 文件 -> 存储为 -> 在窗口中选择格式和位深度
 
-## 灰度图像操作
+## Chapter 3 灰度图像操作
 
 ### visibility & enhancement
 
-greyScale perception: 256 色已经超过了人眼可以分辨的
-
-Weber's Law: $\frac{\Delta I}{I}\approx 1...2\%$ 可见的灰度值差
-
-定理的定义范围有限
-
-$\gamma$ 校正： gamma 越大 对比度越高
-
-曝光值 E
-
-现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 -> Dynamic range compression
-
-色调映射 - tone mapping -> visibility enhancement（解决过曝和曝光不足）
-
-tone mapping 典型测试图像 * 2
-
-log 操作： $L_d = \frac{\log(L_w+1)}{\log(L_max+1)}$
-
-$L_w$ 是实际亮度， $L_d$ 是显示亮度
+1. greyScale perception: 256 级已经超过了人眼可以分辨的
+1. Weber's Law:
+    - 肉眼可见的灰度值差 visible threshold $\frac{\Delta I}{I}\approx 1...2\%$ 
+    - 定理的定义范围有限，在亮度过大或者过小时不成立
+    - 显示设备想要至少呈现出 256 级灰度，要求 $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$ 对比度 $\frac{I_{max}}{I_{min}}$ 值越大说明显示器效果越好
+1. $\gamma$ 校正：
+    - 最初用于想 CRT 显示器，后用于图像后期处理，$\gamma$ 越大 对比度越高
+    - 曝光值 E
+    - 现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 -> Dynamic range compression
+1. 色调映射 (tone mapping) -> visibility enhancement（解决过曝和曝光不足）
+1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(L_w+1)}{\log(L_{max}+1)}$
+    - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上
+    - 缺陷：对比度降低
 
 ### histogram 直方图 & histogram equalization 直方图均衡化
+
+1. 直方图：
+    - 灰度图直方图：直方图是一种统计图，表示每一个灰度级中像素数占总像素数的比例
+    - 彩色图直方图：三通道各有一个直方图
+        - 用例：以图搜图（仅根据颜色分布）
+        - 用例：照片拼照片
+    - 缺陷：忽略了结构信息（斑马皮肤和国际象棋棋盘）
+    - 应用：图像压缩、增强、分割
+1. 直方图均衡化：
+    - 效果：增加对比度，使图像更清晰，颜色更鲜艳。比如说对于过曝和曝光不足的照片，灰度动态范围较小，灰度值集中，照片会看起来灰蒙蒙的，适合用直方图均衡化处理。
+    - 连续：
+        - 原始图像直方图 $r-P(r)$，满足 $\int_0^1 P(r)=1$
+        - 求一个映射 $s = T(r)$ 使得 $\forall s, P(s) = 1$
+        - $\int_{0}^{r}P(r)dr = \int_{0}^{s}P(s)ds = \int_{0}^{s}1\cdot ds=s$
+        - 公式：$s=\int_{0}^{r}P(r)dr$
+    - 离散：
+        - $s_k = \sum_{i=0}^k P(r_k)$，原来灰度值为 $r_k$ 的像素点被重新分配灰度值 $s_k$
+        - 递推：$s_k = s_{k-1} + P(r_k)$
+        - 近似：将 $s_k$ 近似为数值最相近的灰度级 $r_l$
+    - 缺陷：在连续条件下能做到完全均衡，但在离散条件下无法做到
+    - 局部直方图均衡化
+1. 附加操作：
+    1. 直方图匹配：
+        - 连续：做两次直方图均衡化 $s_k = T_1(r_{1k}) = T_2(r_{2k})$，则 $r_{2k} = T2^{-1}\cdot T1(r_{1k})$
+        - 离散：根据两张对应表建立新的对应表
+    1. histogram transformation：手动更改 $s=T(r)$ 函数调节亮度或对比度
+

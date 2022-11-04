@@ -197,15 +197,28 @@ Box operator+(const Box&, const Box&);
 
 ### 构造函数
 
-> 参考：[重载构造函数教程](http://c.biancheng.net/view/2221.html)
+使用初始化列表来初始化字段:
 
-举例：
+```cpp
+MyClass::MyClass( double a, double b, double c): X(a), Y(b), Z(c)
+{
+  // ...
+}
+```
+
+---
+
+复制构造函数：
 
 ```cpp
 
 ```
 
-使用可选参数：注意只在函数声明处写默认值，在定义函数时不要再加
+注意：若没有显示定义复制构造函数，则系统会默认创建一个复制构造函数，当类中有指针成员时，由系统默认创建的复制构造函数会存在“浅拷贝”的风险，因此必须显示定义复制构造函数。
+
+---
+
+使 **可选参数** ：注意只在函数声明处写默认值，在定义函数时不要再加
 
 ```cpp
 class Box{
@@ -220,3 +233,33 @@ Box::Box(int h,int w,int len){//在定义函数时可以不指定默认参数
     length=len;
 }
 ```
+
+### 析构函数
+
+析构函数（destructor）会在每次删除所创建的对象时执行。在程序正常结束时默认会使所有对象消亡。
+
+将动态分配的内存全部存在 class 内，能够有效避免内存泄露。
+
+举例：
+
+```cpp
+class String{
+private:
+    char* p;
+public:
+    String(int n);
+    ~String();
+};
+
+String::~String(){
+    delete[] p;
+}
+
+String::String(int n){
+    p = new char[n];
+}
+```
+
+### template
+
+note: template 不支持声明和定义在不同的文件里

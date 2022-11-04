@@ -197,7 +197,72 @@ up是直立，it是斜体，sl伪斜体（字宽比斜体略大），小型大�
 
 #### 数学公式
 
+##### 对齐
+
+```latex
+\usepackage{amsmath}
+
+\begin{align}
+\frac{|geo(p_k, p_j)-geo(q_k, q_j)|}{(geo(p_k, p_j)+geo(q_k, q_j))/2}>\epsilon_C\\
+\frac{|rad(p_k, p_j)-rad(q_k, q_j)|}{(rad(p_k, p_j)+rad(q_k, q_j))/2}>\epsilon_C
+\end{align}
+```
+
+`align` 会自动在公式后加编号，`align*` 不会
+
 #### 插入图片
+
+1. `\graphicspath{ {./images/} }` 图片的相对路径（关于主文件）或者绝对路径
+1. `\includegraphics{universe}` *只需要包含图片名称*，不需要拓展名。The file name of the image should not contain white spaces nor multiple dots.
+1. 图片放缩中，If only the width parameter is passed, the height will be *scaled to keep the aspect ratio*.
+1. rotating unit is  degrees and direction is counter-clockwise.
+1. figure 的参数
+
+
+| Parameter      | Position |
+| ----------- | ----------- |
+| h  |  Place the float here, i.e., approximately at the same point it occurs in the source text (however, not exactly at the spot) |
+| t  |  Position at the top of the page. |
+| b  |  Position at the bottom of the page. |
+| p  |  Put on a special page for floats only. |
+| !  |  Override internal parameters LaTeX uses for determining "good" float positions. |
+| H  |  Places the float at precisely the location in the LATEX code. Requires the float package, though may cause problems occasionally. This is somewhat equivalent to h!. |
+
+1. wrapfigure 相当于拿一个 div 在 img 外面把他套住， `\centering` 比如是在 wrapfigure 位置确定的基础上进行居中。参数如下：
+
+| Parameter |     | Position |
+|--|--|--|
+| r | R | right side of the text |
+| l | L | left side of the text |
+| i | I | inside edge–near the binding (in a twoside document) |
+| o | O | outside edge–far from the binding |
+
+
+举例：
+
+```latex
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+% basic use
+\includegraphics{universe}
+% changing size
+\includegraphics[scale=1.5]{overleaf-logo}
+\includegraphics[width=5cm, height=4cm]{overleaf-logo}
+\includegraphics[width=\textwidth]{universe}
+% rotating
+\includegraphics[scale=1.2, angle=45]{overleaf-logo}
+% positioning
+\begin{figure}[t]
+\includegraphics[width=8cm]{Plot}
+\centering
+\end{figure}
+% wrap
+\begin{wrapfigure}{r}{0.25\textwidth} %this figure will be at the right
+    \centering
+    \includegraphics[width=0.25\textwidth]{mesh}
+\end{wrapfigure}
+```
 
 #### 插入列表
 

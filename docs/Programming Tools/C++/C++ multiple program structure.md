@@ -37,13 +37,15 @@
 
 ### 共享变量
 
-使用 extern 声明
+使用 extern 声明：一次声明，一次定义，多次使用
 
 ```cpp
+// a.h
+extern int a[];
 // A.cpp
 int a[N];
 // B.cpp
-extern int a[];
+a[0] = 0;
 ```
 
 [参考博客](https://blog.csdn.net/qq_27942333/article/details/84719737)
