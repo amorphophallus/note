@@ -72,4 +72,22 @@
         - 父亲：$father(i)$ 是一个阶梯函数，$father(1) = 0$，每过 d 个数函数值 +1，$father(i) = \lfloor (i+d-2)/d\rfloor$
         - 最大的儿子：把最大的儿子后面的节点全去掉，则树上除了叶子之外全都是满儿子，$$father(son_{max}(i)) = [son_{max}(i)-1]/d = i$$ 所以 $son_{max}(i)=id+1$
         - 最小的儿子： $son_{min}(i) = (i-1)d+2$
-7. ch7: disjoint set ( )
+7. ch7: disjoint set ( 并查集 )
+    - union-by-size: 小树合并做大树的儿子，查询 $O(\log_2 N)$，因为从任意节点每往上爬一层，子树大小至少翻一倍
+        - array representation: 非根节点，数组中存父亲编号；根节点，数组中存数组大小的相反数
+    - union-by-depth: 浅树合并做深树的儿子，查询 $O(\log_2 N)$，因为一棵深度为 n 的树需要 2 棵深度为 n-1 的树合并得到，所以深度为 n 的树大小至少为 $2^n$，树深度为 $O(\log_2 N)$ 级
+    - path compression: 查询和合并的复杂度都是 $O(1)$】
+        - 并查集的非递归写法：
+            ```c
+            SetType  Find ( ElementType  X, DisjointSet  S )
+            {
+                ElementType  root,  trail,  lead;
+                for ( root = X; S[ root ] > 0; root = S[ root ] );
+                for ( trail = X; trail != root; trail = lead ) {
+                lead = S[ trail ] ;   
+                S[ trail ] = root ;   
+                }
+                return  root ;
+            }
+            ```
+    - relation 的性质：reflexive 自反性，symmetric, transit
