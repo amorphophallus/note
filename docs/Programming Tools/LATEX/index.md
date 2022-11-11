@@ -532,12 +532,18 @@ int main()
 使用方法是在打开 excel 之后再点击 `Excel2LaTeX.xla` 文件，在 excel 的顶部导航中会出现一个新的栏目。
 
 在自动转换之后还需要加上包依赖和格式
+1. 表格样式之间加上竖线
+2. 每行之间加上横线
+3. 多行的之间加上短横线 `\cline`
+4. 如果表格太大就调整表格大小
+5. 如果原文件已经包含 xcolor，只需要在方括号中加上 table 即可，不用重新包含
 
 ```latex
 % 包依赖
 \usepackage{multirow} % 多行
 \usepackage{array} % 对齐
 \usepackage{graphicx} % 表格自动调整大小
+\usepackage[table]{xcolor} % 表格颜色
 
 % 格式
 \begin{tabular}{| c | c | c | c | c | c | c | c |} % 表格竖线的样式
