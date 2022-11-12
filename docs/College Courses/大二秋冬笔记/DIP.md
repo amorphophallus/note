@@ -449,7 +449,11 @@ padding：
 1. Weber's Law:
     - 肉眼可见的灰度值差 visible threshold $\frac{\Delta I}{I}\approx 1...2\%$ 
     - 定理的定义范围有限，在亮度过大或者过小时不成立
-    - 显示设备想要至少呈现出人眼能区分的 256 级灰度，要求 $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$ 对比度 $\frac{I_{max}}{I_{min}}$ 值越大，能显示的灰度范围越大，说明显示器效果越好
+    - 显示设备想要至少呈现出人眼能区分的 256 级灰度，要求 
+    
+    $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$
+    
+    对比度 $\frac{I_{max}}{I_{min}}$ 值越大，能显示的灰度范围越大，说明显示器效果越好
     - Fechner's Law: 人眼的感知能力正比于 $\log(I)$
 1. $\gamma$ 校正：
     - 最初用于 CRT 显示器，后用于图像后期处理
@@ -496,6 +500,7 @@ padding：
 
 1. 简单变换(simple transformation or warp)
     1. 平移：
+
         $$
         \begin{align*}
         \begin{bmatrix}
@@ -530,7 +535,9 @@ padding：
         \end{bmatrix}
         \end{align*}
         $$
+
     2. 镜像：
+
         $$
         \begin{align*}
         \begin{bmatrix}
@@ -565,8 +572,10 @@ padding：
         \end{bmatrix}
         \end{align*}
         $$
+
         - $s_x=1,s_y=-1$ 关于 x 轴对称，$s_x=-1,s_y=1$ 关于 y 轴对称
     3. 旋转：
+
         $$
         \begin{align*}
         \begin{bmatrix}
@@ -601,11 +610,13 @@ padding：
         \end{bmatrix}
         \end{align*}
         $$
+
         - 逆时针旋转
         - 需要移动到画布中间：$\Delta x, \Delta y$ 取原图 4 个顶点在新图中的坐标最小值的相反数
         - 需要插值
     4. 缩放(scale): 缩小 = shrink = down-sampling
         - 缩小：需要取样，放大：需要插值
+
         $$
         \begin{align*}
         \begin{bmatrix}
@@ -640,7 +651,9 @@ padding：
         \end{bmatrix}
         \end{align*}
         $$
+
     5. 错切(shear)
+
         $$
         \begin{bmatrix}
         x'\\
@@ -658,8 +671,10 @@ padding：
         1
         \end{bmatrix}
         $$
+
         $d_x$ 是常数，对 y 做错切同理。
     6. 组合：
+
         $$
         \begin{bmatrix}
         x'\\
@@ -677,17 +692,20 @@ padding：
         1
         \end{bmatrix}
         $$
+
 2. 插值(interpolation)
     1. nearest neighbor：通过逆变换把新图坐标转换为原图坐标（实数），在原图像上取最近邻
     2. linear interpolation: 
         - 1D
         - 2D: bilinear equation
+
             $$
             \begin{align*}
             g(x,y)&=ax+by+cxy+d\\
             &=\frac{B-A}{x_0}x+\frac{C-A}{y_0}y+\frac{(A+D)-(B+C)}{x_0y_0}xy+A
             \end{align*}
             $$
+
             其中 $A,B,C,D$ 分别是 $(0,0),(x_0,0),(0,y_0),(x_0,y_0)$ 处的函数值
     3. bicubic(双三次)
     4. RBF：![Alt text](./img/%E5%B9%BB%E7%81%AF%E7%89%8770.PNG)![Alt text](./img/%E5%B9%BB%E7%81%AF%E7%89%8772.PNG)
@@ -698,17 +716,21 @@ padding：
 ## Chapter 4 Convolution & Filtering
 
 1. 1-D convolution:
+
     $$
     \begin{align*}
     g(x)=f(x)*h(x)=\int_{-\infty}^{+\infty}f(t)h(x-t)dt\\
     g(x)=f(x)*h(x)=\frac{1}{M}\sum_{t=0}^{M-1}f(t)h(x-t)
     \end{align*}
     $$
+
     - 交换律: $f*g=g*f$
     - 结合律: $(f*g)*h=f*(g*h)$
     - 分配律: $f*(g+h)=f*g+f*h$
 2. Filtering:
     - 卷积核称为 filter，这里二维卷积相当于加权求和
+
     $$g(x,y)=\sum_{i=-n}^n\sum_{j=-m}^m kernel(i,j)f(x+i,y+j)$$
+
     1. low-pass filter（低通滤波）
         - e.g. mean filter（均值滤波）
