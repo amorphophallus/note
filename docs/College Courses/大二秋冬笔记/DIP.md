@@ -70,7 +70,7 @@
     - RGB<->CIE YUV ![](img/%E5%B9%BB%E7%81%AF%E7%89%8779.PNG)
 
 
-## 存储图像的数据结构 & 图像处理方法
+## Chapter 1 存储图像的数据结构 & 图像处理方法
 
 1. 矩阵：例如 multispectral image 多光谱图像
 2. 链表：例如 RLE(Run Length Encoding)
@@ -103,6 +103,9 @@
 
 重要信息：
 - `bfOffBits`: 找到 bitmap 的开头
+
+注意：
+- bfTtype 需要注意字节序的问题，最保险的做法是 `bfType = *(unsigned short*)((unsigned char*)"BM")`
 
 ```c
 struct BITMAPFILEHEADER
@@ -347,7 +350,7 @@ int getBmpFile(BMP & bmp){
 
 
 
-## 二值图像和形态学操作(Binary Image and Morphological Operation)
+## Chapter 2 二值图像和形态学操作(Binary Image and Morphological Operation)
 
 ### 结构定义
 
@@ -442,19 +445,21 @@ padding：
 
 ### visibility & enhancement
 
-1. greyScale perception: 256 级已经超过了人眼可以分辨的
+1. greyScale perception: 256 级已经超过了人眼可以分辨的范围
 1. Weber's Law:
     - 肉眼可见的灰度值差 visible threshold $\frac{\Delta I}{I}\approx 1...2\%$ 
     - 定理的定义范围有限，在亮度过大或者过小时不成立
-    - 显示设备想要至少呈现出 256 级灰度，要求 $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$ 对比度 $\frac{I_{max}}{I_{min}}$ 值越大说明显示器效果越好
+    - 显示设备想要至少呈现出人眼能区分的 256 级灰度，要求 $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$ 对比度 $\frac{I_{max}}{I_{min}}$ 值越大，能显示的灰度范围越大，说明显示器效果越好
+    - Fechner's Law: 人眼的感知能力正比于 $\log(I)$
 1. $\gamma$ 校正：
-    - 最初用于想 CRT 显示器，后用于图像后期处理，$\gamma$ 越大 对比度越高
+    - 最初用于 CRT 显示器，后用于图像后期处理
+    - $$I=U^{\gamma},U=I^{\frac{1}{\gamma}}$$ $\gamma$ 越大, 对比度越高
     - 曝光值 E
     - 现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 -> Dynamic range compression
-1. 色调映射 (tone mapping) -> visibility enhancement（解决过曝和曝光不足）
-1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(L_w+1)}{\log(L_{max}+1)}$
-    - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上
-    - 缺陷：对比度降低
+1. 色调映射 (tone mapping) -> visibility enhancement（解决过曝和曝光不足，从而可以看清更多部分）
+1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(\beta L_w+1)}{\log(\beta L_{max}+1)}$
+    - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上， $\beta$ 是系数，$\beta$ 越小，图像对比度越低，整体亮度越高；反之对比度升高但是增亮效果削弱
+    - 缺陷：对比度降低（可以再使用直方图均衡化增加对比度）
 
 ### histogram 直方图 & histogram equalization 直方图均衡化
 
@@ -479,8 +484,231 @@ padding：
     - 缺陷：在连续条件下能做到完全均衡，但在离散条件下无法做到
     - 局部直方图均衡化
 1. 附加操作：
-    1. 直方图匹配：
+    1. 直方图匹配（以图搜图）：
         - 连续：做两次直方图均衡化 $s_k = T_1(r_{1k}) = T_2(r_{2k})$，则 $r_{2k} = T2^{-1}\cdot T1(r_{1k})$
         - 离散：根据两张对应表建立新的对应表
-    1. histogram transformation：手动更改 $s=T(r)$ 函数调节亮度或对比度
+    1. histogram transformation：手动更改 $s=T(r)$ 函数调节亮度或对比度（在 ps 里就有这个图）
+        - 部分亮度对比度增强：分段函数
+    1. 颜色量化：$r-s$ 图变成阶梯函数，减小图像存储空间
 
+
+## Chapter 3 Geometric Transformation
+
+1. 简单变换(simple transformation or warp)
+    1. 平移：
+        $$
+        \begin{align*}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        1 & 0 & \Delta x\\
+        0 & 1 & \Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}\\\\
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        1 & 0 & -\Delta x\\
+        0 & 1 & -\Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}
+        \end{align*}
+        $$
+    2. 镜像：
+        $$
+        \begin{align*}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        s_x & 0 & 0\\
+        0 & s_y & \Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}\\\\
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        s_x & 0 & 0\\
+        0 & s_y & \Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}
+        \end{align*}
+        $$
+        - $s_x=1,s_y=-1$ 关于 x 轴对称，$s_x=-1,s_y=1$ 关于 y 轴对称
+    3. 旋转：
+        $$
+        \begin{align*}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        \cos\theta & -\sin\theta & \Delta x\\
+        \sin\theta & \cos\theta & \Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}\\\\
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        \cos\theta & \sin\theta & -\cos\theta\Delta x-\sin\theta\Delta y\\
+        -\sin\theta & \cos\theta & \sin\theta\Delta x-\cos\theta\Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}
+        \end{align*}
+        $$
+        - 逆时针旋转
+        - 需要移动到画布中间：$\Delta x, \Delta y$ 取原图 4 个顶点在新图中的坐标最小值的相反数
+        - 需要插值
+    4. 缩放(scale): 缩小 = shrink = down-sampling
+        - 缩小：需要取样，放大：需要插值
+        $$
+        \begin{align*}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}=
+        \begin{bmatrix}
+        k_x & 0 & 0\\
+        0 & k_y & 0\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}\\\\
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}=
+        \begin{bmatrix}
+        \frac{1}{k_x} & 0 & 0\\
+        0 & \frac{1}{k_y} & 0\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}
+        \end{align*}
+        $$
+    5. 错切(shear)
+        $$
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}=
+        \begin{bmatrix}
+        1 & d_x & 0\\
+        0 & 1 & 0\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}
+        $$
+        $d_x$ 是常数，对 y 做错切同理。
+    6. 组合：
+        $$
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}=
+        \begin{bmatrix}
+        a & b & c\\
+        d & e & f\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}
+        $$
+2. 插值(interpolation)
+    1. nearest neighbor：通过逆变换把新图坐标转换为原图坐标（实数），在原图像上取最近邻
+    2. linear interpolation: 
+        - 1D
+        - 2D: bilinear equation
+            $$
+            \begin{align*}
+            g(x,y)&=ax+by+cxy+d\\
+            &=\frac{B-A}{x_0}x+\frac{C-A}{y_0}y+\frac{(A+D)-(B+C)}{x_0y_0}xy+A
+            \end{align*}
+            $$
+            其中 $A,B,C,D$ 分别是 $(0,0),(x_0,0),(0,y_0),(x_0,y_0)$ 处的函数值
+    3. bicubic(双三次)
+    4. RBF：![Alt text](./img/%E5%B9%BB%E7%81%AF%E7%89%8770.PNG)![Alt text](./img/%E5%B9%BB%E7%81%AF%E7%89%8772.PNG)
+3. morph：同时改变像素位置和值
+    - 分类：基于像素、线段、特征点
+    - 应用：表情映射（可用机器学习实现），特征值分解
+
+## Chapter 4 Convolution & Filtering
+
+1. 1-D convolution:
+    $$
+    \begin{align*}
+    g(x)=f(x)*h(x)=\int_{-\infty}^{+\infty}f(t)h(x-t)dt\\
+    g(x)=f(x)*h(x)=\frac{1}{M}\sum_{t=0}^{M-1}f(t)h(x-t)
+    \end{align*}
+    $$
+    - 交换律: $f*g=g*f$
+    - 结合律: $(f*g)*h=f*(g*h)$
+    - 分配律: $f*(g+h)=f*g+f*h$
+2. Filtering:
+    - 卷积核称为 filter，这里二维卷积相当于加权求和
+    $$g(x,y)=\sum_{i=-n}^n\sum_{j=-m}^m kernel(i,j)f(x+i,y+j)$$
+    1. low-pass filter（低通滤波）
+        - e.g. mean filter（均值滤波）
