@@ -166,7 +166,7 @@ markdown_extensions:
       permalink: true
 
   # Python Markdown Extensions
-  - pymdownx.arithmatex:
+  - pymdownx.arithmatex: # 显示 latex 公式
       generic: true
   - pymdownx.betterem:
       smart_enable: all
@@ -195,3 +195,8 @@ plugins:
     - roamlinks
     - tags:
         tags_file: tags.md
+
+# extra js
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js
