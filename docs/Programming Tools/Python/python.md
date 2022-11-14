@@ -281,6 +281,26 @@ print( random.randrange(1,100,2) )   # 生成从1到100的间隔为2的随机整
 print("{} + {} = {}".format(1, 1, 1+1)) # 类似于 printf 的输出方式
 ```
 
+4. argmin / argmax
+
+返回元素最值的索引
+
+```py
+import numpy as np
+a = np.array([3, 1, 2, 4, 6, 1])
+b = np.argmax(a)
+```
+
+5. deepcopy
+
+深拷贝，地址不相同
+
+```py
+import copy
+a = [1, 2, 3]
+d = copy.deepcopy(a) # a和d的地址不相同
+```
+
 #### 传参：传值 vs 引用
 
 1. 自定义类型传参是引用(赋值也是引用)
@@ -414,6 +434,11 @@ finally:                    # 不管是否异常都执行
 [python document class](https://docs.python.org/zh-cn/3/tutorial/classes.html)
 
 1. 方法函数在声明时，有一个显式的参数代表本对象，该参数由调用隐式提供
+
+## Python 常用包
+
+1. 三维画图：`Axes3D`
+2. 表格：`pandas.DataFrame`
 
 ## 其他问题
 

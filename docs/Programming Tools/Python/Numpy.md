@@ -29,6 +29,11 @@
 2. `np.linspace()` 等差数列
 3. `np.logspace()` 等比数列
 
+补充：
+
+1. 从 pandas.DataFrame 转换：`dataNd=dataDf.values`
+2. 转换为 pandas.DataFrame: `dataDf=pd.DataFrame(np.arange(12).reshape(3,4))`
+
 ### 矩阵的自我重复
 
 在 `axis` 那一维上重复 `n` 次，形状从 `(a, b, c)` 变成 `(a, b*n, c)`
@@ -193,6 +198,15 @@ To be continued.
 
 
 ## 运算
+
+### 算数函数
+
+```py
+np.add(a,b)
+np.subtract(a,b)
+np.multiply(a,b)
+np.divide(a,b)
+```
 
 ###  矩阵乘法（高维）
 
