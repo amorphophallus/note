@@ -23,7 +23,7 @@
 7. README
     - 怎么编译？怎么运行？怎么输入？期望的输出？
 
-## 绪论
+## 课程笔记
 
 1. ch1：课程简介
 2. ch2：复杂度分析
@@ -91,3 +91,9 @@
             }
             ```
     - relation 的性质：reflexive 自反性，symmetric, transit
+8. ch8: graph
+    - 定义：![Alt text](./img/ch9-1.png)![Alt text](./img/ch9-2.png)![Alt text](./img/ch9-3.png)
+        - 单讲 connected 一般是无向图，有向图要分强联通和弱联通
+        - 有向图的 adjacent 有 from 和 to 之分
+    - 图的存储方式：adjacent multilist，就是同一条边存两个next，分别是对于出点的 next 和对于入点的 next，方便找入度
+    - 拓扑排序相关定义：![Alt text](./img/ch9-4.png)

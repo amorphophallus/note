@@ -574,6 +574,7 @@ padding：
         $$
 
         - $s_x=1,s_y=-1$ 关于 x 轴对称，$s_x=-1,s_y=1$ 关于 y 轴对称
+
     3. 旋转：
 
         $$
@@ -611,7 +612,7 @@ padding：
         \end{align*}
         $$
 
-        - 逆时针旋转
+        - 顺时针旋转
         - 需要移动到画布中间：$\Delta x, \Delta y$ 取原图 4 个顶点在新图中的坐标最小值的相反数
         - 需要插值
     4. 缩放(scale): 缩小 = shrink = down-sampling
