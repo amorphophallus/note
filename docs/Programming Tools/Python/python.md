@@ -358,6 +358,11 @@ print(node.x)
         ```
         - 只有当文件被当作脚本执行的时候， __name__ 的值才会是 `'__main__'`
 
+#### Python 常用包
+
+1. 三维画图：`Axes3D`
+2. 表格：`pandas.DataFrame` [有需要照着这个文档写就行了](https://blog.csdn.net/Parzival_/article/details/114240650)
+
 ### 异常处理
 
 [Python 标准异常查表](https://www.runoob.com/python/python-exceptions.html)
@@ -435,10 +440,7 @@ finally:                    # 不管是否异常都执行
 
 1. 方法函数在声明时，有一个显式的参数代表本对象，该参数由调用隐式提供
 
-## Python 常用包
 
-1. 三维画图：`Axes3D`
-2. 表格：`pandas.DataFrame`
 
 ## 其他问题
 
