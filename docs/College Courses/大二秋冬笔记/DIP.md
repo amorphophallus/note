@@ -801,6 +801,7 @@ padding：
                 &=f(x+1,y)+f(x-1,y)+f(x,y+1)+f(x,y-1)-4f(x,y)
             \end{aligned}
             $$
+            
         - 常见锐化滤波
             1. gradient based method: 
                 - 其中 $z_5$ 是中心元素，$z'_5$ 是用梯度滤波得到的像素值，$z''_5$ 是用 Robert Cross Gradient 得到的像素值。
