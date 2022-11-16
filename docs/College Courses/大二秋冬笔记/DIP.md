@@ -733,5 +733,122 @@ padding：
 
     $$g(x,y)=\sum_{i=-n}^n\sum_{j=-m}^m kernel(i,j)f(x+i,y+j)$$
 
-    1. low-pass filter（低通滤波）
-        - e.g. mean filter（均值滤波）
+    1. low-pass filter（低通滤波）,i.e. filtering for smoothing（平滑滤波）
+        1. linear smoothing filter, i.e. mean filter（均值滤波）, box filter
+            - 卷积核 (size of *mask* ) 越大，模糊得越厉害
+            - 手机相机的“大光圈”模式：判断景深并用相应大小的卷积核进行平滑滤波
+
+        $$
+        \begin{aligned}
+            Kernel_{mean} = \frac{1}{9}
+            \begin{bmatrix}
+            1 & 1 & 1 \\
+            1 & 1 & 1 \\
+            1 & 1 & 1
+            \end{bmatrix}\\
+            Kernel_{weighted\_mean} = \frac{1}{16}
+            \begin{bmatrix}
+            1 & 2 & 1 \\
+            2 & 4 & 2 \\
+            1 & 2 & 1
+            \end{bmatrix}\\
+        \end{aligned}
+        $$
+
+        2. statistical sorting filter（统计排序滤波）
+            - e.g. median filter（中值滤波）：取 mask 中的中位数作为像素值
+
+        3. Gaussian filter: 用正态分布函数来做代权平均
+
+        $$
+        GB[I]_p=\frac{1}{W_p}\sum_{q\in S}G_{\sigma}(||p-q||)I_q
+        $$
+
+    2. sharpening filter（锐化滤波）
+        - 效果：滤波得到的是边界图像（像素值变化越剧烈值越大），将原图和滤波后的图像融合（fusion，像素值相加）得到边缘增强的图像。
+        - 数学基础：
+            1. discrete differential:
+
+            $$
+            \frac{\partial f}{\partial x}=f(x+1)-f(x)
+            $$
+
+            2. discrete second order idfferential:
+
+            $$
+            \frac{\partial^2 f}{\partial x^2}=f(x+1)+f(x-1)-2f(x)
+            $$
+
+            3. gradient & nabla operator:
+
+            $$
+            \begin{aligned}
+                \nabla f&=
+                \begin{bmatrix}
+                \frac{\partial f}{\partial x}\\
+                \frac{\partial f}{\partial y}
+                \end{bmatrix}\\
+                |\nabla f|&\approx|\frac{\partial f}{\partial x}|+|\frac{\partial f}{\partial y}|
+            \end{aligned}
+            $$
+
+            4. Laplacian operator: 其中平方的含义类似向量点乘
+
+            $$
+            \begin{aligned}
+                \Delta f&=\nabla^2 f\\
+                &=\frac{\partial^2 f}{\partial x^2}+\frac{\partial^2 f}{\partial y^2}\\
+                &=f(x+1,y)+f(x-1,y)+f(x,y+1)+f(x,y-1)-4f(x,y)
+            \end{aligned}
+            $$
+        - 常见锐化滤波
+            1. gradient based method: 
+                - 其中 $z_5$ 是中心元素，$z'_5$ 是用梯度滤波得到的像素值，$z''_5$ 是用 Robert Cross Gradient 得到的像素值。
+
+            $$
+            \begin{aligned}
+                Window &=
+                \begin{bmatrix}
+                z_1 & z_2 & z_3 \\
+                z_4 & z_5 & z_6 \\
+                z_7 & z_8 & z_9
+                \end{bmatrix}\\
+                z'_5&=|z_6-z_5|+|z_8-z_5|\\
+                z''_5&=|z_9-z_5|+|z_8-z_6|
+            \end{aligned}
+            $$
+
+            2. Laplacian filter:
+                - 梯度滤波容易产生较粗的边缘，使用二阶偏导的拉普拉斯滤避免了这一问题，像素均匀变化的区域不会被增强。但是容易受噪点的影响，所以可以用 *高斯拉普拉斯变换* 改进。
+                - 其中 c 是衰减参数，正负性与原像素的像素值相同。可以发现，如果原像素值是正的，且是一个极大值点，则拉普拉斯算子得到的结果是负的，想要增强这个边缘像素的话就必须减掉这个正的值。极小值点同理。
+
+            $$
+            \begin{aligned}
+                Kernel_{laplacian} &=
+                \begin{bmatrix}
+                0 & 1 & 0 \\
+                1 & -4 & 1 \\
+                0 & 1 & 0
+                \end{bmatrix}\\
+                Kernel_{extended} &=
+                \begin{bmatrix}
+                1 & 1 & 1 \\
+                1 & -8 & 1 \\
+                1 & 1 & 1
+                \end{bmatrix}\\
+                g(x,y)&=f(x,y)-c\Delta f(x,y)
+            \end{aligned}
+            $$
+
+    3. bilateral filter（双边滤波）
+        - 基本目标：smoothing
+        - 效果：去噪、磨皮美颜、基于双边滤波的 tone mapping、改变图片风格（漫画滤镜）
+        - 原理：同时考虑距离和像素值——距离越近影响越大，像素值越接近影响越大。 $\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。
+        - 参数设置：$\sigma_s$ 可以设成对角线的 2%，单位像素； $\sigma_r$ 可以设置成窗口中所有像素梯度的平均值
+
+        $$
+        \begin{aligned}
+        BF[I]_p&=\frac{1}{W_p}\sum_{q\in S}G_{\sigma_s}(||p-q||)G_{\sigma_r}(|I_p-I_q|)I_q\\
+        BF[RGB]_p&=\frac{1}{W_p}\sum_{q\in S}G_{\sigma_s}(||p-q||)G_{\sigma_r}(||\mathbf{RGB_p}-\mathbf{RGB_q}||)\mathbf{RGB_q}
+        \end{aligned}
+        $$
