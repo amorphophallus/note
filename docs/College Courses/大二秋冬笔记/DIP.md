@@ -459,8 +459,8 @@ padding：
     - 最初用于 CRT 显示器，后用于图像后期处理
     - $$I=U^{\gamma},U=I^{\frac{1}{\gamma}}$$ $\gamma$ 越大, 对比度越高
     - 曝光值 E
-    - 现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 -> Dynamic range compression
-1. 色调映射 (tone mapping) -> visibility enhancement（解决过曝和曝光不足，从而可以看清更多部分）
+    - 现实世界：HDR(high dynamic range) 亮度范围 10^8 远超可以显示的亮度值 *（，如果不进行处理有一部分会溢出可显示范围无法显示出差异）* -> Dynamic range compression
+1. **色调映射 (tone mapping)** -> visibility enhancement（解决过曝和曝光不足，从而可以看清更多部分）
 1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(\beta L_w+1)}{\log(\beta L_{max}+1)}$
     - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上， $\beta$ 是系数，$\beta$ 越小，图像对比度越低，整体亮度越高；反之对比度升高但是增亮效果削弱
     - 缺陷：对比度降低（可以再使用直方图均衡化增加对比度）
@@ -843,9 +843,14 @@ padding：
 
     3. bilateral filter（双边滤波）
         - 基本目标：smoothing
-        - 效果：去噪、磨皮美颜、基于双边滤波的 tone mapping、改变图片风格（漫画滤镜）
-        - 原理：同时考虑距离和像素值——距离越近影响越大，像素值越接近影响越大。 $\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。
+        - 效果：
+            1. 去噪
+            2. 基于双边滤波的 tone mapping：原图去掉双边滤波后的 low-frequency 部分
+            3. relighting
+            4. 其他：磨皮美颜、改变图片风格（漫画滤镜）
+        - 原理： **同时考虑距离和像素值** ——距离越近影响越大，像素值越接近影响越大。 $\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。
         - 参数设置：$\sigma_s$ 可以设成对角线的 2%，单位像素； $\sigma_r$ 可以设置成窗口中所有像素梯度的平均值
+        - 公式：其中 $G_{\sigma}$ 是高斯（正态）分布函数
 
         $$
         \begin{aligned}
@@ -853,3 +858,7 @@ padding：
         BF[RGB]_p&=\frac{1}{W_p}\sum_{q\in S}G_{\sigma_s}(||p-q||)G_{\sigma_r}(||\mathbf{RGB_p}-\mathbf{RGB_q}||)\mathbf{RGB_q}
         \end{aligned}
         $$
+
+        - 快速近似：[参考博客](https://zhuanlan.zhihu.com/p/272236618)
+        - 缺点：容易产生梯度逆转
+    4. guided filter：[参考博客](https://zhuanlan.zhihu.com/p/161666126)

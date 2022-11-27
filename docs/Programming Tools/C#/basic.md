@@ -4,6 +4,7 @@
 
 > 参考资料：
 > 1. [菜鸟教程](https://www.runoob.com/csharp/csharp-tutorial.html)
+> 
 > todo:
 > 1. CSharp 语法，和 C 不一样的地方记一下 [菜鸟教程](https://www.runoob.com/csharp/csharp-tutorial.html)
 > 2. CSharop Task （继承 Task 创建新类） [Task 详解](https://www.cnblogs.com/zhaoshujie/p/11082753.html)
@@ -33,6 +34,9 @@ Task t1 = new Task(action, "alpha");
 // with return value
 var t = Task<int>.Run(action);
 ```
+
+1. `new Task` 不会直接开始运行直到 `t.Start()`
+2. `Task.Run()` 会直接开始异步运行
 
 ### delegate
 
@@ -80,9 +84,42 @@ public delegate TResult Func<out TResult>();
 
 **注意：** 函数返回语句不能放在 finally 里，因为不管是否获取到错误 finally 一定会执行，与 catch 错误之后返回是矛盾的。
 
-### JS Error & C# Exception
+### 异常处理——堆栈跟踪
 
-**注意：** throw new Exception 有 context
+显示报错的具体位置
+
+```CS
+try
+{
+    errorMethod();
+}
+catch (System.Exception e)
+{
+    Console.Write("Method exception:" + e.Message + "\n\n" + e.StackTrace);
+}
+```
+
+### base
+
+base 关键字用于从派生类中访问基类的成员：
+
+- 调用基类上已被其他方法重写的方法。
+
+- 指定创建派生类实例时应调用的基类构造函数。
+
+仅允许基类访问在构造函数、实例方法或实例属性访问器中进行。
+
+```cs
+// This constructor will call BaseClass.BaseClass(int i) 用基类的构造函数构造
+public DerivedClass(int i) : base(i)
+{
+}
+```
+
+### is
+
+判断类型
+
 
 ## Jint
 
@@ -152,14 +189,93 @@ public delegate TResult Func<out TResult>();
 - 有多个异步的函数需要执行，在所有异步函数运行结束后执行一个函数，即实现一个功能类似于 `Promise.all()` 的函数。
 - 需要封装到 JS 内部只需要正常写代码，而能够完成错误获取和处理
 
-问题：JS function 并不能完全转化为 C# delegate 类，在转化过程中报错的语句翻译不过来。所以不能将可能报错的 JS function 作为参数传到 C# 函数里进行执行，必须在 JS 转 C# 之前在 JS 代码中就把错误处理给做好。
+~~问题：JS function 并不能完全转化为 C# delegate 类，在转化过程中报错的语句翻译不过来。所以不能将可能报错的 JS function 作为参数传到 C# 函数里进行执行，必须在 JS 转 C# 之前在 JS 代码中就把错误处理给做好。~~
+
+目前的问题：
+
+stackTrace
+
+```CS
+MethodA exception:Expected string but got Undefined
+在 Jint.JsValueExtensions.ThrowWrongTypeException(JsValue value, String expectedType)
+在 Jint.Runtime.JavaScriptException.JavaScriptErrorWrapperException.SetCallstack(Engine engine, Location location, Boolean overwriteExisting)
+在 Jint.Runtime.JavaScriptException.SetJavaScriptCallstack(Engine engine, Location& location, Boolean overwriteExisting)
+在 Jint.Runtime.ExceptionHelper.ThrowJavaScriptException(Engine engine, JsValue value, Completion& result)
+在 Jint.Native.Function.ScriptFunctionInstance.Call(JsValue thisArgument, JsValue[] arguments)
+在 Jint.Runtime.Interpreter.Expressions.JintCallExpression.EvaluateInternal(EvaluationContext context)
+在 Jint.Runtime.Interpreter.Expressions.JintExpression.GetValue(EvaluationContext context)
+在 Jint.Runtime.Interpreter.Statements.JintVariableDeclaration.ExecuteInternal(EvaluationContext context)
+在 Jint.Runtime.Interpreter.JintStatementList.Execute(EvaluationContext context)
+在 Jint.Runtime.Interpreter.Statements.JintBlockStatement.ExecuteBlock(EvaluationContext context)
+在 Jint.Runtime.Interpreter.Statements.JintBlockStatement.ExecuteInternal(EvaluationContext context)
+在 Jint.Runtime.Interpreter.Statements.JintTryStatement.ExecuteInternal(EvaluationContext context)
+在 Jint.Runtime.Interpreter.JintStatementList.Execute(EvaluationContext context)
+在 Jint.Engine.ScriptEvaluation(ScriptRecord scriptRecord)
+在 Jint.Engine.<>c__DisplayClass70_0.<Execute>b__0()
+在 Jint.Engine.ExecuteWithConstraints[T](Boolean strict, Func`1 callback)
+在 Jint.Engine.Execute(Script script)
+在 Jint.Engine.Execute(String code, String source, ParserOptions parserOptions)
+在 Jint.Engine.Execute(String code, String source)
+在 ConsoleApp4.Promise.<>c__DisplayClass3_0.<Then>b__0(Task`1 rep) 位置 D:\Projects\csrepo\ConsoleApp4\Program.cs:行 号 51default!!!!
+```
+
+1. `JavaScriptErrorWrapperException` 类从 `JintException` 继承而来，`JintException` 是从 `Exception` 继承而来。在其中的 `SetCallstack` 方法中，`Error` 有 `CommonProperties.Stack` 这个属性，但是不是 `String` 而是 `undefined`，所以在 `AsString` 的时候报错 `Expected string but got Undefined`.
+    ```cs
+    internal void SetCallstack(Engine engine, Location location, bool overwriteExisting)
+    {
+        _location = location;
+
+        var errObj = Error.IsObject() ? Error.AsObject() : null;
+        if (errObj is null)
+        {
+            _callStack = engine.CallStack.BuildCallStackString(location);
+            return;
+        }
+
+        // Does the Error object already have a stack property?
+        if (errObj.HasProperty(CommonProperties.Stack) && !overwriteExisting)
+        {
+            _callStack = errObj.Get(CommonProperties.Stack).AsString();
+        }
+        else
+        {
+            _callStack = engine.CallStack.BuildCallStackString(location);
+            errObj.FastSetProperty(CommonProperties.Stack._value, new PropertyDescriptor(_callStack, false, false, false));
+        }
+    }
+    ```
+
+2. 调用 `SetCallstack` 的是 `ExceptionHelper.ThrowJavaScriptException` 方法中的一句 `throw new JavaScriptException(value).SetJavaScriptCallstack(engine, result.Location);`。问题在新建 `JavaScriptException` 实例的时候的 `value`。
+    ```cs
+    public static void ThrowJavaScriptException(Engine engine, JsValue value, in Completion result)
+    {
+        throw new JavaScriptException(value).SetJavaScriptCallstack(engine, result.Location);
+    }
+    ```
+
+3. `CommonProperties` 是定义在 `CommonProperties.cs` 中的类，`CommonProperties.Stack` 就是一个 `"stack"` 字符串
+
+4. `JavaScriptException` 的构造函数是调用基类中的构造函数
+    ```cs
+    public JavaScriptException(JsValue error)
+        : base(GetMessage(error), new JavaScriptErrorWrapperException(error, GetMessage(error)))
+    {
+        _jsErrorException = (JavaScriptErrorWrapperException) InnerException!;
+    }
+    ```
+
+5. 最终问题是出在函数换了一个 engine 运行之后堆栈信息丢失，导致无法抛出错误。解决办法是把 engine 当成变量传到 engine 里面。
+
+在 js 中封装 C# 中的 Promise 类：
 
 ```js
+// 在 JS 中进行 try catch
 class PromType{
-    constructor(prom){
+    constructor(prom = Async(), ancestor = undefined){
         this.promData = prom;
+        this.ancestor = (typeof ancestor) == (typeof undefined) ? prom : ancestor;
         this.then = function(func){
-            return new PromType(this.promData.Then((data) =>{
+            return new PromType(eng, this.promData.Then((data) =>{
                 try{
                     log('in JS then!!!!' + data);
                     let ret = func(data);
@@ -169,7 +285,7 @@ class PromType{
                     log('!!!!!');
                     return RetValue(err.message, 1);
                 }
-            }));
+            }), this.ancestor);
         };
         this.catch = function(func){
             return new PromType(this.promData.Catch((data) =>{
@@ -182,13 +298,65 @@ class PromType{
                     log('!!!!!');
                     return RetValue(err.message, 1);
                 }
-            }));
+            }), this.ancestor);
+        };
+        this.run = function(){
+            this.ancestor.Run();
+        };
+    }
+}
+
+// 仅仅在 JS 中进行一个封装
+class PromType{
+    constructor(prom = Async(), ancestor = undefined){
+        this.promData = prom;
+        this.ancestor = (typeof ancestor) == (typeof undefined) ? prom : ancestor;
+        this.then = function(func){
+            return new PromType(this.promData.Then(eng, func), this.ancestor);
+        };
+        this.catch = function(func){
+            return new PromType(this.promData.Catch(eng, func), this.ancestor);
+        };
+        this.run = function(){
+            this.ancestor.Run();
         };
     }
 }
 ```
 
+在 C# 中封装 try catch 语句
+
 ```js
+// 第一种
+retValue = (() => {
+    let ret;
+    try{
+        log('in JS!!!');
+        ret = func(data);
+        log('func over!!!');
+        return RetValue(ret, 0);
+    }catch(err){
+        log ('func error!!!');
+        return RetValue(err.message, 1);
+    }})();
+
+// 第二种
+retValue = RetValue('default', 0);
+try{
+    log('in JS!!!');
+    let ret = func(data);
+    log('func over!!!');
+    retValue = RetValue(ret, 0);
+}catch(err){
+    log ('func error!!!');
+    retValue = RetValue(err.message, 1);
+};
+```
+
+测试 js 代码：
+
+```js
+// 第一版
 (() =>{
     Async().then(()=>{
         log(1);
@@ -212,9 +380,73 @@ class PromType{
     })
     log('function over')
 })();
+
+// 第二版
+(() =>{
+    // Async().Then(()=>{log(1); return 3;}).Then((res) => {log(2); log(res); log(res+1); return res+2;}).Then((res)=>{log (res); try{throw new Error('Test Error!!!');}catch(err){log(err.message + ' 1st time'); throw new Error(err.message)}; log(res+1); return res+2;}).Catch((err)=>{log('Catch Error: '+err)}).Then((res)=>{log(res)})
+    // var prom = Async()
+    // prom.Then(eng, ()=>{log(1); return 3;}).Then(eng, (res) => {log(2); log(res); log(res+1); return res+2;}).Then(eng, (res)=>{log (res); try{throw new Error('Test Error!!!');}catch(err){log(err.message + ' 1st time'); throw new Error(err.message)}; log(res+1); return res+2;}).Catch((err)=>{log('Catch Error: '+err)}).Then(eng, (res)=>{log(res)})
+    // prom.Run();
+    new PromType().then(()=>{log(1); return 2;}).then((res) => {log(res); return res+1;}).then((res)=>{log (res); try{throw new Error('Test Error!!!');}catch(err){log(err.message + ' 1st time'); throw new Error(err.message)}; log(res+1); return res+2;}).catch((err)=>{log('Catch Error: '+err)}).then((res)=>{log(res)}).run();
+})();
+
+// 最终版
+new PromType().then(()=>{
+    log(1);
+    return 2;
+}).then((res) => {
+    log(res);
+    return res+1;
+}).then((res)=>{
+    log(res);
+    try{
+        throw new Error('Test Error!!!');
+    }catch(err){
+        log(err.message + ' 1st time');
+        throw new Error(err.message);
+    }
+    log(res+1);
+    return res+2;
+}).catch((err)=>{
+    log('Catch Error: '+ err);
+    return 'error caught!';
+}).then((res)=>{
+    log(res)
+}).run();
 ```
 
 学到的东西：
 
 1. JS 类（如果要用链式调用必须要递归的返回）
 2. JS error 有作用域，比如说语法错误的域比 try catch 广不能被捕捉到。可以深入探究一下。
+
+
+
+### 4
+
+目前的问题是：
+
+1. Jint engine 退出运行之后， engine 中的全局变量会丢失
+    - 尝试1：首先检查一下 eng 作为参数传递的时候是否是
+    - 尝试2：修改 Jint 原码，把 Engine 里最后结束的时候清空 Agent 的操作给去掉，或许可以把 engine 里的变量保存下来
+
+
+然后需要写一些类似 React hook 风格的异步函数
+
+需求：
+
+1. usePromise() 新建一个 Task，返回值是 RetValue
+2. useCatch() 新建一个抓取错误的 Task，
+3. useIf() 在两个 Task 中选择一个执行
+4. useRef() 在 C# 中定义一个新的全局变量
+5. 还要能够判断异步是否已经运行结束了
+6. 最好能够输出报错的位置
+
+RetValue：（小改）
+
+如果函数正确结束，返回值 0 & 返回值
+如果函数抛出错误，返回 1 & Error（类型是 JSValue，把整个 error 丢）
+
+可能存在的问题：
+
+1. 传入 eng 内部的 eng，stackTrace 是否是正确的 stackTrace（即 eng 作为 eng 内部的变量时，两者是不是同一个东西）
