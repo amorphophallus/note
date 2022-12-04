@@ -496,7 +496,7 @@ padding：
     1. 颜色量化：$r-s$ 图变成阶梯函数，减小图像存储空间
 
 
-## Chapter 3 Geometric Transformation
+## Chapter 4&5 Geometric Transformation & Morphing
 
 1. 简单变换(simple transformation or warp)
     1. 平移：
@@ -714,7 +714,7 @@ padding：
     - 分类：基于像素、线段、特征点
     - 应用：表情映射（可用机器学习实现），特征值分解
 
-## Chapter 4 Convolution & Filtering
+## Chapter 6&7 Convolution & Filtering
 
 1. 1-D convolution:
 
@@ -845,11 +845,17 @@ padding：
         - 基本目标：smoothing
         - 效果：
             1. 去噪
-            2. 基于双边滤波的 tone mapping：原图去掉双边滤波后的 low-frequency 部分
+            2. 基于双边滤波的 tone mapping：可以看 Durand 的论文，感觉这个方法比常规可视增强的好处在于双边滤波保边效果好，。大致过程应该如下：
+                1. 原图分出亮度和色度
+                2. 亮度用双边滤波分出低频和高频
+                3. 对低频部分做可视增强
+                4. 把三部分合并
             3. relighting
             4. 其他：磨皮美颜、改变图片风格（漫画滤镜）
-        - 原理： **同时考虑距离和像素值** ——距离越近影响越大，像素值越接近影响越大。 $\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。
-        - 参数设置：$\sigma_s$ 可以设成对角线的 2%，单位像素； $\sigma_r$ 可以设置成窗口中所有像素梯度的平均值
+        - 原理： **同时考虑距离和像素值** ——距离越近影响越大，像素值越接近影响越大。 
+        - 参数设置：
+            1. 方差越大，说明权重差别越小，因此表示不强调这一因素的影响，反之，则表示更强调这一因素导致的权重的不均衡。$\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。极端情况，如果 $\sigma_s$ 无穷大，相当于值域滤波；$\sigma_r$ 无穷大，相当于空域高斯滤波。
+            2. $\sigma_s$ 可以设成对角线的 2%，单位像素； $\sigma_r$ 可以设置成窗口中所有像素梯度的平均值
         - 公式：其中 $G_{\sigma}$ 是高斯（正态）分布函数
 
         $$
@@ -862,3 +868,47 @@ padding：
         - 快速近似：[参考博客](https://zhuanlan.zhihu.com/p/272236618)
         - 缺点：容易产生梯度逆转
     4. guided filter：[参考博客](https://zhuanlan.zhihu.com/p/161666126)
+        - 功能：去雾、抠图
+        - 优势：在边界上比双边滤波效果更好，可以有效防止梯度逆转（光晕）
+        - 缺陷：在边界的选择上不能永远符合人的直觉
+    5. sparse norm filter
+        - L2 norm: 均值滤波
+
+        $$I_i^{new} = \min_{I}\sum_{j\in N_i}(I-I_j)^2$$
+
+        - L1 norm: 中值滤波
+
+        $$I_i^{new} = \min_{I}\sum_{j\in N_i}(I-I_j)$$
+
+        - 推广：在 p<1(0.1, 0.2, 0.3) 时具有防止梯度逆转的功效
+
+        $$I_i^{new} = \min_{I}\sum_{j\in N_i}|I-I_j|^p$$
+
+        - 应用：
+            1. 防梯度逆转
+            2. 去除异常值(outlier)
+            3. HDR compression: 可视增强
+            4. 去运动模糊(motion deblur)：前提是先预估一个相机抖动路径
+            5. 智能上色：给定灰度图和在每一块上涂两笔颜色。需要多次迭代
+            6. 图像融合：基本同上
+
+
+## Chapter 8 Fourier Transformation
+
+1. 傅里叶级数
+
+$$
+
+$$
+
+2. 傅里叶变换 [看这个博客学吧](https://www.cnblogs.com/h2zZhou/p/8405717.html)
+    1. 应用：
+        1. 生物识别：例如眼球识别
+        2. 3D 显示中的反走样(anti-aliasing)：近处清晰图像和远处模糊图像之间的过渡
+        3. 图像压缩：去除高频部分
+    2. 数学基础：
+        1. 复数
+            - 定义：magnitude, phase & 
+            - 计算性质：相加，相乘
+        2. 欧拉方程
+    3. 频域图：横坐标是频率，纵坐标是相位，灰度值越大表示该频率和相位的振幅

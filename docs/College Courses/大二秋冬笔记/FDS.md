@@ -114,14 +114,91 @@
         - 有向图的 adjacent 有 from 和 to 之分
     - 图的存储方式：adjacent multilist，就是同一条边存两个next，分别是对于出点的 next 和对于入点的 next，方便找入度
     - 拓扑排序相关定义：![Alt text](./img/ch9-4.png)
-9. ch9: shortest path
+9. ch10: shortest path
     1. Floyd
         - $O(N^3)$
     2. Dijkstra
-        - $O()$
+        - $O(V^2+E)$
+        - 堆优化：$O((V+E)\log V)$，log 后面是 E 还是 V 并不关键因为 E 最多是 V 的平方。
+        - 无法处理负边权
     3. Bellman-Ford & SPFA
         - 平均情况下 $O(kE)$, 其中 $k$ 是所有顶点进队的平均次数，一般满足 $k<2$。最坏情况退化为 Bellman-Ford 算法，复杂度 $O(VE)$
         - 用数组 dis 记录每个结点目前的最短路径值，用邻接表来存储图 G。设立一个队列用来保存待优化的结点，优化时每次取出队首结点 u，并且用 u 点当前的最短路径值对 u 点能到达的所有结点 v 进行松弛操作，如果 v 点的最短路径估计值有所调整，且 v 点不在当前的队列中，就将 v 点放入队尾。这样不断从队列中取出结点来进行松弛操作，直至队列空为止。
+    4. AOE Activity on edge（有向无环图 DAG）
+        - 拓扑排序 -> 最短路 & 最长路
+        - critical path: 关键路径，即占据最长时间的路径
+10. ch11: 其他图论算法
+    1. 最小生成树 (minimum spanning tree)
+        0. 性质：边权最小的边一定在最小生成树中（用于证明两个算法的正确性）
+        1. Kruskal：
+            - 做法：按边权从小到大排序 + 取边做并查集
+            - 证明：用性质
+        2. Prim：
+            - 做法：以某个点为初始点集，每次选点集和外界连边中最小的边，把那个点加入点集
+            - 证明：用性质
+    2. 最大流 (max flow)
+        1. 定义：有源有汇，其他点流入等于流出。 [定义参考博客](https://blog.csdn.net/mystery_guest/article/details/51910913)
+        2. 定理：最大流 = 最小割
+            1. 平面图网络流：
+                - 把源汇连边，找 **对偶图** （面作为点，面之间相邻就连 2 条 **有向边**，正向保留边权，反向设为 0，走一条有向边表示把边左边的点放进 s 的集合中，右边的点放进 t 的集合中）
+                - 求最短路（本质上来说对偶图中的环相当于一个割。为了保证源汇在不同的集合中，强制选取了源汇之间连的虚拟边）
+        3. 常见增广路算法：
+            1. 核心思路： **引入反向边**
+                - 反向边小技巧：正向边存在数组的偶数位，反向边存在奇数位，则取反向边只需要 `i^1`
+            2. Ford-Fulkerson：找到增广路径就更新
+            3. Edmonds-Karp (EK 算法) ：BFS 找边数最少的增广路径更新，$O(NM^2)$
+            4. Dinic：在 EK 的基础上，分层 (BFS) + 多路增广(DFS)，复杂度 $O(N^2M)$
+                - 当前弧优化：已经增广过的边不再增广，引用写法 `for (int &i = cur[u]; i; i = g.nxt[i])`
+11. DFS 的应用：
+    1. 欧拉路径（回路）和哈密尔顿路径
+        - 欧拉回路 dfs： $O(V+E)$
+    2. 无向图的双连通分量(biconnectivity)
+        1. 定义：
+            - articulation point: 关节点，去掉这个点图变得不连通
+            - biconnected graph: 不存在关节点
+            - biconnected component: maximal biconnected subgraph
+        2. tarjan 算法：
+            1. 生成一颗 dfs 树，遍历顺序记为 `dfn[v]`
+            2. 除了树边之外仅可能存在一种边：连接 u 和 u 子树中的节点 v 的边。记 `low[v]` 为从 **v 和 v 子树中的节点** 出发走 **1 条** 非树边能够到达的最小 dfn，更准确地说，
+            
+            $$
+            low[u]=\min
+            \left\{
+            \begin{align*}
+            &dfn[u]&\\
+            &low[v]&,v\textsf{ is a son of }u\\
+            &dfn[w]&,(u,w)\textsf{is a back edge}
+            \end{align*}
+            \right\}
+            $$
+            
+            当 u 的某个儿子 v `low[v]>=dfn[u]` 时 u 是关节点。
+            3. 想要记录每个双联通分量中的点有哪些：将遍历到的点都入栈，在找到关节点的时候不断出栈直到关节点出栈，然后再把关节点入栈。（因为每个关节点可能会被包含在多个点双中）
+            4. 注意：对于图的所有不连通的分量都要搜索，注意特判孤立节点的情况
+    3. 有向图的强联通分量：
+        1. 生成一颗 dfs 树，遍历顺序记为 `dfn[v]`
+        2. 除了树边之外可能存在 3 种边：
+            1. 前向边：可以忽略
+            2. 后向边：可以形成强连通
+            3. 横插边：从 dfn 大的子树插到 dfn 小 的子树
+        3. `low[u]` 表示从 u 出发可以到达的最小的 dfn，其中 w 必须是还未确定在哪个强连通分量的点（即需要在栈中，用 `inq[w]` 来判断）
+
+        $$
+        low[u]=\min
+            \left\{
+            \begin{align*}
+            &dfn[u]&\\
+            &low[v]&,v\textsf{ is a son of }u\\
+            &low[w]&,(u\to w)\textsf{ is a non-tree-edge and w}\in \textsf{undetermined component}
+            \end{align*}
+            \right\}
+        $$
+
+        4. 当节点 u 满足 `low[u]==dfn[u]` 时说明 u 和他的父亲属于不同的强连通分量，弹栈直到弹出 u
+12. 排序：
+    1. 插入排序：
+        - 插入排序（以及任何交换相邻元素的排序）的交换次数 = 逆序对个数(inversion count)
+        - 最大比较和交换次数 $\frac{n(n-1)}{2}$，最小比较和交换次数 $n-1, 0$
 
 
 ## 错题整理
