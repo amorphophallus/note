@@ -898,17 +898,63 @@ padding：
 1. 傅里叶级数
 
 $$
+\begin{equation*} \begin{split} f(t)=\frac{a_{0}}{2}+\sum_{n=1}^{\infty}{[a_{n}cos(n\omega t)+b_{n}sin(n\omega t)]} \end{split} \end{equation*}
+$$
 
+$$
+ \begin{align*} &a_{n}=\frac{2}{T}\int_{t_{0}}^{t_{0}+T}f(t)cos(n\omega t)dt\\ &b_{n}=\frac{2}{T}\int_{t_{0}}^{t_{0}+T}f(t)sin(n\omega t)dt\\ \end{align*}
 $$
 
 2. 傅里叶变换 [看这个博客学吧](https://www.cnblogs.com/h2zZhou/p/8405717.html)
     1. 应用：
         1. 生物识别：例如眼球识别
         2. 3D 显示中的反走样(anti-aliasing)：近处清晰图像和远处模糊图像之间的过渡
-        3. 图像压缩：去除高频部分
+        3. 图像压缩 or 去噪点：去除高频部分
     2. 数学基础：
         1. 复数
             - 定义：magnitude, phase & 
             - 计算性质：相加，相乘
         2. 欧拉方程
+
+        $$
+        
+        $$
+
     3. 频域图：横坐标是频率，纵坐标是相位，灰度值越大表示该频率和相位的振幅
+    4. 公式：傅里叶变换和逆变换
+
+    $$
+    \begin{equation*} F(\omega)=\int_{-\infty}^{\infty} f(x) e^{-i \omega x} d x \end{equation*} \\
+    \begin{equation*} f(x)=\frac{1}{2 \pi}\int_{-\infty}^{\infty} F(\omega) e^{i \omega x} d \omega \end{equation*}
+    $$
+
+    5. 推广：2-D 傅里叶变换
+
+3. 快速傅里叶变换(FFT)
+    1. DFT
+    2. 2-D DFT
+    2. 2-D DFT 的可视化：magnitude + phase，其中相位对于重建画面更重要
+
+（待办：FT 和 FFT 的推导和应用再看一遍）
+
+## Chapter 9 Image Feature 图像特征
+
+1. 应用：
+    1. 图像匹配
+    2. 全景照片：图像拼接 + 亮度调节
+        - 进阶：对角度不同、光照不同的图片进行拼接
+    3. 火星车动态寻路：地面特征的匹配
+2. 技术：
+    1. feature detecting: 检测特征点
+    2. Scale Invariant Feature Transform(SIFT)：旋转、缩放、光照不变性
+3. 找特征点的方法：Harris Corner Detector
+    - [这个博客里抄公式](https://zhuanlan.zhihu.com/p/129882379)
+    - [这个博客看推导](https://www.jianshu.com/p/133ee1dde482)
+    - Harris Operator：简化方法
+    - Properties：
+        1. 旋转不变性：用长轴短轴确定方向
+        2. 光照不变性：因为取的是极值点，二阶导受原函数放缩的影响很小
+        3. 对于图像尺度非常敏感：
+    - Harris-Laplacian：尺度敏感的解决方法
+
+（待办：抄公式，看哈里斯检测的公式推导）

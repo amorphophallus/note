@@ -301,6 +301,21 @@ a = [1, 2, 3]
 d = copy.deepcopy(a) # a和d的地址不相同
 ```
 
+python 的函数形参是实参的引用，修改函数参数的操作会直接影响在函数外部的参数本身。比如下面 f1 会改变外部的 arr，而 f2 改变了形参引用的地址，arr 不会改变。
+
+```py
+def f1(arr):
+    arr.append(2)
+
+def f2(arr):
+    arr = copy.deepcopy(arr2)
+
+arr = [1, 2, 3]
+arr2 = [5, 6, 7]
+f1(arr)
+f2(arr)
+```
+
 #### 传参：传值 vs 引用
 
 1. 自定义类型传参是引用(赋值也是引用)

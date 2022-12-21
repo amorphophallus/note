@@ -211,14 +211,21 @@ MyClass::MyClass( double a, double b, double c): X(a), Y(b), Z(c)
 复制构造函数：
 
 ```cpp
-
+BMP::BMP(const BMP & bmp){
+    // allocate memory to contain the whole file:
+    this->buffer = (unsigned char*) malloc (sizeof(unsigned char) * bmp.fileHeader.bfSize);
+    if (this->buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+    // copy data and initialize
+    memcpy(this->buffer, bmp.buffer, bmp.fileHeader.bfSize);
+    this->initBmp();
+}
 ```
 
 注意：若没有显示定义复制构造函数，则系统会默认创建一个复制构造函数，当类中有指针成员时，由系统默认创建的复制构造函数会存在“浅拷贝”的风险，因此必须显示定义复制构造函数。
 
 ---
 
-使 **可选参数** ：注意只在函数声明处写默认值，在定义函数时不要再加
+使用 **可选参数** ：注意只在函数声明处写默认值，在定义函数时不要再加
 
 ```cpp
 class Box{
@@ -233,6 +240,37 @@ Box::Box(int h,int w,int len){//在定义函数时可以不指定默认参数
     length=len;
 }
 ```
+
+---
+
+区分构造函数和结构体赋值语句：
+
+```c
+BMP bmp(100, 100);
+BMP bmp2 = bmp;
+BMP bmp3; bmp3 = bmp;
+```
+
+对于 bmp2 调用了复制构造函数，对于 bmp3 则做了结构体的赋值操作。后者可能造成的深浅拷贝问题和默认复制构造函数所产生的相同,可以用重载运算符来解决。
+
+```c
+BMP bmp = BMP(100, 100, 0, 0, 255);
+printf("%p\n", &bmp);
+printf("%p\n", bmp.buffer);
+bmp = BMP(100, 100, 0, 0, 255);
+printf("%p\n", &bmp);
+printf("%p\n", bmp.buffer);
+```
+
+再举一例，假设这里没有重载等于号。第一次调用构造函数来初始化，生成一个 BMP 实例，名为 bmp。第二次调用构造函数生成了一个新的 BMP 实例，并把其值赋给 bmp 变量，此时存在两个 BMP 类实例。
+
+所以两次输出 bmp 的地址不变，但是 buffer 指向的地址变了。实际上存在两片 buffer，但是有一个 buffer 已经没有实际的指针变量指向他了。所以有一片 buffer 的地址不会被析构函数释放，导致内存泄露。
+
+解决办法是重载等于号，把等于号的赋值改成深拷贝，即 realloc bmp 中分配的地址，把指针指向的内容复制一份给 bmp。
+
+---
+
+
 
 ### 析构函数
 
