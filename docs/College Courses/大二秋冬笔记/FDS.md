@@ -236,6 +236,20 @@
         - MSD (Most Significant Digit): 每个 run 之后对每个 bucket 单独排序，所以复杂度会更大一些。
         - 复杂度：$O(N+B)$ & $O(P(N+B))$，其中 B 是基数，P 是重复次数
         - 例题：LSD 两轮之后的排序，就是拿后两位出来排序的结果
+13. Hash
+    - 专有名词：
+        - collision
+        - overflow
+        - loading density = 已经放了几个数到 hash table 里 / 总共可以放几个
+        - identifier density = 已经放了几个数到 hash table 里 / 可能放到 table 里的数的总个数
+        - Hash Function & key & hash value: H(key) = hash value.
+    1. 时间复杂度：没有冲突 $O(1)$
+    2. 哈希函数：自变量是整数，自变量是字符串（选择部分字符看成 32 进制数）
+    3. 开放寻址法：
+        1. linear probing 循环找下一个位置直到找到空位
+            - linear probing 的期望 probe 次数：对于插入或者不成功的查询 $\frac{1}{2}(1+\frac{1}{(1-\lambda)^2})$，对于成功的查询 $\frac{1}{2}(1+\frac{1}{1-\lambda})$
+        2. quadratic probing: 往后找 1, 2, 4, ... 个位置
+            - 如果使用平方探测，且表的规模是素数，那么当表至少有一半是空的时候，总能插入新的元素。
 
 
 ## 错题整理
