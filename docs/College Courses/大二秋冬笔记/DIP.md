@@ -14,10 +14,11 @@
         - 视网膜屏幕：dpi 接近视网膜上的细胞数
 - JPEG:
     1. 压缩策略：
-        - Different manipulations for *high-frequency signal* and *low-frequency signal*.
+        - 根据压缩比要求，从高频到低频逐步削减信息。Different manipulations for *high-frequency signal* and *low-frequency signal*.
         - According to the requirement of compression ratio, remove information from high frequency to low frequency. 
     2. 大幅面高质量打印：国外进口 -> 有研究空间
     3. 缺点：文字等细节容易看出问题的，适合用矢量图
+    4. 优点：高频信息占用存储空间大，减少高频信息更容易获得高压缩比；低频信息可以保留物体的基本轮廓和色彩分布，最大限度维持图像质量。适合用于互联网。
 - TIFF: 用于 CAD、GIS(geographic information system)，分为 public 和 private （压缩方式或者加密方式），便于公司进行开发
 - GIF(graphics interchange format): 使用LZW encoding method
 
@@ -51,14 +52,15 @@
 
 
 ### 颜色空间 (color space)
-- device dependent model:
+
+- **device dependent** model:
     - RGB: additive，色光混合
     - CMY: subtractive，吸收部分色光，反射剩下的色光，多用于打印设备（CMYK 增加黑色）
     - HSV(HIS):
         1. hue（色调）
         1. saturation（饱和度）
         1. value / intensity（光强），和 YUV 里的 Y 是一样的
-- device independent model:
+- **device independent** model:
     - CIE XYZ
     - CIE Lab
     - CIE YUV
@@ -201,7 +203,7 @@ typedef struct _PIXELINFO {
 
 #### 实际位图数据
 
-对于用到调色板的位图，图象数据就是该像素颜在调色板中的索引值。对于真彩色图，图象数据就是实际的R,G,B值。
+对于用到调色板的位图，图象数据就是该像素颜在调色板中的索引值。对于真彩色图，图象数据就是实际的R,G,B值（**顺序是 BGR**）。
 
 要注意两点：
 1. 每一行的字节数必须是 **4的整倍数**，如果不是，则需要用 0 补齐。
@@ -464,6 +466,8 @@ padding：
 1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(\beta L_w+1)}{\log(\beta L_{max}+1)}$
     - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上， $\beta$ 是系数，$\beta$ 越小，图像对比度越低，整体亮度越高；反之对比度升高但是增亮效果削弱
     - 缺陷：对比度降低（可以再使用直方图均衡化增加对比度）
+
+
 
 ### histogram 直方图 & histogram equalization 直方图均衡化
 
@@ -954,7 +958,161 @@ $$
     - Properties：
         1. 旋转不变性：用长轴短轴确定方向
         2. 光照不变性：因为取的是极值点，二阶导受原函数放缩的影响很小
-        3. 对于图像尺度非常敏感：
-    - Harris-Laplacian：尺度敏感的解决方法
+        3. **对于图像尺度非常敏感**
+    - 尺度敏感的解决方法
+        1. Harris-Laplacian：先进行降采样获得多个尺度的图像，对每个点做多尺度的角点检测，如果这个点在某些尺度上不是角点，则舍去。对于留下来的点，用 Laplace 算子求出角点特征最明显的尺度。
+        2. SIFT(scale invariant feature transform)：Difference of Gaussian
+            - Orientation：给每个特征点一个代表其方向和像素值变化程度的向量，用于判断旋转和光照
+                - 对角点求特征方向：求偏导
+                - 求一块像素的方向：投票法。所有像素点的特征方向做直方图选最大的。
+                - 也可以把一个 patch 分割成小块，每个小块求特征向量，以使特征维度更多，表达更准确。
+            - SIFT 应用：词袋模型(bag of visual word)，一个 SIFT 特征表示一个含义。
+            - 缺点：耗时长，对非刚性物体效果差（如动物）
+4. SURF：优化了计算速度
+    1. 算法步骤：
+        1. 计算积分图（二维前缀和）
+        2. 分割成 4 * 4 的子窗口，求四个类 Haar wavelet feature（相邻的上下左右窗口进行加加减减），一个子窗口有 16 * 4 个特征
+        3. 变换尺度，重复计算，得到尺度方向上离散的特征值，可以用插值(interpolation)方法得到中间值。
+        4. 匹配加速：SURF 特征可以用正负号进行初步判断
+    2. 优点：更快，耐噪声
+    3. 应用：图像拼接——选择特征点，提取特征，匹配（至少六个点，得到图像变换矩阵），旋转缩放拼接（RANSAC），拼接（Image Blending）
+5. RANSAC(random sample consensus)：解决离群点问题
+    1. 算法流程：
+        1. 随机选点算 transformation 矩阵（回归出一个函数）
+        2. 用结果矩阵检查有多少 inlier（在阈值之内） 和 outlier
+        3. 用 inlier 重新回归出转移矩阵，迭代到符合要求。
+    2. 优缺点：通用，容易实现；实际情况下离群点多导致迭代次数巨大（改进：霍夫变换，voting strategy）
+        - 点数越多迭代次数越多，最优结果离群点越多迭代次数越多（不容易收敛）
+6. Image Blending：
+    1. Pyramid creation：先通过高斯滤波得到一系列图像（高通到低通），相邻相减（拉普拉斯算子）得到某些频率上的图像。不断迭代。
 
 （待办：抄公式，看哈里斯检测的公式推导）
+
+
+## 期末复习
+
+1. 考察内容重点
+    1. 算法实现：卷积操作、二值图像、灰度图像
+    2. 易于分点作答的理论知识点：成像原理
+2. 考前回看
+    1. 数字相机成像原理 ![Alt text](./img/dip_review_2.png)![Alt text](./img/dip_review_3.png)
+    2. 景深的定义：相机能够清晰拍摄的距离范围
+        - 小光圈 -> 大景深 -> 风景照（需要清晰显示远近的信息）
+        - 大光圈 -> 小景深 -> 背景虚化
+        - 其他：镜头焦距越长，景深越小；焦距越短，景深越大。拍摄距离距离越远，景深越大；距离越近，景深越小。![Alt text](./img/dip_review_6.jpg)
+    3. CIE RGB 色感应函数![Alt text](./img/dip_review_7.png)
+    4. 人眼感应颜色变化的优先级、敏感程度
+        - 优先程度：三者变化幅度相同的情况下，人们往往会注意到色调（Hue, H）的变化，然后是饱和度（Saturation, S），然后是亮度（Value, V）。
+        - 敏感度：人眼对于亮度的变化最为敏感，能分辨更微小的亮度变化。恰好与人眼的高动态能力相匹配。
+    5. 颜色系统：举例、是否设备相关、应用
+        - RGB 加色
+            ![Alt text](./img/dip_review_5.png)
+        - CMY 减色, CMYK(K 代表黑色，用来省墨水) 
+            ![Alt text](./img/dip_review_4.png)
+        - HSV：设备相关，
+            1. hue（色调）
+            2. saturation（饱和度）
+            3. value / intensity（光强），和 YUV 里的 Y 是一样的
+        - YUV：亮度，红色色差，蓝色色差（色度）
+        - CIE XYZ, CIE Lab 设备无关（统计人的感受得到）
+    6. 图像编码
+        - JPG：
+            1. 压缩策略：根据压缩比要求，从高频到低频逐步削减信息。
+            2. 缺点：文字等细节容易看出问题的，适合用矢量图
+            3. 优点：高频信息占用存储空间大，减少高频信息更容易获得高压缩比；低频信息可以保留物体的基本轮廓和色彩分布，最大限度维持图像质量。适合用于互联网。
+        - BMP 的结构：
+            1. 不同的 biBitCount 代表什么图片？1 二值图像，8 灰度图，16 伪彩色，24 真彩色，32 带透明度的真彩色
+            2. 每一行的字节数必须是 **4的整倍数**，如果不是，则需要用 0 补齐。
+            3. 一般来说（biHeight > 0 时），.BMP文件的数据从下到上，从左到右的。也就是说，从文件中最先读到的是图象最下面一行的左边第一个像素，然后是左边第二个像素…接下来是倒数第二行左边第一个像素，左边第二个像素…依次类推，最后得到的是最上面一行的最右一个像素。
+            4. 像素值存储顺序：BGR
+        - RLE(Run Length Encoding, 行程编码): 线性存储图像 ![Alt text](./img/dip_review_8.png)
+        - 无压缩、有损压缩、无损压缩
+    7. 二值图像：优缺点分点作答、全局大津算法、局部化大津算法
+        - 优点：只留下需要的信息，且在某些需要打印的场景更为低廉
+        - 大津算法的实现步骤：枚举 threshold 计算 ![Alt text](./img/dip_review_13.png)
+    8. 形态学操作：膨胀、腐蚀、开运算（先腐蚀再膨胀，去小噪点，保持原有大小）、闭运算（先膨胀再腐蚀，去小缺口，保持原有大小）
+        - 掌握：物理意义、算法实现
+        - 例如膨胀的物理意义：扩大图片，填充小空缺
+    9. 可视增强
+        1. Weber's Law:
+            - 肉眼可见的灰度值差 visible threshold $\frac{\Delta I}{I}\approx 1...2\%$ 
+            - 定理的定义范围有限，在亮度过大或者过小时不成立
+            - 显示设备想要至少呈现出人眼能区分的 256 级灰度，要求 
+            
+            $$\frac{I_{max}}{I_{min}}=(1+K_{weber})^{255}\approx13...156$$
+            
+            对比度 $\frac{I_{max}}{I_{min}}$ 值越大，能显示的灰度范围越大，说明显示器效果越好
+        1. 可视增强 - $\log$ 操作： $L_d = \frac{\log(\beta L_w+1)}{\log(\beta L_{max}+1)}$
+            - $L_w$ 是实际亮度， $L_d$ 是显示亮度，$L_d$ 分布在 $[0,1]$ 上， $\beta$ 是系数，$\beta$ 越小，图像对比度越低，整体亮度越高；反之对比度升高但是增亮效果削弱
+            - 缺陷：对比度降低（可以再使用直方图均衡化增加对比度）
+    10. 直方图、直方图均衡化（算法描述、会运算）、直方图拟合
+        - 直方图均衡化：
+            - 效果：增加对比度，使图像更清晰，颜色更鲜艳。比如说对于过曝和曝光不足的照片，灰度动态范围较小，灰度值集中，照片会看起来灰蒙蒙的，适合用直方图均衡化处理。
+            - 连续：
+                - 原始图像直方图 $r-P(r)$，满足 $\int_0^1 P(r)=1$
+                - 求一个映射 $s = T(r)$ 使得 $\forall s, P(s) = 1$
+                - $\int_{0}^{r}P(r)dr = \int_{0}^{s}P(s)ds = \int_{0}^{s}1\cdot ds=s$
+                - 公式：$s=\int_{0}^{r}P(r)dr$
+            - 离散：
+                - $s_k = \sum_{i=0}^k P(r_k)$，原来灰度值为 $r_k$ 的像素点被重新分配灰度值 $s_k$
+                - 递推：$s_k = s_{k-1} + P(r_k)$
+                - 近似：将 $s_k$ 近似为数值最相近的灰度级 $r_l$
+        - 直方图均衡化例子：![Alt text](./img/dip_review_10.png)
+        - 优缺点：仅考虑像素值不考虑位置，不同图像的直方图可能相同
+    11. 几何变换的矩阵：平移、旋转、镜像、错切、缩放
+        - 旋转（顺时针）
+        
+        $$
+        \begin{align*}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        \cos\theta & -\sin\theta & \Delta x\\
+        \sin\theta & \cos\theta & \Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}\\\\
+        \begin{bmatrix}
+        x\\
+        y\\
+        1
+        \end{bmatrix}&=
+        \begin{bmatrix}
+        \cos\theta & \sin\theta & -\cos\theta\Delta x-\sin\theta\Delta y\\
+        -\sin\theta & \cos\theta & \sin\theta\Delta x-\cos\theta\Delta y\\
+        0 & 0 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        x'\\
+        y'\\
+        1
+        \end{bmatrix}
+        \end{align*}
+        $$
+
+    12. 插值：最近邻、线性插值（双线性插值）
+    13. 图像变形（morph）：插入中间帧，线性插值方法
+        - 表情映射的步骤：假设光照条件相同（m 个点光源），手动选取特征点，计算图像表面方向向量，根据方向向量计算变形前后的脸部某点光照强度变化。再把这个变化应用到新的图像中 Ib' = Ib * (Ia'/Ia)。![Alt text](./img/dip_review_11.png)
+    14. 离散一维卷积、离散二维卷积的公式和具体计算![Alt text](./img/dip_review_9.png)
+    15. 滤波（卷积核长什么样，要会计算，优点和缺点）
+        - 均值滤波、中值滤波、拉普拉斯滤波![Alt text](./img/dip_review_12.png)
+        - 双边滤波（边界明显，梯度逆转）：$\sigma_s$ 越大图像越模糊，$\sigma_r$ 越小，图像保留越多纹理。极端情况，如果 $\sigma_s$ 无穷大，相当于值域滤波；$\sigma_r$ 无穷大，相当于空域高斯滤波。
+        - 引导滤波（保梯度、速度更快）：引导公式推导，区分双边滤波和引导滤波的结果
+    16. 傅里叶变换（理解即可）：傅里叶平面表示的信息，本质——把函数表达为周期函数之和（值域到频域）、
+        - 相位比幅值更重要
+    17. 特征检测
+        - Harris 角点检测：优缺点、公式推导
+        - 哈里斯-拉普拉斯（变换视野）
+        - SIFT：流程、优缺点
+        - 图像拼接的流程: 选择特征点（Harris），提取特征（SIFT，SURF），匹配（至少六个点，得到图像变换矩阵），旋转缩放（RANSAC），拼接融合（Image Blending）
+    18. 深度学习
+        - 描述反向传播算法（BP）：计算一轮到两轮 BP
+        - 池化：max、average
+        - learning rate：太大太小的问题

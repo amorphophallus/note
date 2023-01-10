@@ -27,17 +27,17 @@
 
 1. ch1：课程简介
 2. ch2：复杂度分析
-    - 大 O：上限
+    - 大 O：上限（ **logN is O(N)**，大 O 只规定上限，这句话是对的 ）
     - 大 Ω：下限
     - 大 θ：上限 + 下限
     - 小 o：无穷小量（大 O 的反向操作）
-    - if/else：选较大的那个分支算复杂度
-    - 主定理
+    - **if/else：选较大的那个分支算大 O 复杂度**
+    - ~~主定理~~
 2. ch3：栈和队列
     - 中缀表达式转后缀表达式：
-        1. 如果是操作数, 则直接压进输出队列中
+        1. 如果是操作数, 则直接压进**输出队列**中
         2. 如果是运算符, 分以下情况:
-            a. 运算符堆栈为空, 或者运算符栈顶元素为'(', 则直接将运算符压进栈
+            a. 运算符堆栈为空, 或者**运算符栈**顶元素为'(', 则直接将运算符压进栈
             b. 运算符如果是')', 则将运算符栈中的元素都压进去输出队列中并将其弹出运算符栈, 直到遇到'('为止
             c. 运算操作符是'+' '-' '*' '/' 之一的时候, 将其与运算符栈顶元素作比较,如果栈顶的优先级较小（ **如果运算符是左结合的则优先级相等也要出栈** ）, 则将运算符压入栈中。否则, 将栈顶元素弹出并压入输出队列中, 然后继续比较栈顶, 直到运算符被压入栈.
     - 中缀表达式转前缀表达式：
@@ -50,16 +50,18 @@
             c. 运算操作符是'+' '-' '*' '/' 之一的时候, 将其与运算符栈顶元素作比较,如果栈顶的优先级较小,（ **如果运算符是右结合的则优先级相等也要出栈** ） 则将运算符压入栈中. 否则, 将栈顶元素弹出并压入操作数栈中, 然后继续比较栈顶, 直到运算符被压入栈。
         5. 扫描完一遍后, 将运算符堆栈剩余的元素都压入操作数栈中。
         6. 将操作数栈从栈顶到栈底输出就是prefix.
+        - 前缀表达式的计算：从前往后读，把遇到的运算符放到运算符栈，遇到的数字放到数字栈，一旦数字有两个就拿出来用运算符栈顶的运算符计算，把结果放回数字栈。
+    - 表达式树(expression tree)：后缀表达式是表达式树的后序遍历，前缀表达式是表达式树的前序遍历。
 3. ch4：树
-    - traversal:
-        - preorder: 根左右
-        - inorder: 左根右
-        - postorder: 左右根
-    - degree of tree: max degree of node
+    - traversal:（名字容易记错）
+        - **preorder**: 根左右
+        - **inorder**: 左根右
+        - **postorder**: 左右根
+    - **degree of tree: max degree of node; degree of node on tree: 节点拥有的儿子个数（父亲不算），概念很容易忘**
     - 任意树变成二叉树：倾斜 45 度，兄弟变儿子；i.e.左儿子是第一个儿子，右儿子是兄弟
     - threaded binary tree 线索二叉树：
         - 目的：n 节点二叉树有 n+1 个儿子指针是 NULL，利用这些指针来使遍历更加方便
-        - 分类：前序 / 中序 / 后序
+        - **分类**：前序 / 中序 / 后序 threaded binary tree
         - 构造：NULL 的左儿子换成（前序 / 中序 / 后序）遍历中的前驱节点，右儿子换成后继。
         - 遍历：不再需要回溯，只需要判断自身和左右儿子的顺序即可
 4. ch5：二叉搜索树
@@ -72,8 +74,8 @@
     - decision tree:
         - internal node & external node(leaf)
     - 特殊的树
-        - complete binary tree: 叶子节点深度差最大为 1
-        - full binary tree
+        - **complete** binary tree: 叶子节点深度差最大为 1，如果最后一层没有满叶子则所有叶子都在最左边。
+        - **full** binary tree（这两个容易记混）
 5. ch6：binary heap
     - property：
         - 每个节点都比儿子大（左右儿子之间没有限制）
@@ -81,16 +83,16 @@
         - 查找只能 $O(N)$
         - 编号从 $\lfloor \frac{N}{2}\rfloor +1$ 开始就都没有儿子
     - operation
-        - 建堆：保证操作每个节点时，他的两个儿子子树都是堆，然后将这个节点往下推。有 $\frac{N}{2}$ 个节点需要往下推至少一次，$\frac{N}{4}$ 个节点往下至少两次，以此类推 $T(N)=\frac{N}{2}+\frac{N}{4}+...=O(N)$
+        - **线性建堆**(linear xxx)：保证操作每个节点时，他的两个儿子子树都是堆，然后将这个节点往下推。有 $\frac{N}{2}$ 个节点需要往下推至少一次，$\frac{N}{4}$ 个节点往下至少两次，以此类推 $T(N)=\frac{N}{2}+\frac{N}{4}+...=O(N)$
         - push：在最大编号后面插入，依次往上交换
-        - pop：左右儿子挑一个大（小）的提上来
+        - pop：**把编号最大的放到根的位置**（否则无法保证完全二叉树的性质），左右儿子挑一个大（小）的提上来
     - d-heaps: 
         - 单次操作 $O(d \log_dN)$，d 为 3 时时间复杂度最低
         - 父亲：$father(i)$ 是一个阶梯函数，$father(1) = 0$，每过 d 个数函数值 +1，$father(i) = \lfloor (i+d-2)/d\rfloor$
         - 最大的儿子：把最大的儿子后面的节点全去掉，则树上除了叶子之外全都是满儿子，$$father(son_{max}(i)) = [son_{max}(i)-1]/d = i$$ 所以 $son_{max}(i)=id+1$
         - 最小的儿子： $son_{min}(i) = (i-1)d+2$
 7. ch7: disjoint set ( 并查集 )
-    - union-by-size: 小树合并做大树的儿子，查询 $O(\log_2 N)$，因为从任意节点每往上爬一层，子树大小至少翻一倍
+    - **union-by-size**: 小树合并做大树的儿子，查询 $O(\log_2 N)$，因为从任意节点每往上爬一层，子树大小至少翻一倍
         - array representation: 非根节点，数组中存父亲编号；根节点，数组中存数组大小的相反数
     - union-by-depth: 浅树合并做深树的儿子，查询 $O(\log_2 N)$，因为一棵深度为 n 的树需要 2 棵深度为 n-1 的树合并得到，所以深度为 n 的树大小至少为 $2^n$，树深度为 $O(\log_2 N)$ 级
     - path compression: 查询和合并的复杂度都是 $O(1)$】
@@ -107,7 +109,7 @@
                 return  root ;
             }
             ```
-    - relation 的性质：reflexive 自反性，symmetric, transit
+    - relation 的性质：reflexive 自反性，symmetric 对称性, transit 传递性
 8. ch8: graph
     - 定义：![Alt text](./img/ch9-1.png)![Alt text](./img/ch9-2.png)![Alt text](./img/ch9-3.png)
         - 单讲 connected 一般是无向图，有向图要分强联通和弱联通
@@ -130,10 +132,10 @@
 10. ch11: 其他图论算法
     1. 最小生成树 (minimum spanning tree)
         0. 性质：边权最小的边一定在最小生成树中（用于证明两个算法的正确性）
-        1. Kruskal：
+        1. **Kruskal**（Kruskal 基于边，Prim 基于点，区分一下）：
             - 做法：按边权从小到大排序 + 取边做并查集
             - 证明：用性质
-        2. Prim：
+        2. **Prim**：
             - 做法：以某个点为初始点集，每次选点集和外界连边中最小的边，把那个点加入点集
             - 证明：用性质
     2. 最大流 (max flow)
@@ -152,9 +154,9 @@
 11. DFS 的应用：
     1. 欧拉路径（回路）和哈密尔顿路径
         - 欧拉回路 dfs： $O(V+E)$
-    2. 无向图的双连通分量(biconnectivity)
+    2. **无向图**的双连通分量(biconnectivity)
         1. 定义：
-            - articulation point: 关节点，去掉这个点图变得不连通
+            - **articulation point**: 关节点，去掉这个点图变得不连通（注意记名词，并且关节点出现表示这张图一定是无向图）
             - biconnected graph: 不存在关节点
             - biconnected component: maximal biconnected subgraph
         2. tarjan 算法：
@@ -181,7 +183,7 @@
             1. 前向边：可以忽略
             2. 后向边：可以形成强连通
             3. 横插边：从 dfn 大的子树插到 dfn 小 的子树
-        3. `low[u]` 表示从 u 出发可以到达的最小的 dfn，其中 w 必须是还未确定在哪个强连通分量的点（即需要在栈中，用 `inq[w]` 来判断）
+        3. `low[u]` 表示 **从 u 出发可以到达的最小的 dfn**（和无向图双联通分量区分），其中 w 必须是还未确定在哪个强连通分量的点（即需要在栈中，用 `inq[w]` 来判断）
 
         $$
         low[u]=\min
@@ -200,13 +202,13 @@
         - 插入排序（以及任何交换相邻元素的排序）的交换次数 = 逆序对个数(inversion count)
         - 最大比较和交换次数 $\frac{n(n-1)}{2}$，最小比较和交换次数 $n-1, 0$
         - stable sort
-    2. 希尔排序：
-        - 取步长，进行分组插入排序，并逐步缩小步长，直到步长为 1，变为插入排序。
+    2. 希尔排序 Shell Sort：
+        - 取步长(也称增量，**increment**)，进行分组插入排序，并逐步缩小步长，直到步长为 1，变为插入排序。
         - 步长可以取 `floor(n/2)`，每次除 2。
         - 平均复杂度取决于步长的选取，在随机条件下效果较好，$O(N^{\frac{3}{2}})$ 或者 $O(N^{\frac{5}{4}})$
         - unstable sort
     3. 定义和结论
-        - stable sort: 大小相同的元素不会交换位置
+        - **stable sort**(易考): 大小相同的元素不会交换位置
         - unstable sort：会交换位置
         - 基于交换的排序的复杂度下界：排序树的深度 $k\geq \log_2(N!)$，又有 $log_2(\frac{N}{2}\log_2 \frac{N}{2}=\frac{N}{2}^{\frac{N}{2}})\leq\log_2(N!)\leq log_2(N^N)=N\log_2N$，所以 $\log_2(N!)=\Theta(N\log N)$
     4. 堆排序：
@@ -230,35 +232,35 @@
     6. 归并排序：
         1. 从中间分成两段，分别递归
         2. 在临时数组中进行归并，需要 $O(n)$ 的空间
-    7. table sort：用 `table[i]` 表示第 i 大的元素的下标，用于交换复杂度较高的场景
+    7. table sort（**名字容易忘**）：用 `table[i]` 表示第 i 大的元素的下标，用于交换复杂度较高的场景
     8. bucket sort（桶排序） & radix sort（基数排序）：
-        - LSD (Least Significant Digit)：即从最低位开始排序，这样一定是按照低位从小到大的顺序放到高位的桶里，保证排序。
-        - MSD (Most Significant Digit): 每个 run 之后对每个 bucket 单独排序，所以复杂度会更大一些。
-        - 复杂度：$O(N+B)$ & $O(P(N+B))$，其中 B 是基数，P 是重复次数
+        - **LSD** (Least Significant Digit)：即从最低位开始排序，这样一定是按照低位从小到大的顺序放到高位的桶里，保证排序。
+        - **MSD** (Most Significant Digit): 每个 run 之后对每个 bucket 单独排序，所以复杂度会更大一些。
+        - 复杂度：$O(N+B)$ & $O(P(N+B))$，其中 B 是基数，P 是重复次数，N 是桶或者基数个数
         - 例题：LSD 两轮之后的排序，就是拿后两位出来排序的结果
 13. Hash
     - 专有名词：
         - collision
         - overflow
-        - loading density = 已经放了几个数到 hash table 里 / 总共可以放几个
+        - loading density = 已经放了几个数到 hash table 里 / 总共可以放几个（**常见题目：第一次发生冲突时的  loading density**）
         - identifier density = 已经放了几个数到 hash table 里 / 可能放到 table 里的数的总个数
-        - Hash Function & key & hash value: H(key) = hash value.
+        - Hash Function & **key & hash value** (注意区分) : H(key) = hash value.
     1. 时间复杂度：没有冲突 $O(1)$
     2. 哈希函数：自变量是整数，自变量是字符串（选择部分字符看成 32 进制数）
-    3. 开放寻址法：
+    3. 开放寻址法 open addressing：
         1. linear probing 循环找下一个位置直到找到空位
             - linear probing 的期望 probe 次数：对于插入或者不成功的查询 $\frac{1}{2}(1+\frac{1}{(1-\lambda)^2})$，对于成功的查询 $\frac{1}{2}(1+\frac{1}{1-\lambda})$
         2. quadratic probing: 往后找 1, 2, 4, ... 个位置
             - 定理：如果使用平方探测，且表的规模是素数，那么当表至少有一半是空的时候，总能插入新的元素。![Alt text](./img/%E5%B9%B3%E6%96%B9%E6%8E%A2%E6%B5%8B%E6%B3%95.png)
             - 拓展：如果表的规模是形如 $4k+3$ 的素数，则平方探测法可以探测到整张表。
-        3. double hashing: `f(i)=i*hash2(x)` 探测的步长与 key 值有关，解决聚集问题
+        3. double hashing: `f(i)=i*hash2(x)` 探测的步长与 key 值有关，解决聚集问题（**double hashing 和 rehashing 的名字容易记混**）
             - 二次哈希函数需要满足的条件：不会映射到 0，能够探测整个表。例如 `hash2(x)=R-(x%R)`，其中 R 是比 tablesize 小的质数（tablesize 也是质数）
         4. rehashing：
             - rehashing 的条件：如果表已经有一半满或达到一定的插入率，或者某次插入失败了
-            - 操作：把已经插入的 key 用新的哈希函数插入到一张 2 倍大的表里。
+            - 操作：把已经插入的 key 用新的哈希函数插入到一张新的表里，**新表的大小是比当前大小的两倍大的最小质数**，不是直接乘 2，否则非质数的表会导致效率降低。
             - 复杂度：因为之前的插入已经是 O(N) 的了，重新哈希一遍只会给每次插入的时间复杂度加一个常数。但交互的时候重新哈希速度慢会被用户感知。
-        5. seperate chaining: 对相同哈希值用链表存储，简单粗暴
-    4. 如何删除：先标记删除。频繁删除会降低插入的效率
+    4. seperate chaining: 对相同哈希值用链表存储，简单粗暴
+    5. 如何删除：先标记删除。频繁删除会降低插入的效率
 
 
 
@@ -271,3 +273,15 @@
 If a stack is used to convert the infix expression a+b*c+(d*e+f)*g into a postfix expression, what will be in the stack (listing from the bottom up) when f is read?
 
 Ans：`+(+`
+
+2. 
+
+判断：一颗 BST，5,6,7 三个数都在上面。如果 5 和 7 在同一层，则 6 是他们的父亲。
+
+Ans：错。反例：按顺序插入 {6, 4, 5, 8, 7}
+
+3. 
+
+判断：给定 BST 的 postorder traversal，能否还原整棵树
+
+Ans：给前序遍历或者后序遍历都可以，根确定了则左右子树包含哪些节点也确定了。
