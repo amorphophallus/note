@@ -108,17 +108,18 @@ nav:
         - 'Tools':
             - 'word学习笔记': 'College Courses/Tools/word学习笔记.md'
             - '论文相关': 'College Courses/Tools/论文相关.md'
-        - '网安导':
-            - '笔记': 'College Courses/网安导/笔记.md'
-            - '实验报告': 'College Courses/网安导/实验报告.md'
-        - '超算 HPC':
-            - 'CUDA 基础': 'College Courses/HPC/CUDA 基础.md'
-            - 'CUDA 优化': 'College Courses/HPC/CUDA 优化.md'
-            - '手写 SIMD 向量化': 'College Courses/HPC/手写 SIMD 向量化.md'
-        - 'Introduction to Computing System':
-            - '复习提纲': 'College Courses/Introduction to Computing System/复习提纲.md'
         - '课程计划':
             - '大二秋冬学期学习计划': 'College Courses/课程计划/大二秋冬学期学习计划.md'
+        - '大一春夏':
+            - '网安导':
+                - '笔记': 'College Courses/网安导/笔记.md'
+                - '实验报告': 'College Courses/网安导/实验报告.md'
+            - '超算 HPC':
+                - 'CUDA 基础': 'College Courses/HPC/CUDA 基础.md'
+                - 'CUDA 优化': 'College Courses/HPC/CUDA 优化.md'
+                - '手写 SIMD 向量化': 'College Courses/HPC/手写 SIMD 向量化.md'
+            - 'Introduction to Computing System':
+                - '复习提纲': 'College Courses/Introduction to Computing System/复习提纲.md'
         - '大二秋冬笔记':
             - 'AI基础': 'College Courses/大二秋冬笔记/AI基础.md'
             - '博弈论基础': 'College Courses/大二秋冬笔记/博弈论基础.md'
@@ -128,6 +129,7 @@ nav:
             - '数字全息技术': 'College Courses/大二秋冬笔记/数字全息技术.md'
             - '程算': 'College Courses/大二秋冬笔记/程算.md'
             - '概率论': 'College Courses/大二秋冬笔记/概率论.md'
+            - '51单片机': 'College Courses/大二秋冬笔记/b站大学_51单片机.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
