@@ -22,13 +22,15 @@
 
 1. mnt 文件夹：把 windows 的所有盘挂载在 mnt 文件夹下，可以方便操作 windows 下的文件。
 
-## Debian 修改环境变量
+## 常见问题
 
-### 临时修改
+### Debian 修改环境变量
+
+#### 临时修改
 
 命令行`export PATH=$PATH:/usr/bin`
 
-### 当前用户
+#### 当前用户
 
 `sudo vim ~/.bashrc`：
 
@@ -40,7 +42,7 @@ export PATH
 
 `source ~/.bashrc`
 
-### 所有用户
+#### 所有用户
 
 `sudo vim /etc/profile`：
 
@@ -52,6 +54,12 @@ export PATH
 
 `source /etc/profile`
 
-### tips
+#### tips
 
 1. `PATH` 等号前后不能有空格
+
+### apt-get 换源
+
+修改 `/etc/apt/sources.list`
+
+若换源后遇到 Temporary failure in name resolution 问题，重启 Windows 解决问题。
