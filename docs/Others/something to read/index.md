@@ -5,10 +5,11 @@
 [How SHA-256 Works Step-By-Step | Boot.dev](https://blog.boot.dev/cryptography/how-sha-2-works-step-by-step-sha-256/)
 [知乎-清理C盘](https://zhuanlan.zhihu.com/p/427183314)
 
-> gay 宝的推荐：
-[mathgen book](https://thatsmathematics.com/blog/mathgen-books/)
-[服务器折腾指北](https://blog.laoda.de/archives/posts)
-[船新的 css 框架](https://github.com/tailwindlabs/tailwindcss)
+gay 宝的推荐：
+
+1. [mathgen book](https://thatsmathematics.com/blog/mathgen-books/)
+2. [服务器折腾指北](https://blog.laoda.de/archives/posts)
+3. [船新的 css 框架](https://github.com/tailwindlabs/tailwindcss)
 
 ## metasource
 
@@ -17,6 +18,7 @@
 1. [CS 自学指南](https://csdiy.wiki/)
 2. [咸鱼肆 - 学长组织的知识类文章连载](https://www.yuque.com/xianyuxuan/saltfish_shop/)
 3. [阮一峰 - 科技爱好者周刊](https://github.com/ruanyf/weekly)
+4. [安富莱嵌入式周报](https://www.armbbs.cn/forum.php?mod=forumdisplay&fid=12&filter=typeid&typeid=104)
 
 
 ## 课程主页 / 网课 / 仓库 / 其他资源
