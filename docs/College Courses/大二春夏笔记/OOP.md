@@ -49,16 +49,20 @@ void print_array(T* arr[], int n){
 
 ```cpp
 template<typename T, typename Compare>
-void section_sort(T arr[], int n, Compare comp){
-    for (int i = 0; i < n; ++ i)
+void selection_sort(T arr[], int n, Compare comp)
+{
+  for (int i = 0; i < n - 1; ++i)
+  {
+    int min_idx = min_element(arr, i, n, comp);
+    if (min_idx != i)
+      swap(arr[min_idx], arr[i]);
+  }
 }
 ```
 
-==template Compare==
+- 存在 `std::Compare` 类型，比如优先队列中可以使用的 `less`, `priority_queue<int,vector<int>,less<int> > big_heap;`
 
-std:: Compare 类型
-
-### Class
+### 类 Class
 
 #### 重载运算符
 
@@ -290,6 +294,144 @@ String::String(int n){
 - [C++ 类成员函数中的静态变量的作用域](https://blog.csdn.net/su_787910081/article/details/42213245)
 
 
+### 预处理指令
+
+#### #pragma once
+
+```cpp
+#pragma once
+```
+
+保证这个头文件只被编译一遍。相当于 C 中的
+
+```c
+#ifndef __INVERTED_INDEX__
+#define __INVERTED_INDEX__
+
+...
+
+#endif
+```
+
+### 命名空间 namespace
+
+#### 定义
+
+```cpp
+namespace my_space{
+
+}
+```
+
+
+#### 使用
+
+- 使用 `typedef` 或 `using`, `auto` 缩短变量类型的长度
+
+```cpp
+// 使用函数
+using my_space::my_function;
+// 使用整个 namespace
+using namespace my_space;
+```
+
+### STL 标准模板库
+
+#### 容器 Container
+
+- sequantial
+    - array & vector & deque: 不可变长，单端可变长，双端可变长
+    - forward-list, list: 单向指针，双向指针链表
+- associative
+    - 底层用红黑树实现
+    - set, multiset
+    - map, multimap
+- unordered associative:
+    - 底层用哈希表实现
+    - unordered_set, unordered_multiset, unordered_map, unordered_multimap
+- adaptors
+    - stack, queue, priority_queue
+
+##### vector
+
+- `[]` 运算符不会进行边界检测，一定会返回值。
+
+```cpp
+// 初始化和插入
+vector<int> evens {2, 4, 6, 8};
+evens.push_back(12);
+evens.insert(evens.begin() + 4, 5, 10);
+
+// 遍历 vector
+for (vector<int>::iterator it = evens.begin(); it < evens.end(); it++) cout << *it << ", ";
+for (auto it = evens.begin(); it < evens.end(); it++) cout << *it << ", ";
+for (int e: evens) cout << e << ", ";
+```
+
+##### list
+
+- `size()` 是线性的，`empty()` 才是 O(1)
+- `erase(it)` 会使 it 失效，但会返回下一个迭代器，理想的使用方法是 `it = l.erase(it);`
+
+
+##### map
+
+- key 的数据类型必须能够比大小和判断相等。即自定义类型做 key 需要**重载小于号和等于号**。
+- `[]` 运算符不会判断 key 是否存在，若不存在会插入并把 value 设置成默认值。
+- set 和 map 中的元素默认是不可变的（因为修改元素会改变红黑树结构）。但是可以在变量前加 **`mutable`**，表示即使是在 const object 内这个 member 也是可以修改的，并保证 mutable 的成员不参与大小和相等的比较，即不会影响 object 在红黑树中的位置。
+
+```cpp
+// 定义和插入
+map<string, int> price;
+price["apple"] = 5;
+cout << price["apple"] << endl;
+
+// 遍历
+for (pair<string, int> pair: price) cout << '{' << pair.first << ", " << pair.second << '}' << endl;
+for (auto pair: price)              cout << '{' << pair.first << ", " << pair.second << '}' << endl;
+for (auto [fruit, f_price]: price) cout << '{' << fruit << ", " << f_price << '}' << endl;
+```
+
+#### 算法 Algorithm
+
+[参考阅读: STL world map](https://www.fluentcpp.com/getthemap/)
+
+- 所有的范围都是左闭右开 `[begin, end)`
+
+#### 迭代器 iterator
+
+把各种不同的指针统一起来，使用统一的算法处理。
+
+- random-access: 可以比大小
+- contiguous-access：不能比大小
+
+```cpp
+// vector 的 back_inserter 迭代器，可以在尾部未定义的区域插入
+vector<int> evens {1, 2, 3, 4};
+copy(evens.begin(), evens.end(), back_inserter(evens));
+// list 的 front_inserter 迭代器，在头部插入
+list<int> l {1, 2, 3, 4};
+copy(l.begin(), ,.end(), front_inserter(l)); // {4, 3, 2, 1, 1, 2, 3, 4}
+// ostream_iterator
+copy(evens.begin(), evens.end(), ostream_iterator<int>(cout, ", "));
+```
+
+自定义 iterator ==还不会==
+
+```cpp
+
+```
+
+tips:
+
+- [获取 iterator 指向的元素的地址](https://blog.csdn.net/cwdben/article/details/116034666)
+
+### 其他
+
+#### Memory Model
+
+![Alt text](./imgs/OOP/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-17%20220859.png)
+
 
 ### 工具
 
@@ -408,7 +550,7 @@ String::String(int n){
 
 [参考博客：C++文件读写详解（ofstream,ifstream,fstream）](https://blog.csdn.net/kingstar158/article/details/6859379)
 
-![Alt text](./imgs/iostream_lib.gif)
+![Alt text](./imgs/OOP/iostream_lib.gif)
 
 1. 打开 & 关闭文件
     - `open`

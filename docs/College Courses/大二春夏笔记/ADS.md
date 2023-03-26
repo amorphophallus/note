@@ -163,7 +163,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 - 情景 1 删除节点没有儿子：直接删除，自平衡的情景包含在情景 2 中
 - 情景 2 删除节点只有一个儿子：用儿子代替删除节点
     - 情景 2.1 删除节点是红节点：black height 不变，仍旧平衡
-    - 情景 2.2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行） ![Alt text](./imgs/ADS_red_black_delete.webp)
+    - 情景 2.2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行） ![Alt text](./imgs/ADS/ADS_red_black_delete.webp)
         - 情景 2.2.1 S 是红节点
             - 性质 1：P 一定为黑节点
             - 性质 2：因为 P 的左子树中有至少 1 个黑节点（R），所以右子树中也至少有 1 个黑节点，所以 S 一定有儿子。因为 S 是红节点，只有一个儿子的情况不存在，所以 S 的左右儿子 SL SR 都为黑节点。
@@ -224,8 +224,8 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
 1. M 个指针和 M-1 个键值。在非叶子节点，Ki 存 Pi+1 指向的子树中的最小键值。在叶子节点中，Ki 存 Pi 指向的文件的键值，PM 指向下一个叶子节点（便于对文件进行顺序处理）。
 2. 指向父亲的指针
 
-![Alt text](./imgs/ADS_B+tree_node_structure.png)
-![Alt text](./imgs/ADS_B+tree_structure.png)
+![Alt text](./imgs/ADS/ADS_B+tree_node_structure.png)
+![Alt text](./imgs/ADS/ADS_B+tree_structure.png)
 
 ### 操作
 
@@ -289,9 +289,9 @@ D. there are 5 leaf nodes
     - Delete
         - DeleteEntry: 递归向上的删除函数
 
-![Alt text](./imgs/ADS_B+_insert.png)
-![Alt text](./imgs/ADS_B+_insert_leaf_parent.png)
-![Alt text](./imgs/ADS_B+_delete.png)
+![Alt text](./imgs/ADS/ADS_B+_insert.png)
+![Alt text](./imgs/ADS/ADS_B+_insert_leaf_parent.png)
+![Alt text](./imgs/ADS/ADS_B+_delete.png)
 
 ## Inverted Index 倒排索引
 
@@ -315,13 +315,139 @@ D. there are 5 leaf nodes
 搜索引擎的性能测试
 
 - 相关性
-    - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS_relevance.jpg)
+    - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS/ADS_relevance.jpg)
     - precision $P = R_R / (R_R + I_R)$ 搜到的结果中有多少相关
     - recall $R = R_R / (R_R + R_N)$ 相关的结果中有多少被搜到
     - accuracy $A=(R_R+I_N)/(R_R+I_R+R_N+I_N)$ 有多少结果和标签匹配
 - 搜索速度(how fast it search, hwo fast it index)
 - 耗费资源
 
-![Alt text](./imgs/ADS_search_engine.png)
 
-==课堂互动：F，T，F，precision 和 recall 怎么选择==
+### project 1 Roll Your Own Search Engine
+
+资源：
+
+1. [莎士比亚全集](http://shakespeare.mit.edu/)
+2. [莎士比亚语言研究以及其他信息](https://www.bardweb.net/index.html)
+3. 
+
+todo:
+
+- [x] 爬虫
+
+戏剧的格式：
+
+```json
+{
+    "key": 0,
+    "type": "play",
+    "name": "All's Well That Ends Well",
+    "act": 1,
+    "scene": 1,
+    "url": "http://shakespeare.mit.edu/allswell/allswell.1.1.html",
+    "content": "..."
+}
+```
+
+诗歌的格式：
+
+```json
+{
+    "key": 12345,
+    "type": "poetry",
+    "name": "Sonnet I",
+    "url": "http://shakespeare.mit.edu/Poetry/sonnet.I.html",
+    "content": "..."
+}
+```
+
+整个文件的格式：
+
+```json
+[{}, {}, {}, {}, ...]
+```
+
+- [x] 读取 json 文件 [jsoncpp](https://www.cnblogs.com/tocy/p/json-intro_jsoncpp-lib.html)
+- [x] 大小写 + stemming + stop words 处理 [停用词库](https://www.ranks.nl/stopwords) [NLTK 停用词库](https://gist.github.com/sebleier/554280)
+- [x] 倒排索引 class 的基本功能函数
+- [x] 生成倒排索引
+
+封装格式：(`InvertedIndex.h`)
+
+```cpp
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class InvertedIndex{
+private:
+	
+	class InvertedIndexData{
+	public:
+		string word;
+		int tot_freq;
+		vector<pair<int, int> > freq;
+	};
+	
+	InvertedIndexData * head;
+	
+public:
+	
+	void Insert(int doc, string word);
+	int Query_WordCount(string word);
+};
+```
+
+- [x] 存储倒排索引
+- [x] 读取倒排索引
+
+存储文件的格式：
+
+```json
+[
+    {
+        "word": "prince",
+        "tot_freq": 123,
+        "freq": [
+            [0, 123],
+            [2, 456],
+            ...
+        ]
+    },
+    ...
+]
+```
+
+- [x] 处理查询语句
+    - [x] 测试：threshold
+    - [x] 查询 stop word 怎么处理？ to be or not to be
+- [x] 性能检测：怎么生成查询 & 标签？
+- [ ] 优化：分布式存储(500 000 files and 400 000 000 distinct words)
+- [x] 优化：stemmer 包含引号的单词和缩写 `'bout=about` `they're = they are` （莎士比亚）
+
+
+
+
+
+## 错题整理
+
+### Inverted Index
+
+1. 
+
+When evaluating the performance of data retrieval, it is important to measure the relevancy of the answer set.
+
+F
+
+区分 data retrieval 和 information retrieval，前者是从数据库中取数据，强调速度。
+
+![Alt text](./imgs/ADS/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-21%20100435.png)
+
+2. 
+
+Relevance quality of a returned document is judged against all the query terms in the given query.
+
+F
+
+不是所有 term 都比较，需要去除 stop words
