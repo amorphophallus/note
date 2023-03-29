@@ -579,6 +579,28 @@ $(x+y)^n$ % 公式需要手动修改
 
 #### 参考文献
 
+[参考知乎](https://zhuanlan.zhihu.com/p/265479955)
+
+在文末建立参考文献表
+
+```latex
+\begin{thebibliography}{99}  
+
+\bibitem{ref1} reference1
+\bibitem{ref2} reference2
+\bibitem{ref3} reference3
+\bibitem{ref4} reference4
+
+\end{thebibliography}
+```
+
+在文中引用
+
+```latex
+\cite{ref1}
+\cite{ref1, ref5}
+```
+
 #### 索引
 
 ### 注意事项和常见错误

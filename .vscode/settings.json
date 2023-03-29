@@ -5,5 +5,8 @@
         "functional": "cpp",
         "limits": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "pasteImage.path": "${currentFileDir}/imgs",
+    "pasteImage.insertPattern": "![${currentFileNameWithoutExt}](${imageFilePath})",
+    "pasteImage.prefix": "./"
 }

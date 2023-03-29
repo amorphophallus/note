@@ -163,7 +163,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 - 情景 1 删除节点没有儿子：直接删除，自平衡的情景包含在情景 2 中
 - 情景 2 删除节点只有一个儿子：用儿子代替删除节点
     - 情景 2.1 删除节点是红节点：black height 不变，仍旧平衡
-    - 情景 2.2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行） ![Alt text](./imgs/ADS/ADS_red_black_delete.webp)
+    - 情景 2.2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行） ![Alt text](./imgs/ADS_red_black_delete.webp)
         - 情景 2.2.1 S 是红节点
             - 性质 1：P 一定为黑节点
             - 性质 2：因为 P 的左子树中有至少 1 个黑节点（R），所以右子树中也至少有 1 个黑节点，所以 S 一定有儿子。因为 S 是红节点，只有一个儿子的情况不存在，所以 S 的左右儿子 SL SR 都为黑节点。
@@ -224,8 +224,8 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
 1. M 个指针和 M-1 个键值。在非叶子节点，Ki 存 Pi+1 指向的子树中的最小键值。在叶子节点中，Ki 存 Pi 指向的文件的键值，PM 指向下一个叶子节点（便于对文件进行顺序处理）。
 2. 指向父亲的指针
 
-![Alt text](./imgs/ADS/ADS_B+tree_node_structure.png)
-![Alt text](./imgs/ADS/ADS_B+tree_structure.png)
+![Alt text](./imgs/ADS_B+tree_node_structure.png)
+![Alt text](./imgs/ADS_B+tree_structure.png)
 
 ### 操作
 
@@ -289,9 +289,9 @@ D. there are 5 leaf nodes
     - Delete
         - DeleteEntry: 递归向上的删除函数
 
-![Alt text](./imgs/ADS/ADS_B+_insert.png)
-![Alt text](./imgs/ADS/ADS_B+_insert_leaf_parent.png)
-![Alt text](./imgs/ADS/ADS_B+_delete.png)
+![Alt text](./imgs/ADS_B+_insert.png)
+![Alt text](./imgs/ADS_B+_insert_leaf_parent.png)
+![Alt text](./imgs/ADS_B+_delete.png)
 
 ## Inverted Index 倒排索引
 
@@ -315,7 +315,7 @@ D. there are 5 leaf nodes
 搜索引擎的性能测试
 
 - 相关性
-    - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS/ADS_relevance.jpg)
+    - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS_relevance.jpg)
     - precision $P = R_R / (R_R + I_R)$ 搜到的结果中有多少相关
     - recall $R = R_R / (R_R + R_N)$ 相关的结果中有多少被搜到
     - accuracy $A=(R_R+I_N)/(R_R+I_R+R_N+I_N)$ 有多少结果和标签匹配
@@ -427,8 +427,121 @@ public:
 - [x] 优化：stemmer 包含引号的单词和缩写 `'bout=about` `they're = they are` （莎士比亚）
 
 
+## Leftist Heap 
 
+背景和思路：
 
+- 中文名：左偏树、左偏堆、左堆
+- 特点：满足堆的所有性质 + $O(\log N)$ 合并
+- 实现思路：使堆“不平衡”
+
+定义和性质：
+
+- 定义：npl(X), Null Path Length, X 到 NULL 的最短路径
+- 性质：左子树的 npl 大于等于右子树
+- 定义：右路径，从根开始一直找右儿子得到的路径
+- 定理：左偏树的右路径上有 r 个节点，整棵树的节点个数至少有 $2^r-1$
+    - 证明：数学归纳法。如果根节点的 npl 是 r，则右子树的 npl 是 r-1，左子树的 npl 大于等于 r-1
+- 推论：右路径长度 $O(\log N)$
+
+合并算法实现：（递归）
+
+1. `H_ret = Merge(H1->Right, H2)` **（如果其中至少有一个节点是 NULL 就结束递归，和斜堆有区别）**
+1. `Attach(H_ret, H1->Right)`
+1. `Swap(H1->Left, H1->Right)`
+1. `Update(H1->npl)`
+
+插入算法实现：相当于和一个只有一个节点的堆合并
+
+删除根节点实现：相当于左儿子和右儿子合并
+
+$O(N)$ 建堆：两两合并，做 $\log N$ 次，复杂度 $O(N)$
+
+## Skew Heap
+
+[参考文章，证明很详细](https://www.cnblogs.com/HachikoT/p/16951306.html)
+
+[左倾树和斜堆做题！](https://blog.csdn.net/HGGshiwo/article/details/115060750)
+
+[Skew Heap Visualization!](https://www.cs.usfca.edu/~galles/visualization/SkewHeap.html)
+
+定义和性质：
+
+- 中文名：斜堆
+- 优点：不需要额外空间
+
+合并算法：
+
+1. 如果一个空斜堆与一个非空斜堆合并，**交换非空斜堆的左右节点，向下递归（保证非空堆右路径上所有重节点都变成轻节点，和左倾树不一样）** ，然后返回非空堆的堆顶。
+1. 如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的右孩子对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的右孩子，然后交换根节点的左右儿子。（如果先交换后合并，可以做到非递归）
+- 最后一步交换很关键，对于一个结点来说，合并的数据总是交替地插入自己的左边和右边，那么高度是不是就可以控制住了呢?
+
+复杂度证明：（摊还分析）
+
+- 定义 heavy node：右子树节点个数大于左子树节点个数（不能相等）
+- 定义势能函数：$\Phi(D_i)$ 为整棵树中 heavy node 的个数
+- 定义 $l_a, h_a, l_b, h_b$：a 树右路径上的轻节点个数、重节点个数，b 树右路径上的轻节点个数、重节点个数
+- 证明：
+
+合并的实际开销为 a 和 b 树的右路径长度之和：$$c_i=l_a+h_a+l_b+h_b$$
+
+然后考虑合并产生的势能变化。
+
+- 在合并过程中轻重会变化的，只有右路径上的节点。因为只有右路径上的节点会产生合并操作
+- 对于右路径中的重节点，因为合并在右子树发生，并且会把右子树交换到左子树，所以合并后左子树一定比右子树重，所以变成轻节点。
+- 对于右路径中的轻节点，可能变成重节点或者轻节点，但右路径中的轻节点个数小于 $\log N$ 个。因为轻节点左子树比右子树重，轻节点的子树大小一定大于等于右儿子的两倍。
+
+综上，势能变化 $$\Delta\Phi\leq l_a+l_b-h_a-h_b$$
+
+所以摊还价值为
+$$
+\begin{align*}
+\hat c_i&=\Delta\Phi + c_i\notag \\
+&\leq 2(l_a+l_b)\notag \\
+&\leq 2\log N\notag \\
+\end{align*}
+$$
+
+考虑初始势能和最终势能 $\Phi(0)\leq N, \Phi(M)\leq N$
+
+所以 M 次合并操作的复杂度为
+
+$$
+\begin{align*}
+\sum_{i=1}^M c_i&=\sum_{i=1}^M \hat c_i + \Phi(0)-\Phi(M)\\
+&\leq 2M\log N + N \\
+&= O(M\log N)
+\end{align*}
+$$
+
+e.g. The result of inserting keys 1 to $2^{k−1}$ for any k>0 in order into an initially empty skew heap is always a full binary tree.
+
+数学归纳法。给满二叉树的每条边编号，往右走的为 0，往左走的为 1,。然后给叶子节点编号为从根走到叶子的路径上边的编号组合。例如从根走右右左左，则编号为 0011。
+
+则插入第 2 到 3 个节点的顺序为 0, 1；插入第 4 到 7 个节点的顺序为 00, 10, 01, 11；第 8 到 15 个节点的顺序为 000, 100, 010, 110, 001, 101, 011, 111。
+
+可以看出插入深度为 k 的满二叉树，相当于以右左右左的顺序依次插入深度为 k-1 的右子树和左子树。
+
+**从小到大插入节点会构造一颗满二叉树，从大到小插入节点会构造一条往左延伸的链**
+
+e.g. 斜堆的右路径长度是 $\Omega(N)$ 的
+
+依次插入：6, 5, 4, 7, 3, 8, 2, 9 ... 右路径长度为 $\frac{N}{2}$
+
+## Bionomial Queue 二项队列
+
+[二项队列的性质 参考博客](https://blog.csdn.net/xitie8523/article/details/94467442)
+
+[二项队列的操作 参考博客](https://zhuanlan.zhihu.com/p/72854813)
+
+二项队列操作：
+
+1. 
+
+Insert 均摊 O(1) 证明：
+
+1. $\sum_{i=0}^{k} \frac{N}{2^i}\cdot i < 2N$
+1. accounting method: 每个点 2 块钱。
 
 ## 错题整理
 
@@ -442,7 +555,7 @@ F
 
 区分 data retrieval 和 information retrieval，前者是从数据库中取数据，强调速度。
 
-![Alt text](./imgs/ADS/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-21%20100435.png)
+![Alt text](./imgs/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-21%20100435.png)
 
 2. 
 

@@ -430,7 +430,7 @@ tips:
 
 #### Memory Model
 
-![Alt text](./imgs/OOP/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-17%20220859.png)
+![Alt text](./imgs/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-17%20220859.png)
 
 
 ### 工具
@@ -550,7 +550,7 @@ tips:
 
 [参考博客：C++文件读写详解（ofstream,ifstream,fstream）](https://blog.csdn.net/kingstar158/article/details/6859379)
 
-![Alt text](./imgs/OOP/iostream_lib.gif)
+![Alt text](./imgs/iostream_lib.gif)
 
 1. 打开 & 关闭文件
     - `open`
