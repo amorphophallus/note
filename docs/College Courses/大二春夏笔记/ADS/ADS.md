@@ -530,18 +530,58 @@ e.g. 斜堆的右路径长度是 $\Omega(N)$ 的
 
 ## Bionomial Queue 二项队列
 
+### 性质
+
 [二项队列的性质 参考博客](https://blog.csdn.net/xitie8523/article/details/94467442)
 
+- bionomial queue 是 bionomial tree 构成的森林
+- bionomial tree $B_k$ 高为 $k$
+- $B_k$ 是由两棵 $B_{k-1}$ 组成的，方式为让 $B_{k-1,1}$ 的根成为 $B{k-1,2}$ 的根的儿子
+- $B_k$ 有 $2^k$ 个节点
+- $B_k$ 深度为 $d$ 的节点有 $\tbinom{k}{d}$ 个
+    - 证明：$\tbinom{k}{d}=\tbinom{k-1}{d} + \tbinom{k-1}{d-1}$
+
+
+e.g. n 个节点的 bionomial queue 由哪几颗 bionomial tree 组成？
+
+二进制分解
+
+e.g. 两棵 bionomial queue 合并？
+
+二进制加法
+
+### 操作
+
 [二项队列的操作 参考博客](https://zhuanlan.zhihu.com/p/72854813)
-
-二项队列操作：
-
-1. 
 
 Insert 均摊 O(1) 证明：
 
 1. $\sum_{i=0}^{k} \frac{N}{2^i}\cdot i < 2N$
-1. accounting method: 每个点 2 块钱。
+1. accounting method: 每个点 2 块钱，一块钱插入的时候花掉了，另一块钱存在他所在的树上。这么做可以保证每棵树都存了一块钱，在合并两棵树的时候花掉原来存着的钱中的一块，把另一块钱存在新合成的树上。
+
+### 实现
+
+每个节点存左儿子和右兄弟
+
+```c
+typedef struct BinNode *Position;
+typedef struct Collection *BinQueue;
+typedef struct BinNode *BinTree;  /* missing from p.176 */
+
+struct BinNode 
+{ 
+	ElementType	    Element;
+	Position	    LeftChild;
+	Position 	    NextSibling;
+} ;
+
+struct Collection 
+{ 
+	int	    	CurrentSize;  /* total number of nodes */
+	BinTree	TheTrees[ MaxTrees ];
+} ;
+
+```
 
 ## 错题整理
 

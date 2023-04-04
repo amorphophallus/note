@@ -63,7 +63,9 @@
 - di
 - bp
 - sp
-- (bx 也可用)
+    - `ss:sp` 指向堆栈的顶端
+- bx
+    - 因为 sp 用于特定用途，偏移地址寄存器少了一个，就把通用寄存器中的一个拿来顶替
 
 ip: instruction pointer，指令指针
 
@@ -90,12 +92,6 @@ has_carry_flag:
 扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
 
 ### 汇编指令
-
-1. mov
-    - `mov word ptr [0426],0001` 把 16 位数据 0x0001 移动到地址 0x0426 的内存中。[] 表示取地址，相当于 C 中的 *。
-
-3. nop(0x90)：no operation 用于删除机器码并保持跳转指令的正确性
-4. cli: clear interrupt 不允许中断（在 windows 下是特权指令，用户程序不允许操作）
 
 #### 运算指令
 
@@ -161,6 +157,14 @@ jbe next
 
 如果 ebx 小于等于 100 则跳转到 next 位置
 
+#### 其他常用指令
+
+
+1. mov
+    - `mov word ptr [0426],0001` 把 16 位数据 0x0001 移动到地址 0x0426 的内存中。[] 表示取地址，相当于 C 中的 *。
+1. nop(0x90)：no operation 用于删除机器码并保持跳转指令的正确性
+1. cli: clear interrupt 不允许中断（在 windows 下是特权指令，用户程序不允许操作）
+
 
 ### 汇编语言
 
@@ -172,6 +176,8 @@ jbe next
 
 #### 逻辑地址表示法
 
+##### 段地址 + 偏移地址
+
 段地址：5 位 16 进制段首地址的前 4 位
 
 - 段首的要求：5 位 16 进制段地址的最低位必须为 0
@@ -182,14 +188,33 @@ jbe next
 
 偏移地址：在段地址的基础上，加上的一个偏移量
 
-逻辑地址产生的历史原因：8086 CPU 没有 4 位以上的寄存器，只能把一个 5 位地址拆成两个 4 位表示
+p.s. 逻辑地址产生的历史原因：8086 CPU 没有 4 位以上的寄存器，只能把一个 5 位地址拆成两个 4 位表示
 
-运算符：
+p.s. 每个地址存储 1 个 Byte 的数据
+
+##### 表示方法
+
+正确的：
 
 - 取地址：`ds:bx+3`
 - 取内容：`ds:[bx+3]`
+    - `[bx+3]`，等价于 `ds:[bx+3]`，其中 ds 是隐含的
+- `abc[1]`，其中 abc 是 data 段中的数组，属于直接寻址，会被编译成 `ds:[offset abc + 1]` 然后变成例如 `1000h:[0+1]`
+    - `[abc+1]` 等价
+    - `mov bx, offset abc` + `[bx+1]` 等价 
+    - `mov bx, offset abc` + `mov si, 1` + `[bx+si]` 等价
+    - 注意在 C 中指针加数字 `abc + 1` 的含义是 `abc + 1 * sizeof(*abc)`。但在汇编中指针加数字和数字加数字没有任何区别，`abc + 1` 永远表示 abc 偏移一个 byte。例如，如果 `xyz` 是一个 `dd` 数组，那么 xyz 的第二个元素地址为 `xyz + 4`。
 
-p.s. 每个地址存储 1 个 Byte 的数据
+错误的：
+
+- 不能用常数表示段地址：`1000h:[2000h]`
+
+##### 寻址方式分类
+
+1. 直接寻址：偏移地址只用常数表示。例如 `[1000h]`, `ds:[2000h]`
+1. 间接寻址：偏移地址可以由寄存器和常数表示。
+    - 只允许 bx, bp, si, di 四个寄存器出现在方括号里。例如 `[ax]` 是错误的
+    - 寄存器相加时只允许 b 开头的寄存器和 i 结尾的寄存器、例如 `[bx+si+2]` 是正确的，`[bx+bp]` 是错误的。
 
 #### 重定位(relocating)
 
@@ -219,6 +244,35 @@ e.g. `s db "ABC"` 定义一个数组，每个元素占 8 bit
 e.g. `x dd 3.14` 定义一个 float
 
 p.s. IEEE 754 标准浮点数：参考计组笔记中的 “浮点数 - IEEE754 标准” 章节
+
+#### byte ptr
+
+- 汇编语言的多数指令要求两个操作数等宽
+- 汇编语言中常数没有明确的宽度
+
+`mov ds:[bx], 0` 根据前两条规律，可以得出：指令的两个操作数宽度均不明确会报错
+
+`mov ds:[bx], al` 将 8 bit 数据存到 `ds:bx`
+
+`mov ds:[bx], ax` 将 16 bit 数据存到 `ds:bx`
+
+`mov byte ptr ds:[bx], 0` 规定 `ds:bx` 是一个指向 8 bit 数据的指针，相当于 C 中的强制类型转换 `*(char*)(ds:bx) = 0;`
+
+- 指针修饰符有 `byte ptr`, `word ptr` 和 `dword ptr` 三种
+- 指针修饰符只能修饰内存位置，不能修饰常数。例如 `byte ptr 0` 会报错。
+
+#### assume
+
+1. `assume ds:data` 的作用：告诉编译器把变量或标号的段地址替换成对应的段寄存器，但并不会对段地址进行赋值。
+    - 编译后不会生成机器码，称为“编译指示语句”
+    - 需要提前对 ds 进行赋值
+    - 没有 assume 就无法使用 `[bx+3]` 的简略写法 ？？？
+    - 同一个段名和多个段寄存器建立关联，选择寄存器的优先级为 `ds > es > ss > cs`，即 `assume ds:data, es:data` 相当于 `assume ds:data`
+1. `assume cs:code` 的作用：告诉编译器把变量或标号的段地址替换成对应的段寄存器，但并不会对段地址进行赋值。
+    - 允许存在多个 code 段
+    - 没有 assume 就无法对代码段中的标号进行寻址
+    - 不需要提前对 cs 进行赋值，即使程序运行途中 cs 发生改变（跳转到不同的代码段），cs 也会由程序自行修改。
+
 
 ### DOS
 
@@ -270,7 +324,7 @@ t+18h -> gdt[3]
 
 `int 21h(AH=01h)`: 从 stdin 读取一个字符，保存在 AL 中，相当于 getchar()
 
-```
+```asm
 mov ah, 1
 int 21h
 cmp al, 'A'
@@ -280,7 +334,7 @@ cmp al, 'A'
 
 `int 21h(AH=02h)`: 把 DL 中的数据输出到 stdout 中，相当于 putchar()
 
-```
+```asm
 mov ah, 2
 mov dl, 'U'
 int 21h
@@ -290,7 +344,7 @@ int 21h
 
 `int 21h(AH=4Ch)`: 结束程序，返回 AL 中的数值
 
-```
+```asm
 exit:
     mov ah, 4Ch
     mov al, 0
@@ -306,25 +360,26 @@ exit:
 - turbo debugger(td)：只能调试 16 位 DOS 程序(.exe)
     - windows + R -> command -> td + 程序名(.exe)
 
-==TB 打开 exe、搜索内存位置、搜索程序位置、修改汇编代码？==
-
 1. 在 command 中用 `TD xxx.exe` 命令打开 exe 文件
 2. TD 界面
     - 左上：汇编程序(cs)
     - 左下：内存空间(ds)
     - 右上：寄存器（例如: ax, bx）
-    - 右下：
+    - 右下：栈空间
 3. 设置断点：F2 在光标位置设置一个断点
 4. 跟踪进入函数：F7
-5. 搜索内存地址：选中左下角框 -> ctrl+g -> 输入内存位置的逻辑地址 `ds:0426`
-    - 搜索代码地址同理
+5. 搜索内存地址：选中左下角框 -> ctrl+g -> 输入内存位置的逻辑地址例如 `ds:0426`
+    - 搜索代码地址同理：选中左上角框 -> ctrl+g -> 输入代码位置的逻辑地址例如 `cs:0426`
+    - 并不一定要左上角显示代码，左下角显示数据，只是这样看起来比较舒服
 6. 切换寄存器位数：
     - 右键 -> 可以切换 16 位和 32 位
     - ctrl+R
 7. F9：运行程序
 8. F4：运行到光标处暂停
+1. alt-X：退出
+1. alt+F5：显示 user screen（查看程序输出），然后 esc 返回 TD 界面。
 
-### OllyDbg
+### OllyDbg 调试 32 位可执行程序
 
 ==OllyDbg 打开 exe、设置断点、调试（运行到断点etc）、修改汇编代码==
 
@@ -387,6 +442,49 @@ exit:
 ### DosBox86
 
 一个虚拟的 DOS 环境。其中虚拟的 C 盘位于 `D:\DosBox86` 下，要用这个环境进行编译链接运行，需要把文件放到 `D:\DosBox86\MASM` 文件夹下。
+
+### Bochs 虚拟机
+
+#### 用 dos 虚拟机运行 dos 系统
+
+1. bochs\bochsdbg.exe 双击启动系统
+1. Load -> dos.bxrc -> Start 加载配置文件，启动虚拟机，进入 `bochs enhanced debugger 界面`
+1. 点击 Continue，在 Display 界面看到 dos 的开机启动界面
+1. bochs\dos.img 点击即可查看 dos 镜像中的文件，可以直接把文件拖到里面。
+
+tips：Bochs 虚拟机用解释的方式模拟执行指令，可以调试 BIOS 启动的代码
+
+#### 用 Bochs 虚拟机运行 Windows XP
+
+安装好winimage后，双击bochs\dos.img可以自动打开dos虚拟机的硬盘镜像，然后就可以拖动鼠标把物理机的文件拖到dos.img\masm目录内，或者拖出来。
+
+### Soft-ICE 调试器
+
+Bochs 虚拟机内置的调试器
+
+#### 断点的分类
+
+- 软件断点：software breakpoint，会把设置断点的指令首字节改为 `0CCh`，即 `int 3`，调试器运行程序到此处时会停住
+- 硬件断点：hardware breakpoint，有三种类型（bpmp = breakpoint on memory byte）
+    - `bpmp addr r`: 当 addr 地址处的变量值被读取时断
+        - 硬件中实现的是 `rw`，即在读或者写的时候都断。然后在软件层面判断写之前的数据和写之后的数据是否相等，如果相等则判断为是被读访问。
+    - `bpmp addr w`: 当 addr 地址处的变量值被写入时断
+    - `bpmp addr x`: 当 addr 地址处的指令被执行时断
+
+80386 以上的 cpu 设计了 dr(debug register)，在硬件上支持硬件断点，会把断点地址保存在 dr0, dr1, dr2, dr3 四个寄存器，再把断点条件保存在 dr6, dr7。所以硬件断点最多只能设置 4 个。
+
+#### 使用 soft-ICE 调试 td & 设置硬件断点
+
+1. ctrl+D：唤起 soft-ICE
+1. 从上到下四个窗口：寄存器窗口、数据窗口、代码窗口、命令窗口
+1. F5：print user screen
+1. F8：执行一条指令
+1. 在命令窗口中输入 `D cs:0` 在数据窗口中显示指定位置的数据（大小写不敏感）
+1. 在命令窗口中输入 `bpmb 5386:3 w` 在指定位置设置硬件断点
+    - 如果被调试程序执行了写指令，则会唤起 soft-ICE，并显示造成中断的写指令
+1. 在命令窗口中输入 `BL` 查看已经设置的硬件断点
+1. 在命令窗口中输入 `cls` 清除命令窗口屏幕
+1. 在命令窗口中输入 `x` 或者直接 ctrl+D 回到被调试程序
 
 ## 实验
 
@@ -499,8 +597,18 @@ HW：输入字符，判断是大写字母、小写字母、数字、其他
     - 3 是 s 数组首地址关于段地址的偏移，编译过程中会被赋值
     - ds:bx+3 是数组元素的偏移地址
     - 相当于 C 语言中的 `*(ds: bx+3)`，C 允许这样的语法 `0[s+3]`，能够产生和 `s[3]` 一样的结果
-    - `ds:[bx+3]` 可以简化为 `[bx+3]`，ds 是隐含的
+    - `ds:[bx+3]` 可以简化为 `[bx+3]`，ds 是隐含在 `assume ds:data` 中的。在编译过程中 `[bx+3]` 会先被转化成 `data:[bx+3]` 然后再转化成 `ds:[bx+3]`
 3. ds：数据段寄存器，只接受寄存器赋值，不能用常数赋值。因为在硬件设计时被简化了
+4. `assume ds:data` 的作用：告诉编译器把变量或标号的段地址替换成对应的段寄存器，但并不会对段地址进行赋值。
+    - 编译后不会生成机器码，称为“编译指示语句”
+    - 需要提前对 ds 进行赋值
+    - 没有 assume 就无法使用 `[bx+3]` 的简略写法 ？？？
+    - 同一个段名和多个段寄存器建立关联，选择寄存器的优先级为 `ds > es > ss > cs`，即 `assume ds:data, es:data` 相当于 `assume ds:data`
+5. `assume cs:code` 的作用：告诉编译器把变量或标号的段地址替换成对应的段寄存器，但并不会对段地址进行赋值。
+    - 允许存在多个 code 段
+    - 没有 assume 就无法对代码段中的标号进行寻址
+    - 不需要提前对 cs 进行赋值，即使程序运行途中 cs 发生改变（跳转到不同的代码段），cs 也会由程序自行修改。
+
 
 存储常数的代码：
 
@@ -602,3 +710,92 @@ p.s. 保存 eax 中数据的三种方法
 2. 在内存中定义的变量中寄存 `mov old_eax, eax`, `mov eax, old_eax`
     - 需要确保 ds 中存储的是 old_eax 的段地址，因为在前面已经操作过了，这里不用再操作
 3. 在堆栈中寄存 `push eax`, `pop eax`
+
+### 理解内存的间接寻址方式
+
+有以下的 C 结构体
+
+```c
+struct Node{
+    char name[8];
+    short int score;
+}a[10];
+```
+
+需要用汇编语言获取 `a[2].score` 的值
+
+```asm
+mov ds, seg a       ; ds 是 a 的段地址
+mov bx, offset a    ; bx 是 a[0] 和段首的偏移距离
+mov si, 20          ; si 是 a[2] 和 a[0] 的偏移距离，即 sizeof(Node) * 2
+mov ax, ds:[bx+si+8]    ; 8 是 a[2].score 和 a[2].name 的偏移举例
+                        ; 最终获取 a[2].score
+```
+
+这个例子说明了间接寻址方式的必要性。
+
+tips: 可以把 b 理解位 base，数组的首地址；i 理解为 index，数组元素的偏移量。
+
+
+
+### 多个代码段之间的跳转 jump.asm
+
+实验目的：了解 assume 语句的作用
+
+1. jmp 和 call 指令分为 near 和 far 两种。不同代码段之间跳转需要加上 `far ptr` 支持段间跳转，否则会报错 `error A2064 Near jmp/call to different cs`
+1. 跳转到其他代码段之后，cs 会自动修改。所以每个代码段只需要将自己的段名 assume 成 cs 就行了。
+
+```asm
+code1 segment
+assume cs:code1
+main1:
+    mov ah, 2
+    mov dl, '1'
+    int 21h
+    jmp far ptr main2 ; 会被编译成 code2:main2
+code1 ends
+
+code2 segment
+assume cs:code2
+main2:
+    mov dl, '2'
+    int 21h
+    jmp far ptr main1 ; 会被编译成 code1:main1
+code2 ends
+
+end main1
+```
+
+### 检验软件断点对程序的更改 breakp.asm
+
+主要思想是：用读取内存中数据的同样方法，读取代码段中的指令数据
+
+程序现象：如果直接运行程序，会在终端中输出 `n`，如果在 break_point 处加上断点并调试，则会输出 `y`。
+
+```asm
+code segment
+assume cs:code
+break_point:
+    mov ah, 2   ; 程序检测这句话上有没有设置断点
+    mov al, byte ptr [break_point]
+    cmp al, 0CCh
+    jne no_break_point
+have_break_point:
+    mov dl, 'y'
+    int 21h
+    jmp done
+no_break_point:
+    mov dl, 'n'
+    int 21h
+done:
+    mov ah, 4Ch
+    mov al, 0
+    int 21h
+code ends
+
+end break_point
+```
+
+tips: `[break_point]` 会首先被编译器转化为 `code:[break_point]` 然后根据 assume 转化为 `cs:[break_point]`。可以直接在程序中写明 `cs:[break_point]`，等价，但能够补充说明这是代码段中的标签而不是数据段中的变量。
+
+tips: `byte ptr cs:[break_point]` 的含义是将 `cs:break_point` 强制类型转换为一个指向 8 bit 数据的指针，然后用 `[]` 取出其中的内容。所以最终效果就是取出了 break_point 处命令的第 1 个字节。

@@ -20,6 +20,52 @@
     - 期末考 50%
     - Lab 50%：单周项目，双周小题
 
+### 变量
+
+#### 引用 &
+
+- 一般来说定义引用变量一定要赋初值
+- 不需要赋初值的情景：函数参数，类中的引用变量。由函数的调用者，类的构造函数提供初值
+- 引用只能赋初值，不能修改
+
+![OOP](./imgs/2023-03-30-15-04-19.png)
+
+- `int * &`: 引用一个指针
+- `int & *`: 指向引用变量的指针
+
+![OOP](./imgs/2023-03-30-15-01-09.png)
+
+- `const int &`：不修改实参本身，也不复制，可以节约栈空间和省去复制变量的时间
+
+```cpp
+struct BigStruct{
+    int a[10000];
+};
+
+void f(const BigStruct &);
+```
+
+#### 常量 const
+
+![OOP](./imgs/2023-03-30-15-49-45.png)
+
+![OOP](./imgs/2023-03-30-15-51-17.png)
+
+举个例子，char 指针：
+
+- 第一句和第二句是等价的，等号右边是一个 `const char *`，等号表示将 s1 和 s2 指向 data 区中的字符串常量头指针。如果要这么写，第二句意义更明确，比第一句更不容易犯错。
+- 第三句和第四句是等价的，第三句的等号表示 char 数组的初始化（假设是局部变量），是在栈中分配数组的空间，然后把 data 区中的字符串常量 copy 到栈中。
+
+```cpp
+char * s1 = "Hello World!";
+const char * s2 = "Hello World!";
+char s3[] = "Hello World!";
+char s4[]("Hello World!");
+
+s1[0] = 'C'; // Error
+s3[0] = 'C'; // OK
+```
+
 ### 函数
 
 #### 函数重载(overload)
@@ -128,13 +174,53 @@ Rectangle r = Rectangle(2, 3);
 Rectangle s;
 ```
 
-#### 类的继承
+- 编译器保证构造函数一定会被执行，可以保证对象一定被初始化
+
+在 VC 中使用 debug 编译器，栈空间没有被初始化的变量会被填充 `0xCD`，国标码显示“烫”(`0xCCCC`)；堆中没有被初始化的变量会被填充 `0xCD`，国标码显示“烫”(`0xCDCD`)。
+
+- default constructor：没有参数的 constructor
+
+如果没有任何自定义的构造函数，编译器会自动加上 default constructor；但如果有自定义构造函数，那要用 default constructor 就必须自己写了。
+
+#### 析构函数
+
+析构函数（destructor）会在每次删除所创建的对象时执行。在程序正常结束时默认会使所有对象消亡。
+
+将动态分配的内存全部存在 class 内，能够有效避免内存泄漏。
+
+举例：
+
+```cpp
+class String{
+private:
+    char* p;
+public:
+    String(int n);
+    ~String();
+};
+
+String::~String(){
+    delete[] p;
+}
+
+String::String(int n){
+    p = new char[n];
+}
+```
+
+#### class 访问控制(private, protected, public)
 
 类内成员变量 & 函数类型：
 
 - private: 仅 class 内可以访问
 - protected: class 内、子 class 可以访问，外界无法访问
 - public: 全局都可以访问
+
+一般数据为 private，访问函数为 public，防止随意修改破坏数据间的一些完整性约束。建立 class 的过程相当于一个建模的过程，将实例的属性和交互抽象成概念。
+
+struct 就是一个默认所有成员为 public 的 class。是 C++ 为了兼容 C 的产物。
+
+#### 类的继承
 
 继承类型：
 
@@ -177,19 +263,50 @@ public:
 };
 ```
 
-#### new
+#### new & delete
 
-分配内存，构造类的实体，返回对象的指针。
+##### new & delete 基本变量类型
 
-- 错误写法：`Shape arr[] = {Rectangle(1, 2), Triangle(2, 4, 5)};`
+- `[]` 是创建数组，`(), {}` 是初始化
+
+```cpp
+	int * a = new int[100];
+	int * b = new int(1024);
+	int * c = new int[100]{1, 2, 3, 4, 5};
+	delete[] a;
+	delete b;
+	delete[] c;
+```
+
+- delete 为什么要分为 `delete` 和 `delete[]`？
+
+free 的功能是释放一次 malloc 分配的所有地址，所以不管是分配单个变量 `malloc(sizeof(int))` 还是分配多个变量 `malloc(sizeof(int) * 100)` 都可以用一次 free 全部释放掉。
+
+但是 delete 新增了功能，可以对动态分配的数组，单独析构和释放一个位置的内存。
+
+##### new & delete 自定义变量类型
+
+功能：
+
+- new 的功能：分配内存，调用构造函数构造类的实体，返回对象的指针。
+- delete 的功能：调用析构函数，释放内存。
+
+e.g. new 不同的子类不能把内容存在同一个数组里，但可以把指针存在同一个数组里
+
+- 错误写法：`Shape arr[] = {new Rectangle(1, 2), new Triangle(2, 4, 5)};`
     - 直接把子类赋值给基类，子类独有的变量消失
 - 正确写法：`Shape * arr[] = {new Rectangle(1, 2), new Triangle(2, 4, 5)};`
 
-new 和 malloc 的区别
+new 和 malloc 的区别：
 
 1. new is an operator, while malloc is a function.
 2. new calls an appropriate constructor for object allocation, while malloc doesn't.
 3. new returns a pointer with the appropriate type, while malloc only returns a void * pointer that needs to be typecasted to the appropriate type.
+
+new 和 delete 数组的顺序问题：
+
+- new 先分配空间，再按下标从小到大调用构造函数
+- delete[] 先按下标从大到小调用析构函数，再释放空间
 
 #### 多态 & 虚函数 & dynamic_cast
 
@@ -262,41 +379,27 @@ std::ostream& operator << (std::ostream& out, const Student& x){
 }
 ```
 
-#### 析构函数
-
-析构函数（destructor）会在每次删除所创建的对象时执行。在程序正常结束时默认会使所有对象消亡。
-
-将动态分配的内存全部存在 class 内，能够有效避免内存泄露。
-
-举例：
-
-```cpp
-class String{
-private:
-    char* p;
-public:
-    String(int n);
-    ~String();
-};
-
-String::~String(){
-    delete[] p;
-}
-
-String::String(int n){
-    p = new char[n];
-}
-```
 
 #### static 实现对象间数据共享
 
 - [在 class 中定义 static 成员变量](https://www.cnblogs.com/stevenshen123/p/11555758.html)
 - [C++ 类成员函数中的静态变量的作用域](https://blog.csdn.net/su_787910081/article/details/42213245)
 
+#### class 的多文件实现（声明和定义分离）(.h & .cpp)
 
-### 预处理指令
+- 类外实现成员函数，需要用 `::` 声明函数是成员函数
+- `::` 单独使用用于跳出类，使用全局变量
 
-#### #pragma once
+![OOP](./imgs/2023-04-01-13-22-17.png)
+
+- `.h` 文件中只能写声明，不能写定义和实现 
+
+![OOP](./imgs/2023-04-01-13-23-47.png)
+
+- 多文件实现的好处：主程序和类实现是两个不同的编译单元，以 `.h` 为沟通的接口。只修改主程序或者只修改类实现，另一部分不需要重新编译生成 object，只需要重新链接即可。
+- [C 语言为什么只需要 include<stdio.h> 就能使用里面声明的函数? - 醉卧沙场的回答 - 知乎](https://www.zhihu.com/question/389126944/answer/1169709964)
+
+#### #pragma once 防止重定义
 
 ```cpp
 #pragma once
@@ -438,6 +541,12 @@ tips:
 #### Dev-C++ 调试
 
 [参考博客](https://www.jianshu.com/p/1602264dadf2)
+
+#### CMake 跨平台构建工具
+
+- it is not a build system itself; it generates another system's build files.
+
+[CMake 教程](https://zhuanlan.zhihu.com/p/500002865)
 
 
 ## Homework Record

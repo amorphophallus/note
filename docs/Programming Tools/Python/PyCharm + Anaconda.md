@@ -19,6 +19,7 @@
         ```
     - `conda info` 查看当前 channel
 3. 添加环境变量：把 *安装路径* 和 *Scripts* 路径都放到环境变量里，然后重启
+    - 在 powershell 中使用 conda：`conda init powershell`
 3. 新建环境 `conda create -n 环境名`
     - 查看所有环境 `conda info --envs`
     - 删除环境 `conda remove -n 环境名 --all`
@@ -26,7 +27,11 @@
     - 退出当前环境 `deactivate 环境名`
 5. 在环境中安装包 `conda install 包名称`
     - 查看环境中所有包 `conda list`
+    - 可以在 conda 环境中使用 pip `pip install pytorch`
 6. 在环境中运行程序 `python main.py`
+
+[更新 conda](https://zhuanlan.zhihu.com/p/121601968)
+[conda 创建新环境](https://zhuanlan.zhihu.com/p/94744929)
 
 ## Pycharm 中使用 Anaconda
 
