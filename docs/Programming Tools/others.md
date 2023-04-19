@@ -6,3 +6,5 @@
 4. [wikiHow](https://www.wikihow.com/Main-Page)
 5. 次元小镇：[dimtown](https://dimtown.com/)
 6. 正经漫画网站：[mangaSite](https://18comic.org/)
+
+- glados 未兑换礼品码：NAM1U-M7WA8-J8MXF-YOV8P

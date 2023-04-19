@@ -87,6 +87,9 @@
    - `docker export <container ID> > <export_image_name>.tar`
    - `docker import <file or URL or -> <REPOSITORY[:TAG]>`
 
+6. [一次重启所有已停止的容器](https://blog.csdn.net/qq_39314099/article/details/105785134#:~:text=%E4%B8%80%E6%AC%A1%E9%87%8D%E5%90%AF%E6%89%80%E6%9C%89%E5%B7%B2%E5%81%9C%E6%AD%A2%E7%9A%84docker%E5%AE%B9%E5%99%A8%201%20%E6%9F%A5%E7%9C%8B%E6%89%80%E6%9C%89%E7%9A%84docker%E5%B7%B2%E5%81%9C%E6%AD%A2%E7%9A%84%E5%AE%B9%E5%99%A8%E7%9A%84%E5%8A%9E%E6%B3%95%EF%BC%9A%20docker%20ps%20-a%20%7C%20grep,%7C%20awk%20%27%20%7Bprint%20%241%7D%27%20%7Cxargs%20docker%20start)
+   - 如果遇到 id 重复，直接 `reboot` 重启机器即可或者杀掉所有容器进程即可。
+
 #### e.g. 运行一个 web app
 
 1. `docker run -d -P training/webapp python app.py`

@@ -85,7 +85,7 @@ nav:
         - 'C++':
             - 'C++技巧': 'Programming Tools/C++/C++技巧.md'
             - 'C++多文件结构': 'Programming Tools/C++/C++ multiple program structure.md'
-            - 'Makefile': 'Programming Tools/C++/makefile.md'
+            - 'CMake & Makefile & GCC commands': 'Programming Tools/C++/makefile.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
@@ -95,6 +95,7 @@ nav:
         - '微信小程序':
             - '基础知识': 'Programming Tools/WX miniprogram/基础知识.md'
         - 'markdown转pdf': 'Programming Tools/markdown转pdf.md'
+        - 'C 盘清理': 'Programming Tools/C 盘清理.md'
         - 'Others': 'Programming Tools/others.md'
     - 'Projects':
         - 'box-2021':

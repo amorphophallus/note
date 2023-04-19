@@ -71,9 +71,13 @@ ip: instruction pointer，指令指针
 
 - cs + ip: cs 用于保存将要执行的指令的段地址，ip 用于保存将要执行的指令的偏移地址，cs + ip 确定将要执行的指令的逻辑地址
 
+##### FL
+
 FL: flag，标志寄存器，16 个 bit 分别表示不同含义，有的可以指示指令执行后的状态，有的可以控制 CPU 行为
 
-- FL[0]: 称为 CF，存储当前指令的进位
+![ASM](./imgs/2023-04-19-20-30-55.png)
+
+- FL[0]: 称为 CF，存储当前指令的进位（在加法中表示进位，在减法中表示借位，在移位中表示最后被移出去的位，但本质是一样的）
 
 ```asm
 mov ax 0FFFFh
@@ -85,11 +89,95 @@ no_carry_flag:
 has_carry_flag:
 ```
 
+- CF 相关指令
+    - jc, jnc: 根据 CF 进行跳转
+    - adc: 带进位加法（类似全加器），`adc ax, bx` 表示 `ax = ax + bx + CF`
+    - clc: clear carry `CF = 0`
+    - stc: set carry `CF = 1`
+---
+
+- FL[6]: ZF, zero flag，指令结果为 0 的时候置 1
+    - `sub ax, ax` ZF=1
+- ZF 相关指令
+    - jz, jnz: 根据结果是否 0 进行跳转
+        - `cmp ax, bx` + `je Label` 和 `sub ax, bx` + `jz Label` 在结果上是一样的
+
+---
+
+- FL[7]: SF, sign flag, 存储指令结果的最高位
+- SF 相关指令：js, jns
+
+
+##### 程序载入内存时的自动赋值
+
+以下寄存器会在程序载入内存时被自动赋值
+
+- cs=code
+- ip=程序初始指令的偏移地址
+- ss=stk
+- sp=堆栈段的大小
+- ds=es=psp段址
+
+其中 **psp 段址** 是：长度为 100h 的一块内存，位于程序首段之前，其内容与程序内容无关，存放与 exe 相关的信息
+- 命令行参数：`psp:80h` 一个字节存命令行参数的长度，从 `psp:81h` 开始连续存放命令行参数的字符
+    - 如果程序名后面打了空格，那空格也会在参数字符串里
+    - 参数字符串以回车结尾
+
+**tips.**
+
+1. 进行逻辑地址寻址之前 ds 一定要自己赋值
+1. ds 初始值加 100h 等于程序首段段地址
+
 #### 32 位寄存器
 
 保持 16 位：cs, ds, es, ss
 
 扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
+
+#### 保护模式
+
+16 位 CPU 运行在实模式(real mode)下，用户代码具有和操作系统一样的权限。
+
+32 位 CPU 可以采用保护模式(protected mode)，用户代码不能越权访问操作系统等进程占用的内存空间。
+
+32 位 CPU 中的寄存器：
+
+- 保持 16 位：cs, ds, es, ss
+- 扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
+
+gdt(global descriptor table): 全局描述符表。数组，每个元素 8 Byte
+
+```
+t     -> gdt[0]
+t+08h -> gdt[1]
+t+10h -> gdt[2]
+t+18h -> gdt[3]
+```
+
+现在假设这么一个情形：ds = 8, edi = 45678h，在内存中指向的地址是什么？
+
+假设 gdt[1] 的 8 个字节如下：
+
+| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
+| -- | -- | -- | -- | -- | -- | -- | -- |
+| FF | FF | 00 | 00 | 10 | 93 | 0F | 00 |
+
+取出其中的 7, 4, 3, 2 Byte 组成一个 8 位 16 进制数，与偏移地址相加得到逻辑地址
+
+`00100000h + 45678h = 00145678h`
+
+取出第 6 Byte 的低 4 位，加上 1 和 0 Byte，组成段的最大偏移地址 `FFFFFh`
+
+第 6 Byte 的最高 bit 如果为 0，表示最大偏移量的单位是 bit；如果为 1，表示单位是 Page( = 4K)
+
+第 5 Byte 用来规定段的类型、读写权限。例如 93h 表示：该段是数据段、可读、可写、要求访问者的权限是 ring0（最高权限级）
+
+假设这是第 5 个 Byte 的数据，第 1 和 2 位规定了权限(ring0)
+
+| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
+| -- | -- | -- | -- | -- | -- | -- | -- |
+| 1 | 0 | 0 | 1 | 0 | 0 | 1 | 1 |
+
 
 ### 汇编指令
 
@@ -99,7 +187,7 @@ has_carry_flag:
 1. imul, idiv 有符号整数乘除 **（加减操作不需要区分有符号和无符号）**
 1. fadd, fsub, fmul, fdiv 浮点数加减乘除
 
-e.g. 无符号数乘法
+e.g. 无符号数乘法（**乘法只有一个参数**）
 
 ```asm
 mov ax, 0FFFFh ; 65535
@@ -156,6 +244,65 @@ jbe next
 ```
 
 如果 ebx 小于等于 100 则跳转到 next 位置
+
+#### 栈操作指令
+
+- push
+- pop
+
+tips. 操作数只能是 16 位或者 32 位数据，相应地 ss 减去 2 或者 4。
+
+```asm
+    ; 保存 16位数据
+    push ax
+    push word ptr ds:[di]
+    ; 保存 32 位数据
+    push eax
+    push dword ptr ds:[di]
+    ; 保存 8 位数据，曲线救国
+    push ax
+    pop bx
+    mov al, bl
+```
+
+##### 栈空间的分配
+
+```asm
+stk segment stack
+db 200h dup('S')
+stk ends
+```
+
+- 堆栈只能定义一个，用 `stack` 关键字表示
+- 可以用无名数组填充堆栈，比如上面的代码表示堆栈空间大小 200h Byte
+    - 不定义名称对内存中的数据没有任何影响，但是在程序里就不能通过变量名访问这块内存了
+- 可以不在程序中 `assume ss:stk`，因为 assume 是为程序中的寻址操作服务的，如果不需要通过 push, pop 以外的操作访问堆栈，就不需要加 assume
+- 程序载入内存时 ss 和 sp 会自动赋值
+
+---
+
+如果用户没有分配栈空间，
+
+- ss=首段段地址
+- sp=0
+
+相当于把段的末尾当做堆栈空间，对于 16 位寄存器来说，`sp-2 = 0-2 = 0xFFFE`
+
+即使用户程序不需要使用 push pop，程序本身在进行 **时钟中断、键盘缓冲** 等操作时也会用到栈空间。
+
+##### 压栈弹栈的实现
+
+`push ax` (16 bit)
+
+1. `sub sp, 2`
+1. `mov ss:[sp], ax`
+
+`pop ax` (16 bit)
+
+1. `mov ax, ss:[sp]`
+1. `add sp, 2`
+
+push 和 pop 32 bit 数据同理
 
 #### 其他常用指令
 
@@ -245,6 +392,21 @@ e.g. `x dd 3.14` 定义一个 float
 
 p.s. IEEE 754 标准浮点数：参考计组笔记中的 “浮点数 - IEEE754 标准” 章节
 
+---
+
+p.s. 可以在 code segment 中定义变量，但是必须保证程序运行时跳过定义变量的内存。
+
+##### 定义数组变量
+
+使用 dup 进行重复填充
+
+```asm
+data segment
+s db 1, 2, 3, 4
+t db 200h dup('S')
+data ends
+```
+
 #### byte ptr
 
 - 汇编语言的多数指令要求两个操作数等宽
@@ -274,49 +436,12 @@ p.s. IEEE 754 标准浮点数：参考计组笔记中的 “浮点数 - IEEE754 
     - 不需要提前对 cs 进行赋值，即使程序运行途中 cs 发生改变（跳转到不同的代码段），cs 也会由程序自行修改。
 
 
-### DOS
+#### 写入显卡内存实现程序输出
 
-16 位 CPU 运行在实模式(real mode)下，用户代码具有和操作系统一样的权限。
+详见：
+- 写入显存实现输出字符 printscr.asm & printscr.c
+- 写入显存实现输出图形 prtshape.asm
 
-32 位 CPU 可以采用保护模式(protected mode)，用户代码不能越权访问操作系统等进程占用的内存空间。
-
-32 位 CPU 中的寄存器：
-
-- 保持 16 位：cs, ds, es, ss
-- 扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
-
-gdt(global descriptor table): 全局描述符表。数组，每个元素 8 Byte
-
-```
-t     -> gdt[0]
-t+08h -> gdt[1]
-t+10h -> gdt[2]
-t+18h -> gdt[3]
-```
-
-现在假设这么一个情形：ds = 8, edi = 45678h，在内存中指向的地址是什么？
-
-假设 gdt[1] 的 8 个字节如下：
-
-| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
-| -- | -- | -- | -- | -- | -- | -- | -- |
-| FF | FF | 00 | 00 | 10 | 93 | 0F | 00 |
-
-取出其中的 7, 4, 3, 2 Byte 组成一个 8 位 16 进制数，与偏移地址相加得到逻辑地址
-
-`00100000h + 45678h = 00145678h`
-
-取出第 6 Byte 的低 4 位，加上 1 和 0 Byte，组成段的最大偏移地址 `FFFFFh`
-
-第 6 Byte 的最高 bit 如果为 0，表示最大偏移量的单位是 bit；如果为 1，表示单位是 Page( = 4K)
-
-第 5 Byte 用来规定段的类型、读写权限。例如 93h 表示：该段是数据段、可读、可写、要求访问者的权限是 ring0（最高权限级）
-
-假设这是第 5 个 Byte 的数据，第 1 和 2 位规定了权限(ring0)
-
-| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
-| -- | -- | -- | -- | -- | -- | -- | -- |
-| 1 | 0 | 0 | 1 | 0 | 0 | 1 | 1 |
 
 ### DOS Interrupt
 
@@ -329,6 +454,10 @@ mov ah, 1
 int 21h
 cmp al, 'A'
 ```
+
+和 `int 16h(AH=00h)` 的区别
+- 只能读取可见的字符
+- 读取的字符会显示在屏幕上
 
 #### putchar
 
@@ -349,6 +478,24 @@ exit:
     mov ah, 4Ch
     mov al, 0
     int 21h
+```
+
+#### keyboard interrupt
+
+`int 16h(AH=00h)`：接收键盘输入，存在 AX 中（16 位编码），属于 BIOS 中断
+`int 16h(AH=01h)`：检测键盘缓冲区是否为空，若为空则 ZF=1，非空则 ZF=0(zero flag，是 FL 寄存器中的一个 bit)
+
+```asm
+again:
+    ; do something
+    mov ah, 1
+    int 16h     ; 检测键盘缓冲区
+    jz no_key
+has_key:
+    mov ah, 1   ; 如果键盘缓冲区中有数据，则读取按键信息
+    int 16h
+no_key:
+    jmp again   ; 如果键盘缓冲区为空，则重复执行缓冲区检测流程
 ```
 
 ## 工具
@@ -394,6 +541,8 @@ exit:
 - open -> 选择 `sum.asm` -> project -> build all -> 32 位程序 `sum.exe`
 
 ### MASM
+
+MASM是Microsoft Macro Assembler的缩写，是微软公司为x86微处理器家族开发的汇编开发环境，拥有可视化的开发界面，使开发人员不必再使用DOS环境进行汇编的开发，编译速度快，支持80x86汇编以及Win32Asm，是Windows下开发汇编的利器。
 
 编译 16 位汇编代码
 
@@ -445,18 +594,54 @@ exit:
 
 ### Bochs 虚拟机
 
-#### 用 dos 虚拟机运行 dos 系统
+#### 用 bochs 虚拟机运行 dos 系统
 
 1. bochs\bochsdbg.exe 双击启动系统
-1. Load -> dos.bxrc -> Start 加载配置文件，启动虚拟机，进入 `bochs enhanced debugger 界面`
+1. Load -> dos.bxrc -> Start 加载配置文件，启动虚拟机，虚拟机有三个窗口：
+    - 在 console 窗口可以看到 bochs 运行的日志
+    - bochs enhanced debugger 是 bochs 内置的调试器，是凌驾于虚拟机之上而不是嵌入在虚拟机中的，原则上可以设置无限多的硬件断点和软件断点
+    - display 窗口就是虚拟机的命令行界面了
 1. 点击 Continue，在 Display 界面看到 dos 的开机启动界面
+    - 未点击 continue 时，bochs enhanced debugger 中 PC 停留在 `F000:0000FFF0` 位置处，该地址映射到 ROM 上，是开机启动代码
 1. bochs\dos.img 点击即可查看 dos 镜像中的文件，可以直接把文件拖到里面。
 
-tips：Bochs 虚拟机用解释的方式模拟执行指令，可以调试 BIOS 启动的代码
+tips：Bochs 虚拟机用解释的方式模拟执行指令。
+- 可以调试 BIOS 启动的代码，可以调试 windows, linux 等系统
+- 后续的保护模式代码需要在 bochs enhanced debugger 中调试
+- 解释型虚拟机的难点：处理外界端口。比如键盘、显卡、硬盘，需要能够处理外部中断和进行读写，并且要支持多平台。
+- 相似：游戏机的虚拟机，例如 wii 虚拟机。
 
-#### 用 Bochs 虚拟机运行 Windows XP
+tips：可以在 windows 物理机下运行，也可以在 XP 虚拟机的环境中运行 ~~（虚拟机里跑虚拟机）~~
 
-安装好winimage后，双击bochs\dos.img可以自动打开dos虚拟机的硬盘镜像，然后就可以拖动鼠标把物理机的文件拖到dos.img\masm目录内，或者拖出来。
+#### 用 winimage 实现物理机和虚拟机交换文件
+
+在 XP 虚拟机中：
+
+安装好 winimage 后，双击bochs\dos.img可以自动打开dos虚拟机的硬盘镜像，然后就可以拖动鼠标把物理机的文件拖到dos.img\masm目录内，或者拖出来。
+
+---
+
+在 windows 10 中：
+
+双击 winimage.exe 打开，把 dos.img 文件拖入 winimage 中，然后就可以通过拖动进行文件交换。
+
+#### 使用 bochs enhanced debugger 设置断点
+
+1. 首先点击 break 暂停虚拟机的运行，让 debugger 接管程序的运行
+1. `watch r/w addr <len> <if> <cond>` 设置硬件断点
+    - 注意 addr 只能使用物理地址
+    - len 断点的长度，单位 byte
+    - e.g. `watch w 0x67c3 1` 是 soft-ICE 中等会要设置断点的地址
+1. 点击 continue 重新把控制权交给虚拟机
+1. 当虚拟机对 watch 的地址执行写入操作时，bochs enhanced debugger 自动 break 并显示 `caught write watch point` 日志
+    - ctrl+D 或者 view-disassemble，然后输入地址查看对应地址的汇编代码。触发断点的是高亮指令的上一条，例如 `mov byte ptr es:[ebx], cl`
+    - 怎么找到被修改的地址呢？需要用到 gdt 表。例如上述指令写入的位置就在 `gdt[es] + ebx` 的位置
+1. `info gdt` 显示 gdt 表，或者在 view 中找 gdt，快捷键 ctrl+F2
+1. `info sr` 显示系统寄存器，gdtr 存储 gdt 表的地址。 `d gdtr + es` （代入数字）显示 `gdt[0x20]`。gdt 表的看法详见“保护模式”章节。
+
+~~究极套娃：td 可以调试程序，soft-ICE 可以调试 td，bochs enhanced debugger 可以调试 soft-ICE~~
+
+tips：使用 `help` 查看所有命令，`help watch` 查看命令的具体信息
 
 ### Soft-ICE 调试器
 
@@ -483,8 +668,29 @@ Bochs 虚拟机内置的调试器
 1. 在命令窗口中输入 `bpmb 5386:3 w` 在指定位置设置硬件断点
     - 如果被调试程序执行了写指令，则会唤起 soft-ICE，并显示造成中断的写指令
 1. 在命令窗口中输入 `BL` 查看已经设置的硬件断点
-1. 在命令窗口中输入 `cls` 清除命令窗口屏幕
+    - 显示 `BPMB 5387:0000 W C=01`，C 表示第几次写的时候触发中断
 1. 在命令窗口中输入 `x` 或者直接 ctrl+D 回到被调试程序
+1. 在硬件断点触发时，bochs 会自动唤起 soft-ICE，程序窗口中高亮代码的上一句就是触发断点的语句，例如 `mov es:[bx], al`
+    - 可以在 soft-ICE 的寄存器窗口查看 es, ebx, eax 的值
+    - 在命令窗口输入 `d es:bx` 数据窗口跳转到地址（可以直接使用寄存器中的值）
+1. `bc 1` 清除第一个硬件断点，`bc *` 清除所有硬件断点
+1. `bd 1` 或者 `bd *` （breakpoint disable）禁用断点，`be 1` 或者 `be *` （breakpoint enable）启用断点。禁用的断点在 `bl` 中显示，前面会打上星号标识
+
+tips：soft-ICE 如何实现硬件断点？因为 bochs 是解释型的，所以可以在执行所有可能写入内存的指令时，都通过比较判断设置了硬件断点的位置有没有被写入。
+
+#### 使用 soft-ICE 调试用户程序 exe & 设置软件断点
+
+1. `ldr int3.exe` 用 soft-ICE 打开程序
+1. 在命令窗口输入 `ec` 进入代码窗口，F2 在当前指令位置设置软件断点，再 F2 取消断点。再次输入 `ec` 回到命令窗口
+1. 在命令窗口输入 `bpx 1234:5678` 在指定位置设置软件断点
+1. 再次输入设置断点的指令去除软件断点，或者 `bc 1` 清除编号为 1 的软件断点，`bc *` 清除所有断点
+1. F7 执行一条指令
+
+#### 其他命令
+
+1. `wc 8`, `wd 4` 调节代码窗口、数据窗口的长度
+1. 在命令窗口中输入 `cls` 清除命令窗口屏幕
+1. 上下箭头：调取指令历史记录
 
 ## 实验
 
@@ -799,3 +1005,275 @@ end break_point
 tips: `[break_point]` 会首先被编译器转化为 `code:[break_point]` 然后根据 assume 转化为 `cs:[break_point]`。可以直接在程序中写明 `cs:[break_point]`，等价，但能够补充说明这是代码段中的标签而不是数据段中的变量。
 
 tips: `byte ptr cs:[break_point]` 的含义是将 `cs:break_point` 强制类型转换为一个指向 8 bit 数据的指针，然后用 `[]` 取出其中的内容。所以最终效果就是取出了 break_point 处命令的第 1 个字节。
+
+### 写入显存实现输出字符 printscr.asm & printscr.c
+
+1. 终端的屏幕是一个 25 行 80 列的矩形，坐标 `(0, 0)` 到 `(79, 24)` 每个位置可以放一个字符
+    - 通过显存显示字符不需要操作系统的支持，而是硬件中就实现好了的
+1. 写入显存的代码
+    ```asm
+    mov ax, 0B800h
+    mov es, ax
+    mov bx, 0
+    mov byte ptr es:[bx], 'A'
+    mov byte ptr es:[bx+1], 74h ; 写一个白底红字的 A
+    mov byte ptr es:[bx+2], 'B'
+    mov byte ptr es:[bx+3], 72h ; 写一个白底绿字的 B
+    ```
+    - `0B800h` 是显存的段地址（文字模式），是一个常数值。`0A000h` 是图形模式的显卡段地址
+    - (x, y) 坐标对应的偏移地址计算公式 `addr = (y * 80 + x) * 2`
+    - `74h` 表示显示的颜色，高 4 位 7 表示前景色是白色，低 4 位 4 表示背景色是红色
+    - `7` 的 4 个 bit 分别表示：
+        1. 是否加强颜色：例如 0100 表示普通的红色，1100 表示增强的红色
+        1. 红(R)
+        1. 绿(G)
+        1. 蓝(B)：例如 0111 表示白色，0000 表示黑色，0001 表示蓝色
+
+---
+
+p.s. 为什么显存会和内存地址一样使用逻辑地址进行寻址？
+
+因为部分内存地址被 **映射** 到显存上，通过逻辑地址可以方便地访问显存。
+
+在 dos 系统中：
+- `0000:0000` ~ `9000:FFFF` 没有映射，就是 RAM，存储 dos 及用户程序，长度为 640KB
+- `A000:0000` ~ `B800:FFFF` 映射到显存
+- `C000:0000` ~ `F000:FFFF` 映射到 ROM
+
+映射是在系统启动前，运行 ROM 中的 POST(power on self test) 代码的过程中完成的。
+- p.s.s. ROM 中还固化了 BIOS(basic input output system)，比如 `int 10h` 和 `int 16h` 函数集就定义在 BIOS 中，分别负责屏幕输出和键盘输入。这两组中断函数无需依赖操作系统就能运行，控制操作系统启动前的键盘输入（选择开机选项等）、屏幕输出（开机信息等）。
+
+---
+
+程序功能：在屏幕上显示 2000 个白底蓝字的 A。
+- 输入任意字符返回终端，输入 `cls` 清空屏幕
+
+```asm
+
+code segment
+assume cs:code
+main:
+    mov ax, 0B800h
+    mov es, ax      ; 段地址
+    mov di, 0       ; 偏移地址
+    mov al, 'A'     ; 填充字符
+    mov ah, 71h     ; 填充颜色
+    mov cx, 2000    ; 循环次数
+again:
+    mov word ptr es:[di], ax ; 同时写入了字符和颜色
+                             ; 注意低 8 位写在前面，高 8 位写在后面
+                             ; 'A' 在内存中排在前面，所以应该写到低 8 位 al
+    add di, 2
+    dec cx
+    jnz again
+exit:
+    mov ah, 1
+    int 21h         ; 等待输入一个字符
+                    ; 否则直接退出程序，终端会写东西
+    mov ah, 4Ch
+    mov al, 0
+    int 21h         ; 退出程序
+code ends
+end main
+```
+
+p.s. 可以用 C 语言实现上述代码
+- `p = (unsigned char far *)0xB8000000` 获取显存地址
+- 使用 `tc printscr.c` 进行编译链接
+
+```c
+#include <stdio.h>
+int main()
+{
+    unsigned char far * p = (unsigned char far *)0xB8000000;
+    int i;
+    for (i = 0; i < 2000; ++ i){
+        *p = 'A';
+        *(p+1) = 0x71;
+        p += 2;
+    }
+    getchar();
+    return 0;
+}
+```
+
+### 写入显存实现输出图形 prtshape.asm
+
+1. 终端屏幕可以看成一个 320 列 200 行的矩形，坐标 `(0, 0)` 到 `(319, 199)`，每个坐标是一个像素点
+    - 320 * 200 * 256 虽然分辨率不高，但是所有显存地址可以都放在一个段内，方便编程
+1. 切换图形模式的代码
+    ```asm
+    mov ah, 0   ; int 10h 的 0 号功能：切换图形模式
+    mov al, 13h ; 图形模式选择: 320 * 200 * 256 色
+    int 10h     ; BIOS 中的函数
+    ```
+    - 其他图形 or 文本模式：
+        - `al=12h`: 640 * 480 * 16 色模式，将每个像素的 4 bit 信息分别存在不同的段里。总共有 4 个段，每个段中使用 640 * 480 个 bit
+        - `al=3`： 80 * 25 文本模式。**附带清屏效果**
+        - 在 xp 桌面 - 中断大全中查找其他图形模式
+1. 写入显存的代码
+    ```asm
+    mov ax, 0A000h
+    mov es, ax
+    mov byte ptr es:[0], 4 ; 画一个红色的像素点
+    mov byte ptr es:[1], 2 ; 画一个绿色的像素点
+    ```
+    - `0A000h` 是图形模式的显卡段地址
+    - (x, y) 坐标对应的偏移地址计算公式 `addr = y * 320 + x`
+    - 4 和 2 表示要画的颜色，因为要画就是把整个像素点全部填满，所以只需要颜色信息
+    - `7` 的 4 个 bit 分别表示：
+        1. 是否加强颜色：例如 0100 表示普通的红色，1100 表示增强的红色
+        1. 红(R)
+        1. 绿(G)
+        1. 蓝(B)：例如 0111 表示白色，0000 表示黑色，0001 表示蓝色
+1. 显示图形的代码
+    ```asm
+        shl ax ; ax 里存的是图形的某一行内容
+               ; 左移之后将要输出的位被移到了溢出位，可以通过 jnc 检查溢出
+        jnc no_dot
+    is_dot:
+        ; 画点
+    no_dot:
+    ```
+
+---
+
+程序功能：在屏幕正中间画一个 160 * 100 的红色矩形。
+
+```asm
+code segment
+assume cs:code
+main:
+    mov ah, 0   ; int 10h 的 0 号功能：切换图形模式
+    mov al, 13h ; 图形模式选择: 320 * 200 * 256 色
+    int 10h     ; BIOS 中的函数
+    mov ax, 0A000h
+    mov es, ax
+    mov di, 16080 ; 左上角点坐标 (80, 50)，偏移地址
+    mov cx, 100
+col_loop:
+    push di
+    mov ax, 160
+row_loop:
+    mov byte ptr es:[di], 4
+    inc di
+    dec ax
+    jnz row_loop
+    pop di
+    add di, 320
+    dec cx
+    jnz col_loop
+exit:
+    mov ah, 1
+    int 21h         ; 等待输入一个字符
+                    ; 否则直接退出程序，终端会写东西
+    mov ah, 0
+    mov al, 3
+    int 10h         ; 切换回文本模式，不然返回终端之后屏幕就花了
+    mov ah, 4Ch
+    mov al, 0
+    int 21h         ; 退出程序
+code ends
+end main
+```
+
+### 播放动画 & 键盘控制 pushblk.asm
+
+控制播放速度的方法：
+
+1. 使用循环进行延时，控制动画播放速度
+1. 使用时钟中断控制动画播放速度
+
+处理键盘控制的方法：使用 BIOS 的键盘中断
+
+---
+
+补充知识点
+
+1. 多线程 & 多进程
+    - 多线程：同个程序多个函数同时执行。线程的分配由程序决定
+    - 多进程：cpu 同时执行多个程序。进程的分配由操作系统决定
+
+---
+
+程序功能：使用上下左右键控制屏幕上的方块进行移动
+
+```asm
+data segment
+x dw 0
+y dw 0
+data ends
+
+code segment
+assume cs:code, ds:data
+
+; 函数功能: 将 cx 中存的字符数据显示在 (x, y) 位置
+func_draw:
+    ;根据(x,y)计算bx
+    ;bx=(y*80+x)*2
+    mov ax, [y]
+    mov bp, 80
+    mul bp; dx:ax = ax*bp, 其中dx=0
+    add ax, [x]; ax=y*80+x
+    add ax, ax ; ax=(y*80+x)*2
+    mov bx, ax
+    mov es:[bx], cx
+    ret
+
+main:
+    mov ax, data
+    mov ds, ax
+    mov ah, 0
+    mov al, 3
+    int 10h; 能达到清屏的效果
+    mov ax, 0B800h
+    mov es, ax
+draw:
+    mov cx, 1720h
+    call func_draw  ; 画一个方块
+check_key:
+    ;刷新屏幕的画面
+    mov ah, 1
+    int 16h
+    jnz has_key
+    jmp check_key
+has_key:
+    mov cx, 0020h   ; 用黑色填充
+    call func_draw
+    mov ah, 0
+    int 16h
+    cmp ax, 4800h
+    je is_up
+    cmp ax, 5000h
+    je is_down
+    cmp ax, 4B00h
+    je is_left
+    cmp ax, 4D00h
+    je is_right
+    jmp exit
+is_up:
+    cmp [y], 0
+    je check_key
+    dec [y]
+    jmp draw
+is_down:
+    cmp [y], 24
+    je check_key
+    inc [y]
+    jmp draw
+is_left:
+    cmp [x], 0
+    je check_key
+    dec [x]
+    jmp draw
+is_right:
+    cmp [x], 79
+    je check_key
+    inc [x]
+    jmp draw
+exit:
+    mov ah, 4Ch
+    int 21h
+code ends
+end main
+```

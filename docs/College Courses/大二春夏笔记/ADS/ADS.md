@@ -6,7 +6,7 @@
 
 1. 评分标准
     - Homework（作业） 10%
-    - Discussion（讨论） 10%  
+- Discussion（讨论） 10%  
     - Research Project（大程） 30%
     - Mid Exam（期中）10%
     - Final Exam（期末） 40%
@@ -582,6 +582,174 @@ struct Collection
 } ;
 
 ```
+
+## backtracking 搜索剪枝
+
+- turnpike 搜索复杂度分析 $O(2^nn\log n)$，$2^n$ 是搜索，$n\log n$ 是二分查找比较距离矩阵的包含
+- tic-tac-toe 中的 potential win 含义是：用某种棋子把整个盘面铺满，能找到的不同的三连棋的个数。
+
+![ADS](./imgs/2023-04-05-08-57-53.png)
+
+- $\alpha$-$\beta$ 剪枝算法描述：如果 min 层的值已经小于他父亲 max 层的值，舍去他剩下的子树。如果 max 层的值已经大于他父亲 min 层的点，舍去他剩下的子树。
+
+![ADS](./imgs/2023-04-05-09-02-39.png)
+
+![ADS](./imgs/2023-04-05-09-02-59.png)
+
+### Project 3 To Buy or not to Buy
+
+1. 一种简化问题的想法：把每个 string 看成 62 维向量，选一些向量相加，结果必须每个维度都不小于目标向量，并且和目标向量的曼哈顿距离最近。
+1. 最优性剪枝：目标是使总 bead 数最少，搜索过程中总 bead 数必须小于任何一个可行解
+    - 如何快速找到一个接近最优解的可行解
+    - 迭代加深
+    - 二分
+1. 搜索顺序：优先搜索 bead 更多的 string，减少搜索层数。
+
+---
+
+任务：
+
+1. 朴素的搜索
+1. 优化后的搜索
+1. 随机数据：
+    - 目标很大，可选的很小
+    - 目标很小，可选的很大
+    - 两个都很大
+1. 检测运行时间并输出到 csv 或者 xlsx 形成表格（+ excel2latex 插件转换为 latex 表格）
+
+接口：
+
+search_1.h
+
+```cpp
+#pragma once
+
+// 定义在 main 函数中的常量
+extern const int BeadN;
+
+/*
+ * 第 1 种搜索算法的主函数
+ * Para1 target: 目标串中每种珠子的个数，规定编号 0 - 9 代表数字 0 - 9，编号 10 - 35 代表小写字母 a - z，36 - 51 代表大写字母 A - Z
+ * para2 item_cnt: 可以购买的串的个数
+ * para3 item: 每个可以购买的串中每种珠子的个数，格式同上
+ * RetVal: 如果不存在可行解返回 -1，否则返回结果的珠子个数
+ */
+int search_1(int target[BeadN], int item_cnt, int item[][BeadN]);
+```
+
+init.h
+
+```cpp
+#pragma once
+
+// 定义在主程序中的常量
+extern const int StringN;
+extern const int BeadN;
+
+/*
+ * 初始化函数
+ * para1 s_tar: 目标串的输入字符串，以 \0 结尾
+ * para2 item_cnt: 可以购买的串的个数
+ * para3 s_item: 可以购买的串的输入字符串，每个都以 \0 结尾
+ * Para4 target: 目标串中每种珠子的个数，规定编号 0 - 9 代表数字 0 - 9，编号 10 - 35 代表小写字母 a - z，36 - 51 代表大写字母 A - Z
+ * para5 item: 每个可以购买的串中每种珠子的个数，格式同上
+ */
+void init(char s_tar[StringN], int item_cnt, char s_item[][StringN], int target[BeadN], int item[][BeadN]);
+```
+
+---
+
+resources：
+
+- C++ 使用 xlnt 库操作 excel 表格，[仓库地址](https://github.com/tfussell/xlnt)，[中文简明文档](https://www.cpp-prog.com/%E7%BC%96%E7%A8%8B/xlnt/)
+    - [vcpkg 官方文档](https://github.com/microsoft/vcpkg/blob/master/README_zh_CN.md)：clone repo，下载脚本
+    - [vcpkg 换源](https://zhuanlan.zhihu.com/p/383683670)
+    - [vcpkg 配置](https://zhuanlan.zhihu.com/p/447391308)：设置默认 x64
+    - [vcpkg+vscode+CMake 工程](https://zhuanlan.zhihu.com/p/430835667)：配置 VSCode CMake 插件，新建 CMake 项目的流程
+    - [vcpkg+vscode 开发环境配置](https://zhuanlan.zhihu.com/p/350194582)：安装库和综合的指令
+    - [CMake 教程](https://zhuanlan.zhihu.com/p/500002865)
+- python 操作 excel: xlwings [官方文档](https://docs.xlwings.org/zh_CN/latest/quickstart.html)
+
+## divide & conquer 分治
+
+### 主定理
+
+- [参考博客1](https://www.cnblogs.com/erro/p/12249033.html)：有分治树的图，有详细证明，但是没有讨论带 log 的情况
+- [wiki](https://en.wikipedia.org/wiki/Master_theorem_(analysis_of_algorithms))：所有情况的详细讨论 & 解释
+- 参考：补充阅读 - 主定理证明
+
+#### 主定理详细阐述
+
+![ADS](./imgs/2023-04-16-17-30-10.png)
+
+主定理的含义：分治算法的复杂度分为两部分，分治过程中产生的附加时间 $\sum f(\frac{n}{b^i})$，和分治树叶子节点返回需要的时间 $\Theta(n^{\log_b a})$，主定理的分情况讨论就是在讨论这两部分谁花的时间更多，谁就决定时间复杂度的上界。
+
+#### 主定理证明
+
+1. 叶子主导的情况
+
+$$
+\begin{aligned}
+    \sum_{i=0}^{\log_bn-1}a^i\Big(\frac{n}{b^i}\Big)^{\log_ba-\varepsilon} &= n^{\log_ba-\varepsilon}\sum_{i=0}^{\log_bn-1}\Big(\frac{ab^\varepsilon}{b^{\log_ba}}\Big)^i\\
+    &= n^{\log_ba-\varepsilon}\sum_{i=0}^{\log_bn-1}(b^\varepsilon)^i\\
+    &= n^{\log_ba-\varepsilon}\frac{(b^\varepsilon)^{\log_bn}-1}{b^\varepsilon-1}\\
+    &= n^{\log_ba-\varepsilon}\frac{n^\varepsilon-1}{b^\varepsilon-1} \\
+    &= n^{\log_ba}\frac{n^\varepsilon-1}{n^{\varepsilon}(b^\varepsilon-1)}\\
+    &< n^{\log_ba}
+\end{aligned}
+$$
+
+所以
+
+$$
+\begin{aligned}
+    T(n)&=\Theta(n^{\log_ba})+O\Big(\sum_{i=0}^{\log_bn-1}a^i\Big(\frac{n}{b^i}\Big)^{\log_ba-\varepsilon}\Big)\\
+    &=\Theta(n^{\log_ba})+O(n^{\log_ba})\\
+    &=\Theta(n^{\log_ba})
+\end{aligned}
+$$
+
+参考博客里有个指数 i 没有删掉。
+
+2. 叶子和非叶子平等的情况，只证明不带 log 的部分，带 log 的暂时不会证明，就先背一背吧
+
+$$
+\begin{aligned}
+    &\sum_{i=0}^{\log_bn-1}a^i\Big(\frac{n}{b^i}\Big)^{\log_ba}\\
+    =& n^{\log_ba}\sum_{i=0}^{\log_bn-1}\Big(\frac{a}{b^{\log_ba}}\Big)^i\\
+    =& n^{\log_ba}\sum_{i=0}^{\log_bn-1}1\\
+    =& n^{\log_ba}\log n\\
+\end{aligned}
+$$
+
+所以
+
+$$
+\begin{aligned}
+    T(n)&=\Theta(n^{\log_ba})+\Theta\Big(\sum_{i=0}^{\log_bn-1}a^i\Big(\frac{n}{b^i}\Big)^{\log_ba}\Big)\\
+    &=\Theta(n^{\log_ba}\log n)
+\end{aligned}
+$$
+
+3. 非叶子占主导地位
+
+把前面的证明小于换成大于，$O$ 换成 $\Omega$ 就可以了，可以看成是其他所有时间加起来还比不过根节点一个点的时间复杂度。
+
+#### 举例：最近点对问题
+
+[参考博客](https://blog.csdn.net/sinat_35678407/article/details/82874216)：有画图和复杂度证明，比较详细
+
+
+## 动态规划 DP
+
+1. [背包九讲](https://zhuanlan.zhihu.com/p/139368825)
+1. [环形 dp](https://www.cnblogs.com/chdy/p/10618969.html)
+
+tips. 小题的关注点：更新 dp 数组的顺序问题
+
+### Proj 4 红黑树计数
+
+
 
 ## 错题整理
 

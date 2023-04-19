@@ -3,7 +3,7 @@
 ## 阅读材料
 
 [How SHA-256 Works Step-By-Step | Boot.dev](https://blog.boot.dev/cryptography/how-sha-2-works-step-by-step-sha-256/)
-[知乎-清理C盘](https://zhuanlan.zhihu.com/p/427183314)
+[zhihu on VScode](https://zhuanlan.zhihu.com/p/106057556)
 
 gay 宝的推荐：
 

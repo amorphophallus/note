@@ -1,4 +1,4 @@
-# makefile 的编写和 GCC 编译命令
+# CMake & makefile 的编写 & GCC 编译命令
 
 [TOC]
 
@@ -163,3 +163,80 @@ gcc -o hello.asm -S hello.c
 指定要使用的编译标准。
 
 具体的查看 [这个网页](http://c.biancheng.net/view/8053.html)
+
+
+## CMake
+
+### VCPKG
+
+VCPKG 是 C++ 的包管理工具，VCPKG 配合 CMake 使用可以让 C++ 调库变得更加便捷
+
+安装和配置：
+- [vcpkg 官方文档](https://github.com/microsoft/vcpkg/blob/master/README_zh_CN.md)：clone repo，下载脚本
+- [vcpkg 换源](https://zhuanlan.zhihu.com/p/383683670)
+- [vcpkg 配置](https://zhuanlan.zhihu.com/p/447391308)：设置默认 x64
+- [vcpkg+vscode+CMake 工程](https://zhuanlan.zhihu.com/p/430835667)：配置 VSCode CMake 插件，新建 CMake 项目的流程（举了一个例子）
+- [vcpkg+vscode 开发环境配置](https://zhuanlan.zhihu.com/p/350194582)：安装库和综合的指令（综合之后可以直接在 VS 中调用）
+
+vcpkg 在 CMake 中的使用：
+- 配置 VSCode CMake 插件
+	```json
+	"cmake.configureSettings": {
+		"CMAKE_TOOLCHAIN_FILE": "F:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+		"VCPKG_TARGET_TRIPLET": "x64-windows"
+	}
+	```
+	或者在 `CMakeLists.txt` 中包含以下命令
+	```cmake
+	SET(CMAKE_TOOLCHAIN_FILE "F:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+	```
+	或者在 CMake 命令中添加参数
+	```shell
+	cmake \
+		-B [build directory] \
+		-S . \
+		-DCMAKE_TOOLCHAIN_FILE="[path to vcpkg]/scripts/buildsystems/vcpkg.cmake"
+	```
+	这些方法的效果都是一样的，就是设置 CMake 编译的参数，让 CMake 能找到用 vcpkg 下载的文件
+- `vcpkg install xlnt`，如果已经安装过了不会重复安装，会提示在 CMake 文件中要写哪些话，把这些话复制到 `CMakeLists.txt` 中
+	```cmake
+	find_package(Xlnt CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE xlnt::xlnt)
+	```
+- 在源文件中直接 `#include <xlnt/...>` 会提示补全 xlnt 库包含的头文件
+
+### CMake 命令
+
+[CMake 教程](https://zhuanlan.zhihu.com/p/534439206)
+
+常用命令：CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.15)
+
+# 设置 project name
+project(Tutorial)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# 添加变量
+set(SRC_LIST a.cpp b.cpp c.cpp)
+
+# 查找指定目录下的所有源文件并添加到变量
+aux_source_directory(<dir> <variable>)
+
+# 添加子目录，这样 math 目录下的 CMakeLists.txt 文件和源代码也会被处理
+add_subdirectory(math)
+
+# 生成可执行文件
+add_executable(${PROJECT_NAME} ${SRC_LIST})
+
+# 生成静态链接库
+add_library(MathFunctions mysqrt.cpp)
+```
+
+### VSCode CMake 插件
+
+使用 VSCode 插件快速创建一个 CMake 项目

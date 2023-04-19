@@ -62,4 +62,12 @@ export PATH
 
 修改 `/etc/apt/sources.list`
 
+---
+
+apt-get Temporary failure resolving: DNS 配置错误
+
 若换源后遇到 Temporary failure in name resolution 问题，重启 Windows 解决问题。
+
+如果还是有问题看这篇博客：[排查问题 + 解决方法 + 参考博客](https://blog.csdn.net/qq_36745372/article/details/120088673)
+- 如果 ping 的通 baidu.com 说明是源连不上，再换个别的源
+- 如果 ping 不通 baidu.com 就检查 DNS 配置

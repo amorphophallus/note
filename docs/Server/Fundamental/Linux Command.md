@@ -40,6 +40,10 @@ apt-get update // 更新可以抓的包
 apt-get install vim // 下载应用
 ```
 
+---
+
+update 命令只会获得系统上所有包的最新信息，并不会下载或者安装任何一个包。而是 apt upgrade 命令来把这些包下载和升级到最新版本。
+
 ## mv
 
 [菜鸟教程](https://www.runoob.com/linux/linux-comm-mv.html)

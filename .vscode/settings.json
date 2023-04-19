@@ -4,9 +4,13 @@
         "complex": "cpp",
         "functional": "cpp",
         "limits": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "iostream": "cpp"
     },
     "pasteImage.path": "${currentFileDir}/imgs",
     "pasteImage.insertPattern": "![${currentFileNameWithoutExt}](${imageFilePath})",
-    "pasteImage.prefix": "./"
+    "pasteImage.prefix": "./",
+    "markdown-preview-enhanced.codeBlockTheme": "atom-light.css",
+    "files.autoGuessEncoding": true,
+    "markdown-preview-enhanced.printBackground": false
 }

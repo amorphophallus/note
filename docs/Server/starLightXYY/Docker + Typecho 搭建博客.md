@@ -140,6 +140,7 @@ networks:
 
 1. 样式表加载失败：静态资源引用问题，在博客管理界面修改**站点地址**为 `https://starlightxyy.cn`
 2. 申请子域名：在阿里云后台>域名管理，添加记录（[阿里云网站运维检测平台](https://zijian.aliyun.com/)可以检测是否申请成功）
+1. [docker exec 失败](https://blog.csdn.net/leiwuhen92/article/details/127772413)
 
 ## 博客搬运
 
@@ -162,14 +163,18 @@ networks:
 6. `mv typecho-theme-amaze-master/ amaze/`
 7. 在博客后台(`/admin`)启用主题
 
+[E: Unable to locate package vim 问题解决](https://blog.csdn.net/xiaozhangdetuzi/article/details/118112231)
+
+tips: 在安装包之前先 update 以下，否则可能找不到包
+
 ### 自定义
 
 #### 添加备案号
 
-修改 `/data/usr/themes/amaze/footer.php`：
+在容器中修改 `/app/usr/themes/amaze/footer.php`，或者在容器外的 docker-compose 同文件夹下修改 `./data/usr/themes/amaze/footer.php`：
 
 ```php
- <img style="padding-top:2px;height:1.2rem;width:1.2rem" src="<?php $this->options->themeUrl('/img/gh.png')?>"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=备案编号"target="_blank">浙ICP备2022026654号</a>
+ <img style="padding-top:2px;height:1.2rem;width:1.2rem" src="<?php $this->options->themeUrl('/img/gh.png')?>"><a href="https://beian.miit.gov.cn"target="_blank">浙ICP备2022026654号</a>
 ```
 
 typecho 的 php 文件是网页模板，会交给目标网页去渲染，所以需要用 php 找到静态资源的位置，而不是直接使用相对地址。

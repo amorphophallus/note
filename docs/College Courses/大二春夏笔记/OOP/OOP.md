@@ -91,6 +91,10 @@ void print_array(T* arr[], int n){
 }
 ```
 
+重载函数之间相互调用：减少修改的工作量
+
+![OOP](./imgs/2023-04-07-18-09-17.png)
+
 #### template
 
 ```cpp
@@ -107,6 +111,18 @@ void selection_sort(T arr[], int n, Compare comp)
 ```
 
 - 存在 `std::Compare` 类型，比如优先队列中可以使用的 `less`, `priority_queue<int,vector<int>,less<int> > big_heap;`
+
+#### inline
+
+- inline 函数不会产生函数调用的 jal 语句。
+
+- tradeoff：空间换时间。
+
+- 递归函数不能使用 inline
+
+![OOP](./imgs/2023-04-07-17-46-15.png)
+
+- header only library: inline 函数允许重复定义，可以把函数实现包含在头文件中
 
 ### 类 Class
 
@@ -157,7 +173,9 @@ bool Student::operator > (const Student& y){
 
 #### 构造函数
 
-- 可以重载多个构造函数
+##### 重载多个构造函数
+
+可以重载多个构造函数
 
 ```cpp
 class Rectangle{
@@ -174,13 +192,113 @@ Rectangle r = Rectangle(2, 3);
 Rectangle s;
 ```
 
+##### 构造函数一定会被执行
+
 - 编译器保证构造函数一定会被执行，可以保证对象一定被初始化
 
 在 VC 中使用 debug 编译器，栈空间没有被初始化的变量会被填充 `0xCD`，国标码显示“烫”(`0xCCCC`)；堆中没有被初始化的变量会被填充 `0xCD`，国标码显示“烫”(`0xCDCD`)。
 
+##### 默认构造函数
+
 - default constructor：没有参数的 constructor
 
 如果没有任何自定义的构造函数，编译器会自动加上 default constructor；但如果有自定义构造函数，那要用 default constructor 就必须自己写了。
+
+```cpp
+// 以下两种写法等价
+Rectangle::Rectangle() = default;
+Rectangle::Rectangle() {}
+```
+
+##### 初始化列表
+
+**执行顺序**：
+- 会首先执行初始化列表进行成员的构造（真正的初始化），然后再执行构造函数（成员已经构造完毕，构造函数中的语句是对变量进行赋值、计算等操作）。
+- 会首先构造基类，再构造派生类。析构的时候相反
+
+tips: 如果类的成员没有默认构造函数，则必须要在初始化列表中调用已有的构造函数，否则会报错。
+
+tips：子类可以调用父类的构造函数，然后再构造子类独有的成员。
+
+```cpp
+// 调用顺序为：
+// 1. Shape 的初始化列表
+// 2. Shape 的构造函数
+// 3. Rectangle 的初始化列表
+// 4. Rectangle 的构造函数
+Rectangle(int _h,int _w):Shape(_h, _w), d(sqrt(_h * _h + _w * _w)){}
+```
+
+析构函数调用的顺序和构造函数的正好相反。
+
+##### 关于构造和析构执行顺序的一个例子
+
+```cpp
+#include <iostream>
+
+struct X {
+    X() {
+        std::cout << "X::X()" << std::endl;
+    }
+    ~X() {
+        std::cout << "X::~X()" << std::endl;
+    }
+};
+
+struct Y {
+    Y() {
+        std::cout << "Y::Y()" << std::endl;
+    }
+    ~Y() {
+        std::cout << "Y::~Y()" << std::endl;
+    }
+};
+
+struct Parent {
+    Parent() {
+        std::cout << "Parent::Parent()" << std::endl;
+    }
+    ~Parent() {
+        std::cout << "Parent::~Parent()" << std::endl;
+    }
+    X x;
+};
+
+struct Child : public Parent {
+    Child() {
+        std::cout << "Child::Child()" << std::endl;
+    }
+    ~Child() {
+        std::cout << "Child::~Child()" << std::endl;
+    }
+    Y y;
+};
+
+int main() {
+    Child c;
+}
+
+// output
+/*
+X::X()
+Parent::Parent()
+Y::Y()
+Child::Child()
+Child::~Child()
+Y::~Y()
+Parent::~Parent()
+X::~X()
+*/
+```
+
+- 构造临时对象
+
+```cpp
+// 下面这句话做了两件事情：
+// 首先使用 Rectangle(x, y) 构造函数构造了一个临时变量
+// 然后把临时变量赋值给 rec
+Rectangle rec = Rectangle(3, 4);
+```
 
 #### 析构函数
 
@@ -220,9 +338,13 @@ String::String(int n){
 
 struct 就是一个默认所有成员为 public 的 class。是 C++ 为了兼容 C 的产物。
 
+**tips.** private 仅类内可以访问的含义是，在 Node 类的成员函数中访问另一个 Node 对象的 private 数据是可行的。private 并不限制访问的对象，只限制访问的类型。
+
+**tips.** 可以通过指针访问类内 private 的变量。private 只是用来防止成员操作符的访问。
+
 #### 类的继承
 
-继承类型：
+##### 继承类型 & 继承行为
 
 - 公有继承（public）：当一个类派生自公有基类时，基类的公有成员也是派生类的公有成员，基类的保护成员也是派生类的保护成员，基类的私有成员不能直接被派生类访问，但是可以通过调用基类的公有和保护成员来访问。
 - 保护继承（protected）： 当一个类派生自保护基类时，基类的公有和保护成员将成为派生类的保护成员。
@@ -233,6 +355,7 @@ struct 就是一个默认所有成员为 public 的 class。是 C++ 为了兼容
 - 基类的构造函数、析构函数和拷贝构造函数
 - 基类的重载运算符
 - 基类的友元函数
+- adiitional: name hiding
 
 拓展阅读：
 
@@ -262,6 +385,45 @@ public:
     void get_area(){area = 0.5 * h * w;}
 };
 ```
+
+##### Insights: composition & inheritance 组合和继承
+
+- 组合：car **has a** tire.
+    - class 之间不存在继承关系，而是包含关系
+- 继承：student **is a** human.
+    - base class & derived class
+
+##### Name Hiding
+
+- 派生类中定义的函数会隐藏基类中的同名函数（即使参数列表不一样也会隐藏）
+- 如果派生类中需要调用基类被隐藏的函数，则需要加上 `Base::` 进入基类的命名空间
+- 对 virtual 函数行为不一样（还没看过）
+
+```cpp
+class Base{
+    void print();
+    void print(int a, int b);
+};
+
+class Derived: public Base{
+    void print(int a){
+        Base::print();
+        Base::print(a, a); // 访问基类中的函数
+    }
+};
+
+int main()
+{
+    Derived d;
+    d.print(); // 报错，因为基类中的同名函数被隐藏了
+}
+```
+
+##### upcasting
+
+- 基类指针或者引用可以指向派生类对象，但会丢失派生类独有的数据
+- 对 virtual 函数行为不一样（等会说）
+
 
 #### new & delete
 
@@ -308,10 +470,10 @@ new 和 delete 数组的顺序问题：
 - new 先分配空间，再按下标从小到大调用构造函数
 - delete[] 先按下标从大到小调用析构函数，再释放空间
 
-#### 多态 & 虚函数 & dynamic_cast
+#### 多态 polymorphism & 虚函数virtual & dynamic_cast
 
 - 在编译时，编译器不**静态链接**到基类的函数，而是在程序中任意点可以根据所调用的对象类型来选择调用的函数，这称为**动态链接**
-- 在虚函数不需要任何有意义的实现时，可以使用**纯虚函数**
+- 在**虚函数**不需要任何有意义的实现时，可以使用**纯虚函数**
 - 使用 `Rectangle * rect = dynamic_cast<Rectangle*>(shape);` 来把指向派生类的基类指针转化为派生类指针
 
 tips:
@@ -350,7 +512,82 @@ arr[1]->get_area();
 std::cout << arr[0]->area << " " << arr[1]->area << std::endl;	
 ```
 
-#### friend 成员函数
+解释：虽然 arr 中的数据都是 Shape 指针，但是指向的是不同的派生类对象。在基类 Shape 中 `get_area()` 是纯虚函数，所以会根据调用函数的派生类类型动态链接到对应的函数。
+
+##### virtual 析构函数
+
+`delete Base*` 会调用 Base 的构造函数，而不管指针指向的是否是派生类。
+
+解决方法：
+1. virtual 析构函数
+1. 智能指针，会自动进行内存管理
+    ```cpp
+    #include <memory>
+    std::unique_ptr<Derived> smart_ptr(new Derived);
+    ```
+##### virtual 函数的常规实现方法
+
+![OOP](./imgs/2023-04-19-15-13-15.png)
+
+- vptr: 指向 vtable 的指针，**每个对象有一个**，在初始化的时候指向不同 vtable 的不同位置
+- vtable: 一个指针的数组，**每个类有一个 vtable**，指向本类动态链接的函数
+
+![OOP](./imgs/2023-04-19-15-13-35.png)
+
+- 如果派生类没有重写虚函数，则 vtable 中存的就是基类定义的虚函数（例如 resize），否则会改成派生类自己定义的虚函数（例如：析构函数和 render）
+
+```cpp
+#include <iostream>
+using std::cout;
+using std::endl;
+
+class Base{
+protected:
+    int base_data;
+public:
+	Base(): base_data(200){}
+	virtual void vfunc1(int x){cout << "Base::vfunc1(), parameter: " << x + base_data << endl;}
+    virtual void vfunc2(){cout << "Base::vfunc2()" << endl;}
+};
+
+class Derived: public Base{
+private:
+	int derived_data;
+public:
+	Derived(): derived_data(100){}
+	void vfunc1(int x) override {cout << "Derived::vfunc1(), parameter: " << x + base_data + derived_data << endl;}
+	void vfunc2() override {cout << "Derived::vfunc2()" << endl;}
+};
+
+int main(){
+	Derived d;
+	void* vptr = *((void **)&d); // vptr 是一个指针
+	void** vtable = (void**)vptr; // vtable 是一个指针的数组
+	void (*vf)(Derived*, int) = (void (*)(Derived*, int))vtable[0]; // 虚函数指针存在 vtable 中
+	vf(&d, 20); // 因为成员函数调用需要有 *this 指针，但直接用指针调用函数跳过了类的步骤，没有默认的 *this，需要通过参数传给函数
+
+	// 上下两种调用函数的方式，在函数行为上是一样的
+	d.vfunc1(20);
+
+	return 0;
+}
+```
+
+- 外部指针调用 vtable 中的函数。熟悉 vptr 和 vtable 的存储结构。
+
+##### override 覆写虚函数
+
+关键字 override 的含义是，让编译器来检查我们有没有正确覆写父类的虚函数。因此，任何子类覆写虚函数后导致函数签名的变化，都会导致编译器报错。比如在编写子类函数时忘记加了某个变量，忘记加 const 等导致覆写失败，编译器都会报错
+
+```cpp
+ struct Derived : public Base {
+   void doSomething(int i) override {  // ERROR,编译器报警没有正确覆写Base::doSomething
+     std::cout << "This is from Derived with " << i << std::endl;
+   }
+ };
+```
+
+#### friend 函数 & 类
 
 - 类的**友元函数**定义在类外部，但有权访问类的所有私有（private）成员和保护（protected）成员。
 - 类的**友元类**可以访问类的所有私有（private）成员和保护（protected）成员。
@@ -360,6 +597,12 @@ tips：
 - friend 可以定义在类内任意位置，权限设置对 friend 无效
 
 ```cpp
+class Student; // Declaration
+
+class AnotherClass{
+    void f(Student*);
+};
+
 class Student{
 private:
     int id;
@@ -368,6 +611,7 @@ public:
     Student(int x, std::string y):id(x), name(y){}
     friend bool operator < (const Student&, const Student&);
     friend std::ostream& operator << (std::ostream&, const Student&);
+    friend void AnotherClass::f(Student*); // AnotherClass 的 f 函数可以访问 Student 的 private 变量
 };
 
 bool operator < (const Student& x, const Student& y){
@@ -380,10 +624,28 @@ std::ostream& operator << (std::ostream& out, const Student& x){
 ```
 
 
-#### static 实现对象间数据共享
+#### const object 常量对象
+
+- 变量可以调用函数的常量版本和变量版本，常量只能调用函数的常量版本。
+
+- 常量函数中不能修改成员值，否则会报错。
+
+- 同函数名，同参数列表，但一个函数加了 const 符号，这两个成员函数是不同的成员函数。所以可以做到常量和变量调用同名函数时程序行动不同。
+
+![OOP](./imgs/2023-04-07-17-37-46.png)
+
+
+
+#### const 成员变量 & static const 实现对象间数据共享
+
+const 成员变量在对象构造时创建（必须在初始化列表里构造），在构造函数体内和成员函数中不能修改，在类析构时消失。
+
+---
 
 - [在 class 中定义 static 成员变量](https://www.cnblogs.com/stevenshen123/p/11555758.html)
 - [C++ 类成员函数中的静态变量的作用域](https://blog.csdn.net/su_787910081/article/details/42213245)
+
+![OOP](./imgs/2023-04-07-17-42-39.png)
 
 #### class 的多文件实现（声明和定义分离）(.h & .cpp)
 
@@ -436,6 +698,31 @@ namespace my_space{
 using my_space::my_function;
 // 使用整个 namespace
 using namespace my_space;
+```
+
+#### 使用场景
+
+比如 ADS 的项目里要写一个函数的不同实现版本，分别为 `search_1()`, `search_2()` 和 `search_3()`，分给不同的人写。
+
+因为函数功能相同，容易出现不同的人定义相同名字的全局变量，或者同名函数，导致最后统一编译的时候重定义报错。
+
+针对这个问题最好的解决方法是给每个子函数套一个 namespace，就不会存在重定义的问题了。
+
+search_1.h 只 **声明** 需要被主函数调用的函数
+
+```cpp
+namespace SEARCH_1{
+    int search_1(int target[BeadN], int item_cnt, int item[][BeadN]);
+}
+```
+
+search_1.cpp **实现** 函数，可以定义全局变量（套 namespace 只是用于说明变量和函数所在的空间，命名空间不存在声明和定义的区别）
+
+```cpp
+namespace SEARCH_1{
+    // search_1(){}
+    // int VAR;
+}
 ```
 
 ### STL 标准模板库
