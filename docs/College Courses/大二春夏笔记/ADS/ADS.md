@@ -6,7 +6,7 @@
 
 1. 评分标准
     - Homework（作业） 10%
-- Discussion（讨论） 10%  
+    - Discussion（讨论） 10%  
     - Research Project（大程） 30%
     - Mid Exam（期中）10%
     - Final Exam（期末） 40%
@@ -25,12 +25,20 @@
     - 报告：重点在于 project 中的发现，激情！
 4. 参考资料
     - [Algorithms Visualization](https://www.cs.usfca.edu/~galles/visualization/Algorithms.html)
+    - [卷卷的博客](https://zhoutimemachine.github.io/2023/01/18/2023/ads-hw-review/)
+5. 一些复习策略：
+    - 程序填空 & 函数题 -> ppt 上的代码实现
+    - 注意 ppt 上的定义 & 重视课上小测中对定义的描述
+    - 数据结构所有操作必须非常熟练
 
 ## AVL Tree
 
-- 性质：递归地定义
+[图解](https://www.jianshu.com/p/6988699625d5)
+
+- 性质：递归地定义，所有结点的**平衡因子的绝对值都不超过 1** 的二叉树。
 - 高度：O(logn)，用斐波那契数列证明（令深度为 h 的 AVL）
-- 每个节点记录：子树深度，balance value(左子树深度 - 右子树深度)
+- 每个节点记录：子树深度，**balance value(左子树深度 - 右子树深度)**
+- 操作：旋转，命名为 **LL, RR, LR, RL**，根据从旋转根节点到最深的节点的路径前两步往哪个方向走命名。
 - insertion & rebalance
     - zig-zig: single-rotation，两个点旋转
     - zig-zag: double-rotation，三个点旋转
@@ -62,6 +70,8 @@ e.g. 优化 first fit [装箱问题](https://blog.csdn.net/weixin_43886592/artic
 - x 有父亲(p)和祖父(g)
     - zig-zig：2 * single-rotation（先对 p 和 g 做单旋，再对 x 和 p 做单旋）
     - zig-zag：double-rotation
+
+**tips. Splay 和 AVL 操作上的区别：单次旋转还是两次旋转**
 
 ### 复杂度证明
 
@@ -125,7 +135,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 ### 定义
 
 - 二叉查找树
-- 节点染红色或黑色，根黑色，external node 黑色
+- 节点染红色或黑色，根黑色，external node 黑色，**红色节点间不能有边连接**
 - 如果一个节点是红色的，他的儿子都是黑色的
     - 推论 *（不是基本定义）* ：不存在两个相邻的红节点
 - 对于树上的任意节点 u，从 u 到以 u 为根的子树中的叶子的所有路径上，黑色节点的个数相同
@@ -135,7 +145,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 
 - 定义：internal node 树上的实际节点，external node 虚拟叶子节点（空节点）
 - 定义：uncle 节点为和父节点拥有同一个父亲的节点
-- 定义：black height bh(x) 为从 x 到子树中任意叶子的路径上黑色节点个数
+- 定义：**black height bh(x)** 为从 x 到子树中任意叶子的路径上黑色节点个数
 - Lemma：A red-black tree with N internal nodes has height at most 2ln(N +1).
     - 证明：若根节点 black height 为 n，则黑节点个数为 $2^n-1$，整棵树节点最少为 $N=2^n-1$。对于任意红节点，其父节点一定为黑节点，所以红节点个数小于等于整棵树节点数的一半，所以树深度最大为 $h=2n$。由此可以得出 $h_{max}=2\log_2(N+1)$
 
@@ -217,7 +227,7 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
 树节点的作用：
 
 - 非叶子节点：索引（子树中的最小值拿上来做索引）
-- 叶子节点：存储权值（每个叶子 $\lceil \frac{M-1}{2}\rceil$ 到 M-1 个权值）*（ppt 上以及习题中：每个叶子 $\lceil \frac{M}{2}\rceil$ 到 M 个权值）*
+- 叶子节点：存储权值（每个叶子 $\lceil \frac{M-1}{2}\rceil$ 到 M-1 个权值）*（ppt 上以及习题中：每个叶子 $\lceil \frac{M}{2}\rceil$ 到 M 个权值）* **注意考试使用的定义和实际使用中的定义有所不同**
 
 树节点的结构：
 
@@ -316,9 +326,9 @@ D. there are 5 leaf nodes
 
 - 相关性
     - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS_relevance.jpg)
-    - precision $P = R_R / (R_R + I_R)$ 搜到的结果中有多少相关
-    - recall $R = R_R / (R_R + R_N)$ 相关的结果中有多少被搜到
-    - accuracy $A=(R_R+I_N)/(R_R+I_R+R_N+I_N)$ 有多少结果和标签匹配
+    - precision $P = R_R / (R_R + I_R)$ **搜到的结果中有多少相关**
+    - recall $R = R_R / (R_R + R_N)$ **相关的结果中有多少被搜到**
+    - accuracy $A=(R_R+I_N)/(R_R+I_R+R_N+I_N)$ **所有结果中有多少和标签匹配**
 - 搜索速度(how fast it search, hwo fast it index)
 - 耗费资源
 
@@ -429,6 +439,8 @@ public:
 
 ## Leftist Heap 
 
+[参考博客：有合并的图示](https://zhuanlan.zhihu.com/p/38035946)
+
 背景和思路：
 
 - 中文名：左偏树、左偏堆、左堆
@@ -444,12 +456,12 @@ public:
     - 证明：数学归纳法。如果根节点的 npl 是 r，则右子树的 npl 是 r-1，左子树的 npl 大于等于 r-1
 - 推论：右路径长度 $O(\log N)$
 
-合并算法实现：（递归）
+合并算法实现：（递归，小根堆）
 
-1. `H_ret = Merge(H1->Right, H2)` **（如果其中至少有一个节点是 NULL 就结束递归，和斜堆有区别）**
+1. `H_ret = Merge(H1->Right, H2)` 小的节点作为根节点，小的节点右子树和另一棵树合并 **（如果其中至少有一个节点是 NULL 就结束递归，和斜堆有区别）**
 1. `Attach(H_ret, H1->Right)`
-1. `Swap(H1->Left, H1->Right)`
-1. `Update(H1->npl)`
+1. `Swap(H1->Left, H1->Right)` 如果左子树 npl 小于右子树，即不满足左偏树的性质，则交换左右子树
+1. `Update(H1->npl)` 最后记得更新 npl
 
 插入算法实现：相当于和一个只有一个节点的堆合并
 
@@ -470,11 +482,14 @@ $O(N)$ 建堆：两两合并，做 $\log N$ 次，复杂度 $O(N)$
 - 中文名：斜堆
 - 优点：不需要额外空间
 
-合并算法：
+**合并算法：**
 
 1. 如果一个空斜堆与一个非空斜堆合并，**交换非空斜堆的左右节点，向下递归（保证非空堆右路径上所有重节点都变成轻节点，和左倾树不一样）** ，然后返回非空堆的堆顶。
-1. 如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的右孩子对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的右孩子，然后交换根节点的左右儿子。（如果先交换后合并，可以做到非递归）
+1. 如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的**右孩子**对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的右孩子，然后交换根节点的左右儿子。（如果先交换后合并，可以做到非递归）
+
+tips. 
 - 最后一步交换很关键，对于一个结点来说，合并的数据总是交替地插入自己的左边和右边，那么高度是不是就可以控制住了呢?
+- 为了保证“非空堆右路径上所有重节点都变成轻节点”这个性质，合并中两棵树的右路径上的所有节点必须都做过一次旋转
 
 复杂度证明：（摊还分析）
 
@@ -529,6 +544,12 @@ e.g. 斜堆的右路径长度是 $\Omega(N)$ 的
 依次插入：6, 5, 4, 7, 3, 8, 2, 9 ... 右路径长度为 $\frac{N}{2}$
 
 ## Bionomial Queue 二项队列
+
+### 定义
+
+1. binomial queue
+1. binomial tree
+1. subtree
 
 ### 性质
 
@@ -678,6 +699,12 @@ resources：
 - [wiki](https://en.wikipedia.org/wiki/Master_theorem_(analysis_of_algorithms))：所有情况的详细讨论 & 解释
 - 参考：补充阅读 - 主定理证明
 
+#### 主定理记忆
+
+$c_{crit}=\log_ba$ 对数和底别搞反了。
+
+对比 $f(n)$ 的阶数和 $c_{crit}$，大的那个一定是最终复杂度的一部分。
+
 #### 主定理详细阐述
 
 ![ADS](./imgs/2023-04-16-17-30-10.png)
@@ -750,8 +777,172 @@ tips. 小题的关注点：更新 dp 数组的顺序问题
 ### Proj 4 红黑树计数
 
 
+## 贪心 Greedy
+
+### 线段覆盖问题
+
+- 算法：选不重叠的线段中结束时间最早的
+- 证明：正确性，最优性
+
+### 哈夫曼编码
+
+- TRIE 树
+- [图解哈夫曼编码](https://blog.csdn.net/fx677588/article/details/70767446)
+
+## NP Completeness
+
+### Decidability
+
+Undecidable problems are problems that cannot be solved by a computer in finite amount of time.
+
+不可解问题：
+
+1. 停机问题（逻辑上证明不可解）[知乎](https://www.zhihu.com/question/20081359/answer/162329455)
+1. 3x+1 问题，克拉茨问题（还没证明出来），[陶哲轩证明“绝大多数正整数”](https://zhuanlan.zhihu.com/p/97346612)
+
+### P & NP & NP-complete & NP-hard
+
+- deterministic turing machine: executes one instruction at each point in time. Then depending on the instruction, it goes to the next unique instruction.
+- nondeterministic turing machine: free to choose its next step from a finite set. And if one of these steps leads to a solution, it will always choose the correct one.
+
+---
+
+- decision problem: 回答 "yes" or "no"
+- optimization problem: 输出最优解, can be related to a decision problem using the form of "Is x an optimal answer."
+- search problem: 要输出答案或者 "no solution"
+- counting problem
+
+e.g. SHORTEST-PATH problem relates to PATH problem: given a directed graph G, vertices u and v, and an integer k, does a path exist from u to v consisting of at most k edges?
+
+---
+
+- P: polynomimal-time, 多项式时间求解
+- NP: nondeterministic polynomial-time, 非确定图灵机多项式时间求解，即多项式时间验证
+- NP-complete: 两个性质，第一个是必须是一个 NP 问题，第二个是 has the property that any problem in NP can be polynomially reduced to it. ( 证明 P=NP 即找出 NP-complete 的多项式时间解 )
+    - e.g. Hamiltonian cycle problem & traveling salesman problem: NP-complete
+    - e.g. 最早证明的 NP-complete 问题——SAT: Input a boolean expression and ask if it has an assignment to the variables that gives the expression a value of 1
+- NP-hard: 所有 NP 问题都能规约到的问题，但不一定是 NP 问题
+- co-NP: 问题的补问题是 NP 问题（co-NP 和 NP 不是等价关系）
+
+[Matrix67 将 P, NP, NPC, NPhard](http://www.matrix67.com/blog/archives/105)
+[知乎：证明 SAT 问题是 NP-complete 问题](https://zhuanlan.zhihu.com/p/73234959)
+[CSDN: 证明 NP-complete 的方法](https://blog.csdn.net/Cplus_ruler/article/details/112390803)
+
+e.g. 背包问题不是 P 问题，因为 $O(NW)$ W 不是输入的多项式。
+
+e.g. 证明问题 X 是 NP-complete 问题
+
+1. 证明 X 是 NP 问题
+1. 证明 NP-complete 问题 Y 可以规约到 X，即 $Y\leq_P X$ ![ADS](./imgs/2023-05-10-15-47-10.png)
+
+e.g. P=NP 对于密码学的冲击
+
+---
+
+SAT: 求一组 $\{l_{ij}\}$ 使得 $F(X)=\wedge_{i=1}^m( \vee_{j=1}^n l_{ij})=1$
+
+#### Formal-language Framework
+
+- problem instances set I: problem 的实例，可以当成是输入, the input will be encoded as a binary string
+- problem solutions S: 答案
+- abstract problem Q: 输入到答案的映射
+
+![ADS](./imgs/2023-05-09-12-21-50.png)
+
+---
+
+- language: 对于 decision problem 来说，language 就是能让问题 Q 的答案为 yes 的输入的集合
+- algorithm & problem：都是从输入到输出的映射，但是 problem 可以看成是标准答案，而 Algorithm 是自己想的，需要用 problem 来检验正确性
+- algorithm A decides language L: 正确的要输出正确，错误的要输出错误，两者缺一不可
+    - 区分 accept & decide
+
+
+![ADS](./imgs/2023-05-10-15-50-48.png)
+
+![ADS](./imgs/2023-05-10-15-55-29.png)
+
+e.g. 用 formal language 定义 P 问题（见上面的截图）
+
+e.g. 用 formal language 定义 NP 问题
+- 首先定义什么是验证 verification
+- 能在多项式时间验证的问题是 NP 问题（从这里可以看出，NP 问题并不要求多项式时间验证某个输出不是问题的解，只需要验证是解的就行了）
+
+![ADS](./imgs/2023-05-10-16-07-33.png)
+
+#### reduction
+
+形式上的理解：A 能规约到 B，则 B 应该是比 A 难的
+
+![ADS](./imgs/2023-05-10-15-32-20.png)
+
+formal language 的定义：
+
+![ADS](./imgs/2023-05-10-16-12-41.png)
+
+[对规约概念的理解](https://zhuanlan.zhihu.com/p/194313998)
+
+e.g. 把 clique 问题多项式规约到 vertex cover problem，说明后者是 NPC 问题
+- clique: 是否存在一个大小为 K 的点集，其中每两个点之间都有连边
+- vertex cover problem: 能否选出一个大小最大为 K 的点集，使得所有边都至少有一个点在点集里
+
+![ADS](./imgs/2023-05-10-16-15-40.png)
+
+![ADS](./imgs/2023-05-10-16-16-01.png)
+
+e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
+- 3-SAT：SAT 问题每个 clause 中都有且仅有 3 个 literal
+
+解法是每个 literal 建对应一个点，构造一个 3k 个点的图。同一个 clause 里的点互相不连边，不同 clause 之间除了 $x_i$ 和 $\overline{x_i}$ 不连边之外，其他都连边。在构造的图中选取一个大小为 K 的 clique，相当于在每个 clause 中选一个 literal 为 1，但是不能 $x_i$ 和 $\overline{x_i}$ 同时为 1。
+
+![ADS](./imgs/2023-05-10-16-32-03.png)
 
 ## 错题整理
+
+### AVL
+
+1. 依次插入 `42, 26, 8, 70, 102, 56, 2`，经过几次旋转分别是什么旋转？
+
+答案：LL, RR, RL, LL
+
+考察 AVL 树的旋转操作。
+
+2. 
+
+![ADS](./imgs/2023-04-25-12-20-37.png)
+
+
+
+
+### 摊还分析
+
+1. 
+
+![ADS](./imgs/2023-04-25-08-39-08.png)
+
+注意出栈和入栈都算一次操作，所以要两倍。
+
+**摊还分析做题策略：** 先把每个操作的实际复杂度算出来，对于复杂度高的操作，通过势能方法或者记账方法降低其均摊价值。
+
+势能分析的势能函数设置，目标是通过降低势能的方法，把单次复杂度很大的操作，复杂度减到和摊还复杂度相等。
+
+### 红黑树
+
+1. 
+
+![ADS](./imgs/2023-04-25-08-44-40.png)
+
+第一空：Right **大小写** 搞错了。
+
+第二空：`IsRBTree(T->Left) && IsRBTree(T->Right)` 注意递归定义的数据结构不出意外肯定要 **递归地判断**，不然这里为什么不直接写一个 else
+
+### B+ Tree
+
+1. 
+
+![ADS](./imgs/2023-04-25-08-31-53.png)
+
+考定义，注意节点的儿子或元素个数**下限**。
+
 
 ### Inverted Index
 
@@ -772,3 +963,60 @@ Relevance quality of a returned document is judged against all the query terms i
 F
 
 不是所有 term 都比较，需要去除 stop words
+
+
+### 斜堆
+
+1. 依次插入 1 to $2^{k−1}$，得到的树是什么形状？反过来插得到的是什么形状？
+
+从小到大插，一定是插入到右路径的最底下，然后整条右路径翻转。从大到小插，一定是插在根的位置，再把整条链旋转到左边。
+
+### binomial queue
+
+1. To implement a binomial queue, the subtrees of a binomial tree are linked in increasing sizes.
+
+False. 
+
+### 主定理
+
+1. 
+
+![ADS](./imgs/2023-04-25-08-26-39.png)
+
+主定理背公式
+
+2. 
+
+![ADS](./imgs/2023-04-25-08-35-52.png)
+
+考察公示变形，令 $x=\log N$，令 $T(N)=T(e^x)=F(x)$
+
+### $\alpha-\beta$ 剪枝
+
+1. 描述：什么情况下会进行剪枝？
+
+2. 
+
+![ADS](./imgs/2023-04-25-09-36-45.png)
+
+### 贪心
+
+1. The encoding of a symbol a is a prefix of that of another symbol b iff the node labeled a is an ancestor of the node labeled b.
+
+True。
+
+### NP-completeness
+
+1. 
+
+![ADS](./imgs/2023-05-10-16-41-05.png)
+
+规约说明了 L1 比 L2 简单，所以 L1 一定也是一个 NP 问题。
+
+但是不能说明 L1 是否是 P 问题。这就是 P=NP 要解决的问题了（喜
+
+2. 
+
+![ADS](./imgs/2023-05-10-16-44-42.png)
+
+注意 C 选项，Q 不是 P 说明了 NPC 也不是 P，所以所有 NP 问题都不是 P 问题。可以使用反证法，如果 NPC 是 P 那么所有的 NP 问题都是 P 问题，和 Q 不是 P 问题矛盾。

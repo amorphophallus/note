@@ -9,7 +9,7 @@
 ### intro
 
 1. 参考
-    - 作业答案：[HW1-HW8](https://zhoutimemachine.github.io/2022/07/07/2022/oop-mid-review/) [HW9-HW13](https://zhoutimemachine.github.io/2022/07/07/2022/oop-final-review/)
+    - 作业答案：参考卷卷的博客，可以用于考试复习 [HW1-HW8](https://zhoutimemachine.github.io/2022/07/07/2022/oop-mid-review/) [HW9-HW13](https://zhoutimemachine.github.io/2022/07/07/2022/oop-final-review/)
     - 贺老师翻译的 C++ 相关文章：[知乎](https://www.zhihu.com/column/c_1561843704159232000)。贺老师的图书分享：[阿里云盘](https://www.aliyundrive.com/s/z5hLRAELpPP), 提取码: 5jm9。
     - [The Cherno C++](https://www.youtube.com/playlist?list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb) 超纲知识学习
     - [C++ 新闻](https://isocpp.org/) [cpp_reference](https://en.cppreference.com/w/)
@@ -65,6 +65,28 @@ char s4[]("Hello World!");
 s1[0] = 'C'; // Error
 s3[0] = 'C'; // OK
 ```
+
+#### static
+
+##### static 的两个含义
+
+![OOP](./imgs/2023-05-06-17-19-26.png)
+
+##### static 的使用场景
+
+![OOP](./imgs/2023-05-06-17-25-54.png)
+
+static 全局变量：只能在当前源文件的代码中访问(internal linkage)
+
+static 局部变量：在函数第一次被调用时构造，一直存在直到程序结束
+
+class 内的 static 变量：本源文件中所有类的实例共用，需要单独定义，不能在初始化列表中构造
+
+![OOP](./imgs/2023-05-06-17-23-27.png)
+
+class 内的 static 成员函数：只能访问类内的 static 变量，调用的时候不存在 this 指针
+
+class 内的 static 常量：所有类共享的常量数据
 
 ### 函数
 
@@ -128,10 +150,17 @@ void selection_sort(T arr[], int n, Compare comp)
 
 #### 重载运算符
 
-第一种写法：在类外部重载
+##### 可以重载的运算符
+
+![OOP](./imgs/2023-05-06-13-26-03.png)
+
+##### 第一种写法：在类外部重载 as global function
 
 - 可以把 operator 看成一个函数，具有参数、函数体、返回值。但是参数和返回值的设置必须满足运算符原来的运算规则。
 - 参考资料：[C++ 可重载运算符实例](https://www.runoob.com/cplusplus/cpp-overloading.html)，在网页的最底下。
+
+tips:
+- 如果类外重载需要访问类内的 private 变量，则需要声明 friend
 
 ```cpp
 class Student{
@@ -149,10 +178,14 @@ std::ostream& operator << (std::ostream& out, const Student& x){
 }
 ```
 
-第二种写法：在类内重载
+##### 第二种写法：在类内重载 as member function
 
 - 类内重载是类的一个成员函数
 - 成员函数可以在类内声明，在类外实现
+- 隐含的第一个参数，通过 `this` 指针调用 ![OOP](./imgs/2023-05-06-13-32-31.png)
+- 在调用时第一个参数必须是本类型（第二个参数支持隐式的类型转换） ![OOP](./imgs/2023-05-06-13-34-02.png)
+
+tips: 
 - 输出流的类内重载：所谓“类内”，是 ostream 类内。因为 ostream 类在生命时用到了 template，在重载其运算符时需要和类使用一样的 template `template<typename _CharT, typename _Traits>`*（目前还不会重载）*
 
 ```cpp
@@ -170,6 +203,141 @@ bool Student::operator > (const Student& y){
     return this->id > y.id;
 }
 ```
+
+##### 参数和返回值
+
+参数：
+
+- 如果参数 read-only，最好写成 `const &`
+- 如果 member function 的 this 也 read-only，把函数定义成 `const`
+    - 如果变量和常量都需要调用使用这个运算符，则需要重载两遍
+- 如果 global function 的第一个参数要被修改，定义成 reference `&`
+    - e.g. stream inserter
+
+返回值：
+- indexer 可能需要重载两遍，分别是 const 和非 const 的
+- indexer 返回一个 reference
+
+![OOP](./imgs/2023-05-06-13-42-53.png)
+
+##### 特殊的重载：自增自减
+
+声明：
+
+![OOP](./imgs/2023-05-06-13-43-55.png)
+
+实现：
+
+注意减少重复的代码
+
+![OOP](./imgs/2023-05-06-13-44-34.png)
+
+调用：
+
+![OOP](./imgs/2023-05-06-13-44-13.png)
+
+##### 重载赋值符号 assignment =
+
+注意区别赋值语句和 copy constructor
+
+![OOP](./imgs/2023-05-06-13-53-30.png)
+
+未定义赋值语句，编译器会自动生成
+- 其做法是：递归地进行 memberwise assignment
+- 注意：默认的赋值是浅拷贝
+
+重载成深拷贝：
+- 需要注意检查 self assignment
+
+![OOP](./imgs/2023-05-06-14-01-31.png)
+
+![OOP](./imgs/2023-05-06-14-02-46.png)
+
+##### 重载小括号 functor
+
+如果需要把函数当做参数传进函数，可以使用 functor
+
+```cpp
+#include <cmath>
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void transform(vector<int>& v, const function<int(int)> & f) {
+    for (int & x : v)
+        x = f(x);
+}
+
+class mul_by {
+public:
+    mul_by(int a) : a(a) {}
+    int operator()(int x) const {
+        return x * a;
+    }
+private:
+    int a;
+};
+
+class add_by {
+public:
+    add_by (int a) : a(a) {}
+    int operator()(int x) const {
+        return x + a;
+    }
+private:
+    int a;
+};
+
+class nth_pow {
+public:
+    nth_pow (int a) : a(a) {}
+    int operator()(int x) const {
+        return pow(x, a);
+    }
+private:
+    int a;
+};
+
+class print {
+public:
+    add_by (char sep) : sep(sep) {}
+    // 返回值必须是 int，否则和形参不能对应
+    int operator()(int x) const {
+        cout << x << sep;
+        return x;
+    }
+private:
+    char sep;
+};
+
+int main()
+{
+    vector<int> v { 1,3,5,7,9 };
+    
+    transform(v, mul_by(5));
+    transform(v, add_by(3));
+    transform(v, nth_pow(2));
+    transform(v, print(','));
+```
+
+##### 自定义类型转换
+
+两种形式：
+- 两种里面只能实现一种，否则会报 ambiguous
+
+![OOP](./imgs/2023-05-06-14-31-01.png)
+
+举例：
+- 想要阻止单参数构造函数导致隐式的类型转换，可以在构造函数之前加上 `explicit` 关键字
+
+![OOP](./imgs/2023-05-06-14-31-55.png)
+
+![OOP](./imgs/2023-05-06-14-33-10.png)
+
+更清晰的写法：
+
+![OOP](./imgs/2023-05-06-14-33-53.png)
+
 
 #### 构造函数
 
@@ -203,6 +371,8 @@ Rectangle s;
 - default constructor：没有参数的 constructor
 
 如果没有任何自定义的构造函数，编译器会自动加上 default constructor；但如果有自定义构造函数，那要用 default constructor 就必须自己写了。
+
+tips: 如果没有被重载，拷贝构造函数也会被自动生成
 
 ```cpp
 // 以下两种写法等价
@@ -299,6 +469,53 @@ X::~X()
 // 然后把临时变量赋值给 rec
 Rectangle rec = Rectangle(3, 4);
 ```
+
+##### 单参数构造函数
+
+可以写成带小括号的形式，也可以直接用等于号
+
+```cpp
+Node y;
+Node x(y);
+Node x = y; // 两者等价，都调用了拷贝构造函数
+```
+
+##### 拷贝构造函数
+
+什么时候需要写拷贝构造？
+
+类内有指针的时候，特别是指针指向的地址是在成员函数中分配的事后，一般都需要重载拷贝构造 & 赋值符号，防止浅拷贝产生问题，或者重复析构同一块空间产生错误。
+
+---
+
+拷贝构造在什么时候被调用？
+
+1. 定义变量初始化时
+1. 函数实参传入时
+    - 返回值优化：省去一个拷贝构造。取消返回值优化的编译选项 `-fno-elide-constructors` ![OOP](./imgs/2023-05-06-16-59-19.png)
+
+---
+
+拷贝构造造成的性能下降：
+
+由于 vector 的特性，在扩容的时候，会新分配一段新的空间（长度 capacity() 一般是原来的两倍），然后把原来的所有元素都拷贝到新的地址，导致单次 $O(N)$ 的拷贝构造（均摊 $O(1)$）。
+
+```cpp
+vector<Point> v;
+v.push_back(Point(1, 2)); // 调用 Point 的构造函数和拷贝构造函数
+v.emplace_back(1, 2); // 直接构造 Point，不会调用拷贝构造
+```
+---
+
+如何禁止拷贝构造？
+
+显式地声明成 private，或者加上关键字 `=delete`
+
+```cpp
+Person(const Person &rhs) = delete;
+```
+
+
 
 #### 析构函数
 
@@ -472,6 +689,8 @@ new 和 delete 数组的顺序问题：
 
 #### 多态 polymorphism & 虚函数virtual & dynamic_cast
 
+##### 虚函数和纯虚函数
+
 - 在编译时，编译器不**静态链接**到基类的函数，而是在程序中任意点可以根据所调用的对象类型来选择调用的函数，这称为**动态链接**
 - 在**虚函数**不需要任何有意义的实现时，可以使用**纯虚函数**
 - 使用 `Rectangle * rect = dynamic_cast<Rectangle*>(shape);` 来把指向派生类的基类指针转化为派生类指针
@@ -516,7 +735,7 @@ std::cout << arr[0]->area << " " << arr[1]->area << std::endl;
 
 ##### virtual 析构函数
 
-`delete Base*` 会调用 Base 的构造函数，而不管指针指向的是否是派生类。
+`delete Base*` 会调用 Base 的析构函数，而不管指针指向的是否是派生类，从而导致内存释放不彻底。
 
 解决方法：
 1. virtual 析构函数
@@ -526,6 +745,8 @@ std::cout << arr[0]->area << " " << arr[1]->area << std::endl;
     std::unique_ptr<Derived> smart_ptr(new Derived);
     ```
 ##### virtual 函数的常规实现方法
+
+*注意：并不是所有编译器都采用这种实现方法*
 
 ![OOP](./imgs/2023-04-19-15-13-15.png)
 
@@ -575,6 +796,19 @@ int main(){
 
 - 外部指针调用 vtable 中的函数。熟悉 vptr 和 vtable 的存储结构。
 
+##### vptr 在赋值操作中的行为
+
+vptr 不会复制。b 的 vptr 还是指向 Base 的 vtable。
+
+```cpp
+Base b;
+Derived d;
+b = d;
+b.virtualFunction();
+```
+
+如果强行复制 vptr，且 Derived 类的虚函数调用了派生类独有的数据，则会导致函数访问未定义的内存。
+
 ##### override 覆写虚函数
 
 关键字 override 的含义是，让编译器来检查我们有没有正确覆写父类的虚函数。因此，任何子类覆写虚函数后导致函数签名的变化，都会导致编译器报错。比如在编写子类函数时忘记加了某个变量，忘记加 const 等导致覆写失败，编译器都会报错
@@ -586,6 +820,52 @@ int main(){
    }
  };
 ```
+
+##### relaxation
+
+对于引用和指针类型的返回值，子类对虚函数的覆写，允许返回值为子类。
+
+![OOP](./imgs/2023-04-21-20-36-42.png)
+
+##### interface 接口
+
+*纯虚函数*可以看成一种*接口*，用户根据具体问题实现接口的纯虚函数，调用接口。
+
+**举例：牛顿迭代法**
+
+- 接口：`class NewtonSolver`
+    - 将与牛顿迭代法本身无关的函数抽离出来，即把 `f()` 和 `df()` 做成纯虚函数
+    - 与牛顿迭代法本身相关的函数在接口中实现，比如 `solve()` 牛顿法主函数，`is_good()` 判断结果是否足够
+    - 与牛顿迭代法本身相关的参数在接口中定义，比如 `tolerance` 和 `max_iters` 等参数。
+- 实例：`class NthRootSolver: public NewtonSolver`
+    - 用户只需要根据实际问题实现纯虚函数，就可以对具体问题使用牛顿迭代法
+
+---
+
+换一种思路：函数式编程
+
+将函数作为参数传入函数中，函数也可以当做接口使用。
+
+```cpp
+using fn = std::function<double(double)>;
+
+double Normal_Newton(fn f, fn df, ...);
+
+double Specialized_Newton(double a, ...){
+    auto f = [a] (double x) {return x * x - a;}; // 匿名函数
+    auto df = [] (double x) {return 2 * x;};
+    return Normal_Newton(f, df, ...);
+}
+```
+
+匿名函数：`[]` 中的是超参数，`()` 中的是形参，`{}` 中是函数体。用匿名函数更方便地定义参数传入接口中。
+
+##### Code Quality
+
+- Coupling: 低耦合(loose coupling)，基类和派生类互不影响，派生类不能随意修改基类。
+- Cohesion: 高内聚(high cohesion)，功能明确，函数能用一句话描述，类功能不会过于庞大。
+
+cx 的建议：看开源库，学习思想。
 
 #### friend 函数 & 类
 
@@ -823,6 +1103,10 @@ tips:
 ![Alt text](./imgs/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202023-03-17%20220859.png)
 
 
+#### c++ string
+
+1. `string.data()` 返回一个 char 指针指向字符串的内容
+
 ### 工具
 
 #### Dev-C++ 调试
@@ -906,6 +1190,8 @@ tips:
 7. `std::hex`（16进制）、`std::dec`（10进制）、`std::oct`（8进制）、`std::showbase`（显示进制前缀）、`std::noshowbase`（不显示进制前缀），对本语句及后续语句均有效
     - e.g. `cout << showbase << hex << setw(4) << 12 << setw(12) << -12 << endl;`
 8. `setprecision`: 设置小数精度，对本语句及后续语句均有效
+
+[C++ cout格式化输出补0](https://blog.csdn.net/u012686154/article/details/88429398)
 
 #### cout 格式设置函数的头文件和命名空间
 
@@ -998,3 +1284,28 @@ tips:
                 - e.g. `seekg (12);`
             2. 从指定位置开始计算相对位置：`seekg ( off_type offset, seekdir direction );`
                 - e.g. `in.seekg (-1, ios::end);`
+
+
+
+### HW4
+
+#### stringstream
+
+使用 sstream 进行字符串拼接、类型转换
+
+但是要注意，[stringstream 重复使用需要重置](https://stackoverflow.com/questions/21906167/how-to-correctly-use-stringstream-class-multiple-times)
+
+
+#### cin 读到文件末尾
+
+[C++ cin 读到文件末尾](https://blog.csdn.net/itzyjr/article/details/123246241)
+
+注意，最好把输入语句直接放在 while 循环的判断中，否则可能把 eof 字符读出来。
+
+#### Windows 批处理
+
+[常见批处理指令](https://blog.csdn.net/feihe0755/article/details/90181822)
+
+[重定向](https://blog.csdn.net/feihe0755/article/details/90181822)
+
+[输出多行数据到文件中](http://www.bathome.net/thread-5160-1-1.html)

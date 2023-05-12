@@ -4,6 +4,8 @@
 
 [How SHA-256 Works Step-By-Step | Boot.dev](https://blog.boot.dev/cryptography/how-sha-2-works-step-by-step-sha-256/)
 [zhihu on VScode](https://zhuanlan.zhihu.com/p/106057556)
+[陶哲轩的博客](https://terrytao.wordpress.com/)
+[Matrix67 的博客](http://www.matrix67.com/blog/)
 
 gay 宝的推荐：
 
@@ -25,6 +27,10 @@ gay 宝的推荐：
 
 1. 南京大学 ICS PA: [课程主页](https://nju-projectn.github.io/ics-pa-gitbook/ics2022/) [github 仓库](https://github.com/NJU-ProjectN/ics-pa-gitbook)
 2. 南京大学 OS: [课程主页](http://jyywiki.cn/OS/2022/) [网课](https://space.bilibili.com/202224425/channel/collectiondetail?sid=192498&ctype=0)
+3. CS231n 计算机视觉（深度学习入门）[笔记中文翻译发布](https://zhuanlan.zhihu.com/p/21930884)
+4. 李宏毅强化学习：
+    - [课程视频](https://www.bilibili.com/video/BV1MW411w79n/?vd_source=fc5d7f6ebecaa54cb57d884a9e457b94)
+    - [笔记 & 教材仓库](https://github.com/datawhalechina/easy-rl)
 
 ## 练手项目
 

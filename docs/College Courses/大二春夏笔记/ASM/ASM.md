@@ -62,8 +62,10 @@
 - si
 - di
 - bp
+    - **`[bp]` 默认的段地址是 `ss`**，用于弥补 `sp` 不能进行寻址的缺陷
+    - **段地址覆盖**：显式地指定段地址寄存器覆盖默认的段地址寄存器
 - sp
-    - `ss:sp` 指向堆栈的顶端
+    - `ss:sp` 指向堆栈的顶端，但是在古老的寄存器里 sp 不能放在方括号里，即不能用 `ss:[sp]` 取出栈顶元素
 - bx
     - 因为 sp 用于特定用途，偏移地址寄存器少了一个，就把通用寄存器中的一个拿来顶替
 
@@ -77,7 +79,11 @@ FL: flag，标志寄存器，16 个 bit 分别表示不同含义，有的可以�
 
 ![ASM](./imgs/2023-04-19-20-30-55.png)
 
-- FL[0]: 称为 CF，存储当前指令的进位（在加法中表示进位，在减法中表示借位，在移位中表示最后被移出去的位，但本质是一样的）
+- 在 x86 instruction set reference 中查看不同指令对 FL 不同位的影响
+
+---
+
+- `FL[0]`: 称为 CF，存储当前指令的进位（在加法中表示进位，在减法中表示借位，在移位中表示最后被移出去的位，但本质是一样的）
 
 ```asm
 mov ax 0FFFFh
@@ -96,16 +102,150 @@ has_carry_flag:
     - stc: set carry `CF = 1`
 ---
 
-- FL[6]: ZF, zero flag，指令结果为 0 的时候置 1
+- `FL[6]`: ZF, zero flag，指令结果为 0 的时候置 1
     - `sub ax, ax` ZF=1
 - ZF 相关指令
     - jz, jnz: 根据结果是否 0 进行跳转
         - `cmp ax, bx` + `je Label` 和 `sub ax, bx` + `jz Label` 在结果上是一样的
 
+```asm
+    ; 等价操作，但是前者更快
+    or al, al
+    jz zero
+
+    cmp al, al
+    je zero
+```
+
 ---
 
-- FL[7]: SF, sign flag, 存储指令结果的最高位
+- `FL[7]`: SF, sign flag, 存储指令结果的最高位
 - SF 相关指令：js, jns
+
+---
+
+- `FL[11]`: OF, overflow flag，存储指令结果是否溢出，相当于指令结果最高位的再高一位。
+    - 对一个最高位和次高位不同的数，进行左移 1 位操作，也会造成溢出（移位导致符号变化了）
+- OF 相关指令：jo, jno
+
+---
+
+- `FL[2]`: PF, parity flag, 存储运算结果低 8 bit 的奇校验码（奇校验码含义为：编码+校验码，拥有奇数个 1）
+    - *PF 与数据传输有关*
+- PF 相关指令： jp(=jpe, jump if parity even), jnp(=jpo, jump if parity odd)
+
+```asm
+    or al, al   ; al 中存储接收数据，使用一个“无意义”的运算设置 PF 位
+    jnp error   ; 进行奇校验
+```
+
+---
+
+- `FL[4]`: AF, auxiliary flag, 辅助进位标志，运算指令低 4 位向高 4 位进位 AF=1
+- AF 与 BCD 码有关
+    - `daa`: decimal adjust for addition，行为如下：
+        - 如果 (AF = 1 || AL & 0Fh >= 0Ah) 说明低 4 位已经进位或者需要进位，执行 AL += 6
+        - 如果 (CF = 1 || AL &0 F0h >= A0h) 说明高 4 位已经进位或者需要进位，执行 AL += 60h
+        - 为什么要加 6？因为十六进制进位进了低位的 16，但是 BCD 码的十进制进位只用进 10，要把低位多进的 6 加回去。
+
+--- 
+
+- DF: direction flag。控制字符串操作的方向
+
+    1. `strcpy(char *t,char、*s)` 永远正方向
+    1. `memcpy(char*t,char*s,intn)` 永远正方向
+    1. `memmove(char*t,char*s,intn)` 会根据重叠情况使用正确的方向，当 DF=0 时为正方向（低地址到高地址），当 DF=1 是反方向。
+    - `cld` 指令使 DF=0,`std` 指令使 DF=1
+
+![ASM](./imgs/2023-04-21-22-03-47.png)
+
+用 asm 实现 memmove
+
+```asm
+func_memmove:
+    mov ax, data
+    mov ds, ax
+    mov es, ax
+    mov si, offset s
+    mov di, offset t
+    mov cx, 10
+    cmp es, ds  ; 先比较 es 和 ds
+    ja neg_dir
+    jb pos_dir
+    mov dx, si
+    add dx, cx
+    cmp dx, di  ; 如果 es 和 ds 相同，则比较 si+cx 和 di
+    jae neg_dir
+pos_dir:
+    cld         ; 设置 FD=0 表示内存复制方向为正方向
+    jmp final_step
+neg_dir:
+    std
+final_step:
+    rep movsb   ; 实现 memmove(es:di,ds:si,cx);
+                ; 如果反方向，则 es:di, ds:si 指向需要复制的字符串的最后一位
+```
+
+---
+
+- IF: interrupt flag，表示是否允许硬件中断
+- 相关命令：sti, cli
+
+```asm
+    cli
+    ; 主函数
+    ; 在主函数执行的过程中禁止硬件中断
+    sti
+```
+
+软件中断和硬件中断的区别：硬件中断不会在用户代码中体现，由硬件事件发起。
+
+`int 9h`: 键盘中断，由键盘敲击事件发起，将键盘值读到键盘缓冲区中
+`int 8h`: 时钟中断，间隔一定时间将计数器加 1
+
+---
+
+- TF: trap flag，控制单步模式，一条指令执行前 TF = 1 ，CPU 在指令后面加一句 `int 1h`
+    - `dword ptr 0:[4]` 存储了 `int 1h` 函数的地址，高 16 位是段地址，低 16 位是偏移地址（中断 `int x` 存放在 `0:[4 * x]` 处）（注意是小端模式存储）
+- 相关指令：没有专门的指令，使用 pushf, popf，对 flag 整体进行操作
+
+`int 1h` 的行为：
+
+```asm
+impl_int_1h:
+    pushf                   ; 保存 flag
+    push cs                 ; 保存当前指令的地址
+    push offset trap_inst
+    jmp dword ptr 0:[4]     ; 跳转到中断函数
+```
+
+调试器如何利用 TF：设置 TF = 1，将 `0:[4]` 指针指向自定义的中断函数处，则被调试程序每运行一条就会通过 `int 1h` 回到调试器的控制中。
+
+如何设置 TF？
+
+```asm
+func_set_TF:
+    pushf   ; 在栈里面存一个旧的 flag，方便结束单步模式之后的恢复
+    pushf
+    pop ax
+    or ax, 100h
+    push ax
+    popf
+```
+
+如何利用 TF 进行反调试：
+1. 对用户程序的所有指令进行加密
+1. 将 `int 1h` 指向用户程序自身的函数，该函数的作用是解密下一条指令，加密上一条指令
+1. 用户程序设置 TF = 1，则每条指令都会被 `int 1h` 解密后执行，如果其他人试图调试该程序，则 `int 1h` 指向其他函数，解密程序将不会被执行。
+
+```asm
+data_int_1h:
+    dw prev_inst offset first, seg first    ; 用于存储上一条指令的地址
+my_int_1h:
+    push bp
+    mov bp, sp  ; 用 bp 记录栈中参数地址
+                ; 因为 bp 默认的段地址是 ss
+```
 
 
 ##### 程序载入内存时的自动赋值
@@ -178,6 +318,55 @@ t+18h -> gdt[3]
 | -- | -- | -- | -- | -- | -- | -- | -- |
 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 1 |
 
+#### 32 位间接寻址方式
+
+16 位中最复杂的间接寻址方式是 `[寄存器 + 寄存器 + 常数]` 如 `[bx + si + 2]` 。
+
+32 位中最复杂的间接寻址方式是： `[寄存器 + 寄存器 * n + 常数]`
+- 其中 n = 2、4、8
+- eax, ebx, ecx, edx, esi, edi, esp, ebp 寄存器从八个中任选两个，并且两个寄存器可以同名，例如 `mov eax, [ebx+ebx*4+2]`
+- 应用：将 C 语言编译成汇编语言时，需要根据数组中元素长度对下标进行乘法操作。使用 32 位间接寻址方式之后，就不用单独写一句左移语句了，可以用一句话表达原来两句话的意思。
+
+例如：
+
+mov eax, [ebx + esi*4 +2] short int a[3]={10, 20, 30};
+
+设ebx ＝ ＆a［0］，esi＝2，则ax＝a［2］可以用以下指令 实现：
+
+mov ax， ［ebx＋esi］；错误 mov ax， ［ebx＋esi＊2］； 正确
+
+#### 端口 port
+
+- 端口是计算机和外设之间通信的中间人。
+- 端口地址的范围是：［0000h， OFFFFh］，共65536个端口。
+- 对端口操作使用指令 in 与 out 实现。**in 和 out 只能使用 al 寄存器**
+
+##### 通过端口获取时间 70h & 71h
+
+70h 及 71h 端口与 cmos 内部的时钟有关。其中 cmos 中的地址 4, 2, 0 中分别保存了当前的时、分、秒，使用 BCD 码编码。
+
+```asm
+write:
+    mov al, 0
+    out 71h, al ; 告诉 cmos 接下去要访问它的0号内存单元
+    mov al, 34h
+    out 70h, al ; 把 cmos 的 0 号单元的值改成 34h
+
+read:
+    mov al, 0
+    out 71h, al ; 告诉 cmos 接下去要访问它的0号内存单元
+    in al, 71h  ; 读 cmos 的 0 号单元的值
+```
+
+
+##### 通过端口获取键盘信息 60h
+
+通过 60h 号端口，CPU 与键盘之间可以建立通讯。
+
+```asm
+    in al, 60h  ; 从端口 60h 读取一个字节并存放到 AL 中
+```
+
 
 ### 汇编指令
 
@@ -186,6 +375,16 @@ t+18h -> gdt[3]
 1. add, sub, mul, div 无符号整数加减乘除
 1. imul, idiv 有符号整数乘除 **（加减操作不需要区分有符号和无符号）**
 1. fadd, fsub, fmul, fdiv 浮点数加减乘除
+
+##### 乘法指令 mul & imul
+
+1. 8 位乘法：`mul bl` 表示 `ax = al * bl`
+1. 16 位乘法：`mul bx` 表示 `dx:ax = ax * bx`
+1. 32 位乘法：`mul ebx` 表示 `edx:eax = eax * ebx`
+
+tips： **mul 的参数不能是常数，只能是寄存器或者变量**，因为需要参数长度已知，判断使用哪种长度的乘法。
+
+tips：冒号表示前后连接
 
 e.g. 无符号数乘法（**乘法只有一个参数**）
 
@@ -203,8 +402,9 @@ e.g. 有符号数乘法
 ```asm
 mov ax, 0FFFFh ; -1
 mov bx, 0FFFFh ; -1
-mul bx  ; 结果为 ds = 0000h, ax = 0001h
+imul bx  ; 结果为 ds = 0000h, ax = 0001h
 ```
+
 e.g. 为什么高级语言不需要区分 mul, imul, fmul？
 
 Ans：因为高级语言有变量类型，可以根据操作数类型选择操作模式。但汇编语言的变量只规定长度，不规定类型。例如以下两个变量定义是等价的：
@@ -213,6 +413,111 @@ Ans：因为高级语言有变量类型，可以根据操作数类型选择操�
 a dw 0FFFFh
 b dw -1     ; 在内存中都是一段长 16 位的全 1 的数据
 ```
+
+##### 有符号乘法 imul 的拓展
+
+imul 的第二类用法可以包含 2 个或 3 个操作数：
+
+1. `imul eax, ebx ; eax = eax * ebx`
+    - 第2个操作数可以是寄存器也可以是变量
+1. `imul eax, ebx, 3 ; eax = ebx * 3`
+    - 第2个操作数可以是寄存器也可以是变量
+    - 第3个操作数只能是常数
+
+##### 除法指令 div & idiv
+
+1. 16 位除 8 位得 8 位余 8 位：`div bl` 表示 `ax / bl = al ... ah`
+    - 记忆：在小端规则下，ax 中 al 排在 ah 前面，所以高位 al 存更重要的内容——商，ah 存次要的内容——余数
+    - 如果商超过 8 位，产生溢出，会在除法指令之前插入一个 `int 00h` 中断。可以通过中断函数修改被除数和除数防止报错。
+1. 32 位除 16 位得 16 位余 16 位：`div bx` 表示 `dx:ax / bx = ax ... dx`
+1. 64 位除 32 位得 32 位余 32 位：`div ebx` 表示 `edx:eax / ebx = eax ... edx`
+
+##### 加减法拓展
+
+1. inc & dec
+    - inc & dec 不影响 CF，add 是会影响 CF 的
+1. adc & sbb: add with carry, subtract with borrow
+    - 计算 `12345678h + 5678FFFFh`
+        ```asm
+            mov dx,1234h
+            mov ax,5678h ; dx:ax=12345678h
+            add ax,OFFFFh; CF=1
+            adc dx,5678h; DX=DX+5678h+CF
+        ```
+    - 拓展：大数加法
+        ```asm
+        next:
+            mov al, [di]    ; ds 已经提前设置好
+            adc al, [si]    ; di, si 是两个加数的偏移地址
+            mov [bx], al    ; bx 是结果的偏移地址
+            inc si
+            inc di
+            inc bx
+            dec cx          ; cx 控制循环
+            jnz next
+            adc [bx], 0     ; 最高位判断一下有没有进位
+        ```
+1. neg: 取反 negate
+    - 等同于减法操作，会影响所有的标志位
+1. cmp
+    - 和 sub 的区别在于 cmp 不保存减法的结果
+
+
+##### 浮点数运算指令
+
+硬件支持：
+
+CPU 内部一共有 8 个小数寄存器，分别叫做 st(0), st(1), ..., st(7)
+
+其中 st(0) 可以简写为 st
+
+这 8 个寄存器的宽度均达到 80 位，相当于 c 语言中的 long double 类型。
+
+---
+
+变量定义：
+
+```asm
+    pi dd 3.14              ; 32位小数，相当于 float
+    pi_double dq 3.14159    ; 64位小数，相当于 double
+                            ; q：quadruple 4倍的
+    pi_long dt 3.14159265   ; 80位小数，相当于1ong double 
+```
+
+---
+
+操作指令：
+
+1. fld 执行类似于压栈的操作，最后一次 load 的内容存放在 `st(0)` 中，其余的依次往后推
+    - 支持压入 float, double & long double
+1. fild 把整数转换成小数压入
+
+```asm
+;Turbo Debugger跟踪时，
+;点菜单View->Numeric Processor查看小数堆栈
+
+data segment
+abc dd 3.14 
+xyz dd 2.0
+result dt 0
+data ends
+
+code segment
+assume cs:code, ds:data
+main:
+    mov ax, data
+    mov ds, ax
+    fld abc         ; 把3.14载入到小数堆栈
+    fld xyz         ; 把2.0载入到小数堆栈
+    fmul st, st(1)  ; 两数相乘
+    fstp result     ; 保存结果到result，并弹出
+    fstp st         ; 弹出小数堆栈中残余的值
+    mov ah, 4Ch
+    int 21h
+code ends
+end main
+```
+
 
 #### 逻辑运算
 
@@ -230,11 +535,22 @@ p.s. **逻辑右移使用 zero-extension，算术右移使用 sign-extension**
 
 #### 跳转指令
 
+##### 无符号数比较跳转
+
 - jbe: jump if below or equal
 - jb: jump if below
+    - 实现：只要 `CF == 1` 就跳转（如果上方是 cmp 指令，则 jb 是在检测结果是否小于 0,；但如果上方是其他指令比如 add，jb 就没有实际意义了）
+    - jb 和 jc 的实现完全相同
 - ja: jump if above
+    - 实现：`CF == 0 && ZF == 0`
 - jae: jump if above or equal
 - jmp: 无条件跳转
+- je
+    - 实现：`ZF == 0` 跳转
+    - 完全等价于 `jz`
+- jne
+    - 实现：`ZF != 0` 跳转
+    - 完全等价于 `jnz`
 
 e.g. 
 
@@ -244,6 +560,27 @@ jbe next
 ```
 
 如果 ebx 小于等于 100 则跳转到 next 位置
+
+##### 有符号数比较跳转
+
+1. jl: jump if less
+    - 实现：`SF != OF`
+        - 比如 `2 - 3 = -1`，结果 `SF = 1, OF = 0`
+        - 比如 `(-128) - 127 = 1`，结果 `SF = 0, OF = 1`
+        - 因为如果产生了 overflow 意味着计算结果的符号和真实结果的符号不同
+    - 不考虑 ZF 的状态
+        - 因为两个相等的数相减，结果 `SF = 0, OF = 0`
+1. jg
+    - 实现：`SF == OF && ZF == 0`
+1. jle
+    - 实现：`SF != OF || ZF != 0`
+1. jge
+    - 实现：`SF == OF`
+
+---
+
+可以在 TB 中，修改 FL 的值观察跳转指令是否有向下的箭头。这样可以测试跳转指令通过什么条件判断跳转。
+
 
 #### 栈操作指令
 
@@ -304,13 +641,82 @@ stk ends
 
 push 和 pop 32 bit 数据同理
 
-#### 其他常用指令
+##### pushf & popf
 
+FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值取出来
+
+
+#### 符号扩充指令
+
+三种传统的符号拓展：
+
+1. cbw: convert byte to word
+    - 没有参数
+    - 默认对 al 进行符号拓展，拓展的位放在 ah 中
+1. cwd: convert word to double word
+    - 没有参数
+    - 默认对 ax 进行符号拓展，拓展的位放在 dx 中
+1. cdg: convert double word to quadruplee word
+    - 没有参数
+    - 默认对 eax 进行符号拓展，拓展的位放在 edx 中
+
+更灵活的符号拓展：
+
+1. movsx :move by sign extension 符号扩充
+    ```asm
+        movsx ax,al ; 相当于cbw
+        movsx bx,al
+        movsx edx,bl
+    ```
+1. movzx: move by zero extension 零扩扩充指令
+
+##### 符号拓展的作用之一：服务有符号除法
+
+```asm
+    mov al,-4   ; AL=OFCh
+    cbw         ; AX=0FFFCh=-4
+    mov bl,-2   ; BL=0FEh=-2
+    idiv bl     ; AL=02h(商)，AH=00h(余数)
+```
+#### 赋值相关语句 mov & xchg
 
 1. mov
     - `mov word ptr [0426],0001` 把 16 位数据 0x0001 移动到地址 0x0426 的内存中。[] 表示取地址，相当于 C 中的 *。
+    - **mov 不能同时操作两个内存变量**
+    - **操作数等宽**
+1. xchg
+    - 交换两个变量 `xchg ax, bx`
+    - 可以使用内存变量，但是不能两个都是内存变量
+
+#### 取地址指令 lea & lds & les
+
+1. lea：取偏移地址
+    - 特殊用法：快速加法乘法
+        - e.g. `lea ax, ds:[ax+bx+3]` 可以一次执行两条加法指令
+        - e.g. `lea eax, [eax+eax*4]` 相当于一个移位加一个加法，比直接用乘法指令快
+1. lds：取远指针
+    - e.g. `lds di, ds:[bx]` 把内存中的 32 bit 数据，高 32 位赋值给 ds，低 32 位赋值给 di
+    - 操作数长度固定：第一个操作数是 16 位的，第二个操作数是 32 位的
+1. les：取远指针
+    - e.g. `lds di, ds:[bx]` 把内存中的 32 bit 数据，高 32 位赋值给 es，低 32 位赋值给 di
+    - 操作数长度固定：第一个操作数是 16 位的，第二个操作数是 32 位的
+
+#### XLAT
+
+- 换码指令 XLAT(Translate) 也称查表指令
+    - 在 XLAT 执行前必须让 ds:bx 指向表，AL 必须赋值为数组的下标
+    - 执行 XALT 后，`AL=ds:[bx+AL]`
+
+一个应用：十六进制数转 ASCII 码，本来是用比较语句加上 `'0'` 或者 `'A'`。现在可以在内存中存一张表，然后使用查表指令找到要输出的字符
+
+
+#### 其他常用指令
+
 1. nop(0x90)：no operation 用于删除机器码并保持跳转指令的正确性
 1. cli: clear interrupt 不允许中断（在 windows 下是特权指令，用户程序不允许操作）
+1. `test`: 做一次 `and`，但不改变目标寄存器的值。紧接着可以用 FL 相关指令对目标寄存器值进行判断
+
+
 
 
 ### 汇编语言
@@ -442,6 +848,35 @@ data ends
 - 写入显存实现输出字符 printscr.asm & printscr.c
 - 写入显存实现输出图形 prtshape.asm
 
+#### far ptr 远指针
+
+##### 取出远指针的指令
+
+远指针在内存中的存储：
+
+- 同时包含段地址和偏移地址
+- 32 位远指针和一个 long int 的存储方式是相同的
+
+```asm
+data segment
+    addr dd 0B8000000h, 0B80000A0h ; 32 位远指针
+data ends
+```
+
+32 位远指针：
+
+1. `lds bx, dword ptr ds:[bx]` 把 `ds:bx` 处的一个 `double word` 取出来，高 16 位存到 `ds` 中，低 16 位存在 `bx` 中
+    - 如果 data 段中使用 `dd` 存储变量， `dword ptr` 可以不写
+    - 参数 `bx` 可以换成非偏移地址寄存器
+1. `les bx, dword ptr ds:[bx]` 把 `ds:bx` 处的一个 `double word` 取出来，高 16 位存到 `es` 中，低 16 位存在 `bx` 中
+
+48 位远指针：
+
+1. 把 `dword ptr` 换成 `fword ptr` 其他不变
+
+##### 使用远指针进行跳转
+
+
 
 ### DOS Interrupt
 
@@ -498,14 +933,29 @@ no_key:
     jmp again   ; 如果键盘缓冲区为空，则重复执行缓冲区检测流程
 ```
 
+#### print string
+
+`int 21h(AH=09H)`：输出以 `'$'` 结尾的字符串
+
+```asm
+    mov ah, 9
+    mov dx, offset current_time
+    int 21h
+```
+
+
 ## 工具
 
 ### Turbo C & Turbo Debugger
 
-- turbo C 编辑 + 编译链接(tcc，16 位编译器) + 调试
+#### 打开 TC 和 TD
+
+- turbo C 编辑 + 编译链接(tcc，**16 位编译器**) + 调试
     - windows + R -> command -> tc + 文件名
-- turbo debugger(td)：只能调试 16 位 DOS 程序(.exe)
+- turbo debugger(td)：**只能调试 16 位 DOS 程序(.exe)**
     - windows + R -> command -> td + 程序名(.exe)
+
+#### 用 td 调试 asm 生成的 exe
 
 1. 在 command 中用 `TD xxx.exe` 命令打开 exe 文件
 2. TD 界面
@@ -525,6 +975,16 @@ no_key:
 8. F4：运行到光标处暂停
 1. alt-X：退出
 1. alt+F5：显示 user screen（查看程序输出），然后 esc 返回 TD 界面。
+1. 选中 FL + 空格：临时修改 FL 中 bit 的值
+
+---
+
+显示：
+1. 如果跳转指令后面有个向下的箭头，说明这条指令会进行跳转，否则这条指令不跳转
+
+#### 用 td 调试 c 源代码编译链接生成的 exe
+
+1. 菜单栏 - view - CPU：显示汇编代码，可以看到每条 C 语言语句是如何转化成汇编代码的
 
 ### OllyDbg 调试 32 位可执行程序
 
@@ -691,6 +1151,14 @@ tips：soft-ICE 如何实现硬件断点？因为 bochs 是解释型的，所以
 1. `wc 8`, `wd 4` 调节代码窗口、数据窗口的长度
 1. 在命令窗口中输入 `cls` 清除命令窗口屏幕
 1. 上下箭头：调取指令历史记录
+
+### Visual C++
+
+32 位编译链接
+
+1. F7: 编译链接
+1. F10: 单步跟踪
+1. 菜单栏 - view - debug windows - disassemble：显示源代码编译成的汇编代码
 
 ## 实验
 
@@ -1275,5 +1743,872 @@ exit:
     mov ah, 4Ch
     int 21h
 code ends
+end main
+```
+
+
+### 利用单步模式进行反调试 antidbg.asm
+
+程序功能：对用户程序进行简单加密，在 `int 1h` 中断函数中进行解密和重新加密
+
+需要使用 Bochs 虚拟机的 SoftIce 进行调试
+- 使用 QuickView 对 exe 从 `single_step_begin` 到 `single_step_end` 的每个指令第一个 Byte 加 1
+- 在 `int1h` 处设置软件断点
+- `d ss:sp` 查看 `int 1h` 存到栈里的数据，得知上一条指令的逻辑地址
+- 查看指令有没有被修改
+
+```asm
+code segment
+assume cs:code, ds:code
+main:
+   jmp begin
+old1h dw 0, 0
+prev_addr dw offset first, code; 前一条指令的地址
+begin: 
+   push cs
+   pop ds; DS=CS
+   xor ax, ax
+   mov es, ax; es=0
+   mov bx, 4 ; bx=4
+             ; es:bx->int 1h的中断向量即int 1h函数的地址
+             ; dword ptr 0:[4]储存了int 1h函数的的地址
+             ; 前16位存放偏移地址
+             ; 后16位存放段地址
+             ; 0:n*4用来存放int n的中断向量
+   push es:[bx]
+   pop old1h[0]
+   push es:[bx+2]
+   pop old1h[2]
+   ;上述4条指令可以换成以下4条指令
+   ;mov ax, es:[bx]
+   ;mov dx, es:[bx+2]
+   ;mov old1h[0], ax
+   ;mov old1h[2], dx
+
+   mov word ptr es:[bx], offset int1h
+   mov word ptr es:[bx+2], cs
+   pushf; save old FL
+
+   pushf ; 把FL压入堆栈
+   pop ax; AX=FL
+   or ax, 100h; 第8位置1
+   push ax
+   popf; FL=AX, 此时TF=1, 但注意popf后并不会插入int 1h指令,
+       ; 因为只有当本条指令执行前TF=1, CPU才会在该条指令后插入int 1h指令
+first:
+   nop ; 由于nop前TF=1, 因此nop后会插入int 1h指令
+;int 1h (first int 1h), cpu会执行pushf, push cs, push offset back, jmp dword ptr 0:[4]
+single_step_begin:
+back:
+   xor ax, ax
+;int 1h
+   mov cx, 3
+;int 1h
+next:
+   add ax, cx
+;int 1h
+   nop
+;int 1h
+   loop next
+;int 1h
+   popf; restore old FL, TF=0
+;int 1h (final int 1h)
+   nop;
+single_step_end:
+   push old1h[0]
+   pop es:[bx]
+   push old1h[2]
+   pop es:[bx+2]
+   mov ah, 4Ch
+   int 21h
+int1h:     ; cpu进入int n中断函数时会自动对TF及IF清零, 故在int1h函数执行期间并不会发生int 1h中断
+   push bp 
+   mov bp, sp
+   push bx
+   push es
+   mov bx, cs:prev_addr[0]
+   mov es, cs:prev_addr[2]
+   ;上面2条指令可以改成以下这条指令
+   ;les bx, cs:prevaddr
+   inc byte ptr es:[bx]; 加密上一条指令
+   mov bx, [bp+2]      ; bx=下条指令的偏移地址
+   mov es, [bp+4]      ; es=下条指令的段地址, 此时es:bx->下条指令的首字节
+   ;上面2条指令可以换成以下这条指令
+   ;les bx, dword ptr [bp+2]
+
+   dec byte ptr es:[bx]; 解密下一条指令
+   mov cs:prev_addr[0], bx
+   mov cs:prev_addr[2], es
+   pop es
+   pop bx
+   pop bp
+   iret; cpu会一气呵成地执行pop ip, pop cs, popf
+code ends
+end main
+```
+
+### 使用乘法指令将十进制格式的字符串转换成数字 dec2v32.asm
+
+```asm
+;     y          x
+; 16位段地址:32位偏移地址
+; t是一张表
+; t+y->64位的值, 其中的32位表示y这个段的段首地址
+; 这种寻址模式称为保护模式(protected mode)
+;     y          x
+; 16位段地址:16位偏移地址
+; y*10h+x得到物理地址这种寻址模式称为实模式(real
+; mode)。dos启动后，它会把cpu切换到实模式，而非
+; 保护模式; windows/linux启动后，它会把cpu切换到
+; 保护模式。
+.386
+data segment use16
+s db "2147483647", 0; 7FFF FFFFh
+abc dd 0
+data ends
+code segment use16
+assume cs:code, ds:data
+main:
+   mov ax, data
+   mov ds, ax
+   mov eax, 0; 被乘数
+   mov si, 0; 数组s的下标
+again:
+   cmp s[si], 0; 判断是否到达数组的结束标志
+   je done
+   mov ebx, 10
+   mul ebx; EDX:EAX=乘积, 其中EDX=0
+          ; 或写成imul eax, ebx
+   mov edx, 0
+   mov dl, s[si]; DL='1'
+   sub dl, '0'
+   add eax, edx
+   ;mov dl, s[si]
+   ;sub dl, '0'
+   ;movzx edx, dl
+   ;add eax, edx
+   inc si
+   jmp again
+done:
+   mov abc, eax
+   mov ah, 4Ch
+   int 21h
+code ends
+end main
+```
+
+### 使用除法指令将数字转换成十进制格式的字符串 
+
+```asm
+.386
+data segment use16
+abc dd 7FFFFFFFh
+s db 10 dup(' '), 0Dh, 0Ah, '$'
+data ends
+code segment use16
+assume cs:code, ds:data
+main:
+   mov ax, data
+   mov ds, ax
+   mov di, 0; 数组s的下标
+   mov eax, abc
+   mov cx, 0; 统计push的次数
+again:
+   mov edx, 0           ; 被除数为 EDX:EAX
+                        ; 其中 EDX 同时也用于存储余数，所以在除法前必须清零
+   mov ebx, 10
+   div ebx; EAX=商, EDX=余数
+   add dl, '0'
+   push dx
+   inc cx; 相当于add cx, 1
+   cmp eax, 0
+   jne again
+pop_again:
+   pop dx
+   mov s[di], dl        ; 通过 push pop 翻转数字的顺序，高位先 pop 出来
+   inc di
+   dec cx; 相当于sub cx, 1
+   jnz pop_again
+
+   mov ah, 9
+   mov dx, offset s
+   int 21h
+   mov ah, 4Ch
+   int 21h
+code ends
+end main
+```
+
+### 小数寄存器的使用 float.asm
+
+```asm
+;Turbo Debugger跟踪时，
+;点菜单View->Numeric Processor查看小数堆栈
+data segment
+abc dd 3.14
+xyz dd 2.0
+result dd 0
+data ends
+code segment
+assume cs:code, ds:data
+main:
+    mov ax, data
+    mov ds, ax
+    fld abc; 把3.14载入到小数堆栈
+    fld xyz; 把2.0载入到小数堆栈
+    fmul st, st(1); 两数相乘
+    fstp result; 保存结果到result，并弹出
+    fstp st      ; 弹出小数堆栈中残余的值
+    mov ah, 4Ch
+    int 21h
+code ends
+end main
+```
+
+### 使用 xlat 查表打印十六进制数 xlat.asm
+
+```asm
+.386 ; 表示程序中会用32位的寄存器
+data segment use16; use16表示偏移使用16位
+t db "0123456789ABCDEF"
+x dd 2147483647
+data ends
+
+code segment use16
+assume cs:code, ds:data
+main:
+    mov ax, data    ;\
+    mov ds, ax      ; / ds:bx->t[0]
+    mov bx, offset t;/
+    mov ecx, 8
+    mov eax, x
+next:
+    rol eax, 4
+    push eax
+    and eax, 0Fh
+    xlat
+    mov ah, 2
+    mov dl, al
+    int 21h
+    pop eax
+    sub ecx, 1
+    jnz next
+    mov ah, 4Ch
+    int 21h
+code ends
+end main
+```
+
+### 从端口读取时间数据 readtime.asm
+
+程序功能：显示当前时间 `hh:mm:ss`
+
+暴力做法：进行三次读取
+
+```asm
+data segment
+current_time db "00:00:00", 0Dh, 0Ah, "$"
+data ends
+code segment
+assume cs:code, ds:data
+main:
+    mov ax, data
+    mov ds, ax
+    mov al, 4
+    out 70h,al      ; index hour
+                    ; 读取 cmos 4 号单元的数据
+    in al,71h       ; AL=hour(e.g. 19h means 19 pm.)
+    call convert    ; AL='1', AH='9'
+    mov word ptr current_time[0],ax ; 填充进字符串
+    mov al,2
+    out 70h,al      ; index minute
+                    ; 读取 cmos 2 号单元的数据
+    in  al,71h      ; AL=minute
+    call convert
+    mov word ptr current_time[3],ax     ; word ptr 不能省略，相当于下面两句
+                                        ; mov current_time[3], al
+                                        ; mov current_time[4], ah
+    mov al,0        ; index second
+    out 70h,al
+    in  al,71h      ; AL=second
+    call convert
+    mov word ptr current_time[6],ax
+    mov ah, 9
+    mov dx, offset current_time
+    int 21h         ; 使用 int 21h 的 9 号功能输出一个字符串
+    mov ah, 4Ch
+    int 21h         ; 退出程序
+;---------Convert----------------
+; 函数功能：把用 BCD 码存储的两位十进制数转换成两个字符
+;Input:AL=hour or minute or second
+;      format:e.g. hour   15h means 3 pm.
+;                  second 56h means 56s
+;Output: (e.g. AL=56h, BCD 码)
+;     AL='5'
+;     AH='6'
+convert:
+    push cx
+    mov ah,al ; e.g. assume AL=56h
+    and ah,0Fh; AH=06h
+    mov cl,4
+    shr al,cl ; AL=05h
+    ; shr:shift right右移
+    add ah, '0'; AH='6'
+    add al, '0'; AL='5'
+    pop  cx
+    ret
+;---------End of Convert---------
+code ends
+end main
+```
+
+简化程序：使用循环执行三次读取
+
+```asm
+data segment
+current_time db "00:00:00", 0Dh, 0Ah, "$"
+data ends
+code segment
+assume cs:code, ds:data
+main:
+    mov ax, data
+    mov ds, ax
+    mov bl, 4       ; bl 表示 cmos 中的地址
+    mov di, 0       ; di 表示 current_time 字符串的下标
+next:
+    mov al, bl
+    out 70h, al
+    in al, 71h
+    call convert
+    mov word ptr current_time[di], ax
+    or bl, bl
+    jz done
+    sub bl, 2
+    add di, 3
+    jmp next
+done:
+    mov ah, 9
+    mov dx, offset current_time
+    int 21h         ; 使用 int 21h 的 9 号功能输出一个字符串
+    mov ah, 4Ch
+    int 21h         ; 退出程序
+;---------Convert----------------
+; 函数功能：把用 BCD 码存储的两位十进制数转换成两个字符
+;Input:AL=hour or minute or second
+;      format:e.g. hour   15h means 3 pm.
+;                  second 56h means 56s
+;Output: (e.g. AL=56h, BCD 码)
+;     AL='5'
+;     AH='6'
+convert:
+    push cx
+    mov ah,al ; e.g. assume AL=56h
+    and ah,0Fh; AH=06h
+    mov cl,4
+    shr al,cl ; AL=05h
+    ; shr:shift right右移
+    add ah, '0'; AH='6'
+    add al, '0'; AL='5'
+    pop  cx
+    ret
+;---------End of Convert---------
+code ends
+end main
+```
+
+### 通过端口访问键盘 key.asm
+
+程序功能：读取所有的键盘事件并打印
+
+按键按下和松开都会被抓取。ctrl，shift，caps lock 等键的行为也会被抓取。
+
+```asm
+;---------------------------------------
+;PrtSc/SysRq: E0 2A E0 37 E0 B7 E0 AA  ;
+;Pause/Break: E1 1D 45 E1 9D C5        ;
+;---------------------------------------
+data segment
+old_9h dw 0, 0
+stop   db 0
+key    db 0; key=31h
+phead  dw 0
+key_extend  db 'KeyExtend=', 0
+key_up      db 'KeyUp=', 0
+key_down    db 'KeyDown=', 0
+key_code    db '00h ', 0
+hex_tbl     db '0123456789ABCDEF'
+cr          db  0Dh, 0Ah, 0
+data ends
+
+code segment
+assume cs:code, ds:data
+main:
+    mov ax, data
+    mov ds, ax      ; ds = data
+    xor ax, ax
+    mov es, ax      ; es = 0
+    mov bx, 9*4     ; bx = 36，因为 x 号中断的中断向量地址在 0000:[4*x] 的位置
+    push es:[bx]
+    pop old_9h[0]
+    push es:[bx+2]
+    pop old_9h[2]           ; 保存原来的 int 9h 中断向量
+    cli                     ; 禁用外部中断
+                            ; 防止在修改中断向量的过程中敲键盘导致跳转的偏移地址已经改了但是段地址没有改，造成事故
+    mov word ptr es:[bx], offset int_9h
+    mov es:[bx+2], cs       ; 修改 int 9h 的中断向量，指向程序自定义的函数
+    sti
+again:
+    cmp [stop], 1       ; stop 在循环中不会被修改，但是在中断函数中会被修改
+    jne again           ; 主程序在此循环等待
+    push old_9h[0]
+    pop es:[bx]
+    push old_9h[2]
+    pop es:[bx+2]    ; 恢复int 9h的中断向量
+    mov ah, 4Ch
+    int 21h
+
+int_9h:
+    push ax
+    push bx
+    push cx
+    push ds
+    mov ax, data
+    mov ds, ax       ; 这里设置DS是因为被中断的不一定是我们自己的程序
+    in al, 60h       ; AL=key code
+    mov [key], al
+    cmp al, 0E0h
+    je  extend
+    cmp al, 0E1h    ; 判断是否是拓展编码，拓展编码开头一定是 E0h 或者 E1h
+    jne up_or_down
+extend:
+    mov [phead], offset key_extend
+    call output
+    jmp check_esc
+up_or_down:
+    test al, 80h     ; 最高位==1时表示key up
+    jz down
+up:
+    mov [phead], offset key_up
+    call output
+    mov bx, offset cr
+    call display     ; 输出回车换行
+    jmp check_esc
+down:
+    mov [phead], offset key_down
+    call output
+check_esc:   
+    cmp [key], 81h   ; Esc键的key up码
+    jne int_9h_iret
+    mov [stop], 1
+int_9h_iret:
+    mov al, 20h      ; 发EOI(End Of Interrupt)信号给中断控制器，
+    out 20h, al      ; 表示我们已处理当前的硬件中断(硬件中断处理最后都要这2条指令)。
+                        ; 因为我们没有跳转到的old_9h，所以必须自己发EOI信号。
+                        ; 如果跳到old_9h的话，则old_9h里面有这2条指令，这里就不要写。
+    pop ds
+    pop cx
+    pop bx
+    pop ax
+    iret             ; 中断返回指令。从堆栈中逐个弹出IP、CS、FL。
+
+; 函数功能：依次输出提示和键码
+output:
+    push ax
+    push bx
+    push cx
+    mov bx, offset hex_tbl
+    mov cl, 4
+    push ax   ; 设AL=31h=0011 0001
+    shr al, cl; AL=03h
+    xlat      ; AL = DS:[BX+AL] = '3'
+    mov key_code[0], al
+    pop ax
+    and al, 0Fh; AL=01h
+    xlat       ; AL='1'
+    mov key_code[1], al
+    mov bx, [phead]
+    call display     ; 输出提示信息
+    mov bx, offset key_code
+    call display     ; 输出键码
+    pop cx
+    pop bx
+    pop ax
+    ret
+
+; 函数功能：输出字符串
+display:
+    push ax
+    push bx
+    push si
+    mov si, bx
+    mov bx, 0007h    ; BL = color
+    cld
+display_next:
+    mov ah, 0Eh      ; AH=0Eh, BIOS int 10h的子功能，具体请查中断大全
+    lodsb
+    or al, al
+    jz display_done
+    int 10h          ; 每次输出一个字符
+    jmp display_next
+display_done:
+    pop si
+    pop bx
+    pop ax
+    ret
+code ends
+end main
+```
+
+### 使用定时器中断和时钟端口实现时钟 autotime.asm
+
+程序功能：设置 int 8h 中断，即使程序结束了或者运行了别的程序，终端右上角也会一直显示时间。
+
+```asm
+;==============源程序开始========================
+code segment
+assume cs:code,ds:code      ; 代码和数据放在同一个段里
+;--------------Int_8h---------------------------
+int_8h:
+    inc cs:[count]
+    cmp cs:[count],18
+    jb  goto_old_8h
+    mov cs:[count],0
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+    ;
+    push cs
+    pop  ds; DS=CS
+    push cs
+    pop  es; ES=CS
+    mov al,4
+    out 70h,al; index hour
+    in al,71h ; AL=hour(e.g. 08h means 8 am., 15h means 3 pm.)
+    call convert
+    mov word ptr current_time[0],ax
+    mov al,2
+    out 70h,al; index minute
+    in  al,71h; AL=minute
+    call convert
+    mov word ptr current_time[3],ax
+    mov al,0  ; index second
+    out 70h,al
+    in  al,71h; AL=second
+    call convert
+    mov word ptr current_time[6],ax
+    call disp_time
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+goto_old_8h:
+    jmp dword ptr cs:[old_8h]
+old_8h dw 0,0; old vector of int_8h
+;---------End of Int_8h----------
+
+;---------Disp_time--------------
+;Output:display current time
+;       at (X0,Y0)
+X0 = 80-current_time_str_len
+Y0 = 0
+disp_time proc near
+    push ax
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+    mov ax,0B800h
+    mov es,ax; ES=video buf seg
+    mov ax,Y0
+    mov cx,80*2
+    mul cx   ; DX:AX=Y0*(80*2)
+    mov dx,X0
+    add dx,dx; DX=X0*2
+    add ax,dx; AX=Y0*(80*2)+(X0*2)
+    mov di,ax; ES:DI--->video buffer
+    push cs
+    pop  ds
+    mov  si,offset current_time; DS:SI--->current_time
+    mov  cx,current_time_str_len
+    cld
+    mov ah,17h; color=blue/white
+disp_next_char:
+    lodsb
+    stosw
+    loop disp_next_char
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop ax
+    ret
+disp_time endp
+;---------End of Disp_time-------
+
+;---------Convert----------------
+;Input:AL=hour or minute or second
+;      format:e.g. hour   15h means 3 pm.
+;                  second 56h means 56s
+;Output: (e.g. AL=56h)
+;     AL='5'
+;     AH='6'
+convert proc near
+    push cx
+    mov ah,al ; e.g. assume AL=56h
+    and ah,0Fh; AH=06h
+    mov cl,4
+    shr al,cl ; AL=05h
+    add ax,'00'
+    pop  cx
+    ret
+convert endp
+;---------End of Convert---------
+current_time db '00:00:00'
+current_time_str_len = $-offset current_time ; 8 bytes
+                                             ; $ is a macro which
+                                             ; means current offset
+count db 0   ; increment it on every interrupt
+             ; When it reaches 18(about 1 second elapsed),
+             ; it's time to display the time.
+;============以上代码需要驻留=====================================
+
+;程序从此处开始运行
+initialize:
+    push cs
+    pop ds ; DS=CS
+    xor ax, ax
+    mov es, ax
+    mov bx, 8*4; ES:BX-> int_8h's vector
+    push es:[bx]
+    pop old_8h[0]
+    push es:[bx+2]
+    pop old_8h[2]; save old vector of int_8h
+    mov ax, offset int_8h
+    cli    ; disable interrupt when changing int_8h's vector
+    push ax
+    pop es:[bx]
+    push cs
+    pop es:[bx+2]; set vector of int_8h
+    sti    ; enable interrupt
+install:
+    mov ah,9
+    mov dx,offset install_msg
+    int 21h
+    mov dx,offset initialize; DX=len before label initialize
+    add dx,100h; include PSP's len
+    add dx,0Fh; include remnant bytes
+    mov cl,4
+    shr dx,cl ; DX=program's paragraph size to keep resident
+    mov ah,31h
+    int 21h   ; keep resident
+install_msg db 'AUTOTIME version 1.0',0Dh,0Ah
+            db 'Copyright Black White. Nov 18,1997',0Dh,0Ah,'$'
+code ends
+end initialize
+;==============源程序结束========================
+```
+
+### 使用定时器中断和声卡端口实现播放音乐 music.asm
+
+程序功能：播放一段音乐
+
+```asm
+NOTE_1  =  440 ; 音调频率
+NOTE_2  =  495
+NOTE_3  =  550
+NOTE_4  =  587
+NOTE_5  =  660
+NOTE_6  =  733
+NOTE_7  =  825
+
+ONE_BEEP  =  600 ; 一拍延时600ms
+HALF_BEEP =  300 ; 半拍延时300ms
+
+data segment
+ticks dw 0
+music dw  NOTE_5, ONE_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_5, HALF_BEEP
+dw  NOTE_1*2, ONE_BEEP*2
+dw  NOTE_6, ONE_BEEP
+dw  NOTE_1*2, ONE_BEEP
+dw  NOTE_5, ONE_BEEP*2
+dw  NOTE_5, ONE_BEEP
+dw  NOTE_1, HALF_BEEP
+dw  NOTE_2, HALF_BEEP
+dw  NOTE_3, ONE_BEEP
+dw  NOTE_2, HALF_BEEP
+dw  NOTE_1, HALF_BEEP
+dw  NOTE_2, ONE_BEEP*4
+dw  NOTE_5, ONE_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_5, HALF_BEEP
+dw  NOTE_1*2, HALF_BEEP*3
+dw  NOTE_7, HALF_BEEP
+dw  NOTE_6, ONE_BEEP
+dw  NOTE_1*2, ONE_BEEP
+dw  NOTE_5, ONE_BEEP*2
+dw  NOTE_5, ONE_BEEP
+dw  NOTE_2, HALF_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_4, HALF_BEEP*3
+dw  NOTE_7/2, HALF_BEEP
+dw  NOTE_1, ONE_BEEP*4
+dw  NOTE_6, ONE_BEEP
+dw  NOTE_1*2, ONE_BEEP
+dw  NOTE_1*2, ONE_BEEP*2
+dw  NOTE_7, ONE_BEEP
+dw  NOTE_6, HALF_BEEP
+dw  NOTE_7, HALF_BEEP
+dw  NOTE_1*2, ONE_BEEP*2
+dw  NOTE_6, HALF_BEEP
+dw  NOTE_7, HALF_BEEP
+dw  NOTE_1*2, HALF_BEEP
+dw  NOTE_6, HALF_BEEP
+dw  NOTE_6, HALF_BEEP
+dw  NOTE_5, HALF_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_1, HALF_BEEP
+dw  NOTE_2, ONE_BEEP*4
+dw  NOTE_5, ONE_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_5, HALF_BEEP
+dw  NOTE_1*2, HALF_BEEP*3
+dw  NOTE_7, HALF_BEEP
+dw  NOTE_6, ONE_BEEP
+dw  NOTE_1*2, ONE_BEEP
+dw  NOTE_5, ONE_BEEP*2
+dw  NOTE_5, ONE_BEEP
+dw  NOTE_2, HALF_BEEP
+dw  NOTE_3, HALF_BEEP
+dw  NOTE_4, HALF_BEEP*3
+dw  NOTE_7/2, HALF_BEEP
+dw  NOTE_1, ONE_BEEP*3
+dw  0, 0
+data ends
+
+code segment
+assume cs:code, ds:data, ss:stk
+main:
+   mov ax, data
+   mov ds, ax
+   xor ax, ax
+   mov es, ax
+   mov bx, 8*4
+   mov ax, es:[bx]
+   mov dx, es:[bx+2]   ; 取int 8h的中断向量
+   mov cs:old_int8h[0], ax
+   mov cs:old_int8h[2], dx; 保存int 8h的中断向量
+   cli
+   mov word ptr es:[bx], offset int_8h
+   mov es:[bx+2], cs   ; 修改int 8h的中断向量
+   mov al, 36h
+   out 43h, al
+   mov dx, 0012h
+   mov ax, 34DCh       ; DX:AX=1193180
+   mov cx, 1000
+   div cx              ; AX=1193180/1000
+   out 40h, al
+   mov al, ah
+   out 40h, al         ; 设置时钟振荡频率为1000次/秒
+   sti
+   mov si, offset music
+   cld
+again:
+   lodsw
+   test ax, ax
+   jz done
+   call frequency
+   lodsw
+   call delay
+   jmp again
+done:
+   cli
+   mov ax, cs:old_int8h[0]
+   mov dx, cs:old_int8h[2]
+   mov es:[bx], ax
+   mov es:[bx+2], dx   ; 恢复int 8h的中断向量
+   mov al, 36h
+   out 43h, al
+   mov al, 0
+   out 40h, al
+   mov al, 0
+   out 40h, al         ; 恢复时钟振荡频率为1193180/65536=18.2次/秒
+   sti
+   mov ah, 4Ch
+   int 21h
+
+frequency:
+   push cx
+   push dx
+   mov cx, ax   ; CX=frequency
+   mov dx, 0012h
+   mov ax, 34DCh; DX:AX=1193180
+   div cx       ; AX=1193180/frequency
+   pop dx
+   pop cx
+   cli
+   push ax
+   mov al, 0B6h
+   out 43h, al
+   pop ax
+   out 42h, al ; n的低8位
+   mov al, ah
+   out 42h, al ; n的高8位 
+               ; 每隔n个tick产生一次振荡
+               ; 振荡频率=1193180/n (次/秒)
+   sti
+   ret
+
+delay:
+   push ax
+   cli
+   in al, 61h
+   or al, 3
+   out 61h, al; 开喇叭
+   sti
+   pop ax
+   mov [ticks], ax
+wait_this_delay:
+   cmp [ticks], 0
+   jne wait_this_delay
+   cli
+   in al, 61h
+   and al, not 3
+   out 61h, al; 关喇叭
+   sti
+   ret
+
+int_8h:
+   push ax
+   push ds
+   mov ax, data
+   mov ds, ax
+   cmp [ticks], 0
+   je skip
+   dec [ticks]
+skip:
+   pop ds
+   pop ax
+   jmp dword ptr cs:[old_int8h]
+old_int8h dw 0, 0
+code ends
+
+stk segment stack
+dw 100h dup(0)
+stk ends
 end main
 ```

@@ -209,7 +209,7 @@ vcpkg 在 CMake 中的使用：
 
 [CMake 教程](https://zhuanlan.zhihu.com/p/534439206)
 
-常用命令：CMakeLists.txt
+CMakeLists.txt 中的常用命令
 
 ```cmake
 cmake_minimum_required(VERSION 3.15)
@@ -221,6 +221,9 @@ project(Tutorial)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# 设置生成目标的位置
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/your_dir)
+
 # 添加变量
 set(SRC_LIST a.cpp b.cpp c.cpp)
 
@@ -231,12 +234,59 @@ aux_source_directory(<dir> <variable>)
 add_subdirectory(math)
 
 # 生成可执行文件
+# 生成多个可执行文件就写多句这个命令就行了
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 # 生成静态链接库
 add_library(MathFunctions mysqrt.cpp)
 ```
 
+补充知识：
+1. [cmake设置生成文件的位置](https://www.jianshu.com/p/599550afd28d)
+
 ### VSCode CMake 插件
 
 使用 VSCode 插件快速创建一个 CMake 项目
+
+### 在 Windows Powershell 中使用 CMake
+
+- [Windows上使用cmake编译和生成执行文件](https://blog.csdn.net/fengyuyeguirenenen/article/details/129167640)
+- [Windows cmd del](https://learn.microsoft.com/zh-cn/windows-server/administration/windows-commands/del)
+
+首先需要把 cmake.exe 放到 Path 下。
+
+1. 进入工程根目录，如果存在 `./build` 文件夹则删除文件夹
+
+```shell
+del ./build
+```
+
+2. 新建 `./build` 文件夹
+
+```shell
+mkdir build
+```
+
+3. 进入 `./build`
+
+```shell
+cd ./build
+```
+
+4. 现在使用 CMake 编译产生 Makefile
+
+```shell
+cmake -G "Unix Makefiles" ..
+```
+
+5. 使用 makefile 产生目标文件
+
+```shell
+minGW32-make
+```
+
+6. 进入工程根目录下的 `pd` 文件夹，目标文件生成在这里 *（在 CMakeLists.txt 中设置）*
+
+```shell
+cd ../pd
+```

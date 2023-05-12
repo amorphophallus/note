@@ -284,6 +284,45 @@ lossless 和 dependency-preserved 的区别：前者是分开的两个 relation 
         - XQUERY： PPT 30
     - json
 
+
+### ch9 数据存储
+
+1. 物理存储介质
+    - 存储级别：![DB](./imgs/2023-05-10-14-41-22.png)
+    - 磁盘
+        - 相关概念：ppt 6
+        - 磁盘性能指标：ppt 10 - 12
+        - 磁盘性能优化方案：ppt 13 - 15
+    - flash: SSD: ppt 16
+    - NVM: ppt 18
+
+1. 数据存储结构
+
+- [数据存储模型：NSM, DSM, PAX](https://www.jianshu.com/p/eb44bd5bc786)
+- [cache miss](https://www.cnblogs.com/jokerjason/p/10711022.html)
+
+### ch14 索引 Indexing
+
+1. ordered index: ppt 5，注重概念
+1. B+ 树
+    - 插入的例子：
+    - 删除的例子：
+    - 综合的例子：
+    - bulk loading: ppt 45, 两种方法，bottom up build 和排序了再插入
+    - B+ tree file organization: ppt 41, 注意这里叶子节点存放 record 而不是指向 record 的指针
+    - multi-key: ppt 51
+1. cache conscious: ppt 54
+    - cache miss：CPU 要访问的数据在 cache 中有缓存，就叫 hit，否则叫 miss
+1. LSM: log-structured merge tree
+    - one kind of "write-optimized tree": ppt 55, 56
+    - insert 操作：ppt 57，满的时候合并，合并的时候使用 bottom up build
+    - delete 操作：ppt 60, 打 lazy tag，查询的时候忽略，合并的时候删除
+    - benefit: ppt 58
+1. stepped-merge index: ppt 59
+1. Buffer tree: ppt 61，有点 lazy 操作的味道，插入的 record 可能存在非叶子节点里，等满了再往下更新
+1. bitmap indices: ppt 62
+
+
 ## 错题摘录
 
 except 注意加括号，否则运算顺序容易出错。

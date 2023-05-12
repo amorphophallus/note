@@ -86,14 +86,20 @@ nav:
             - 'C++技巧': 'Programming Tools/C++/C++技巧.md'
             - 'C++多文件结构': 'Programming Tools/C++/C++ multiple program structure.md'
             - 'CMake & Makefile & GCC commands': 'Programming Tools/C++/makefile.md'
+            - 'C++ Library': 'Programming Tools/C++/C++library.md'
         - 'VScode':
             - 'plugins': 'Programming Tools/VScode/plugins.md'
             - 'foam': 'Programming Tools/VScode/VScode-foam.md'
             - 'VScode 调试 C/C++ 代码': 'Programming Tools/VScode/VScode 调试 C 和 C++ 代码.md'
         - 'Visual Studio':
             - 'Programming Tools/VS/index.md'
+        - 'AI helpers'
+            - 'new Bing': 'Programming Tools/AI helpers/new_bing.md'
+            - 'chatPaper': 'Programming Tools/AI helpers/ChatPaper.md'
         - '微信小程序':
             - '基础知识': 'Programming Tools/WX miniprogram/基础知识.md'
+        - 'Java':
+            - 'Programming Tools/Java/index.md'
         - 'markdown转pdf': 'Programming Tools/markdown转pdf.md'
         - 'C 盘清理': 'Programming Tools/C 盘清理.md'
         - 'Others': 'Programming Tools/others.md'
@@ -105,6 +111,7 @@ nav:
             - '项目笔记': 'Projects/rop-neo-front/项目笔记.md'
         - 'android':
             - '笔记': 'Projects/android/笔记.md'
+        - '启智杯-实例分割': 'Projects/启智杯.md'
     - 'College Courses':
         - 'Tools':
             - 'word学习笔记': 'College Courses/Tools/word学习笔记.md'
@@ -134,8 +141,8 @@ nav:
         - '大二春夏笔记':
             - 'ADS': 'College Courses/大二春夏笔记/ADS/ADS.md'
             - 'ASM': 'College Courses/大二春夏笔记/ASM/ASM.md'
-            - 'CO': 'College Courses/大二春夏笔记/CO/计组.md'
-            - 'DB': 'College Courses/大二春夏笔记/DB/数据库系统概念.md'
+            - 'CO': 'College Courses/大二春夏笔记/CO/CO.md'
+            - 'DB': 'College Courses/大二春夏笔记/DB/DB.md'
             - 'NA': 'College Courses/大二春夏笔记/NA/NA.md'
             - 'OOP': 'College Courses/大二春夏笔记/OOP/OOP.md'
             - '电工训': 'College Courses/大二春夏笔记/电工训/电工训.md'
@@ -155,6 +162,7 @@ nav:
             - '素描课程笔记（练习篇）': 'Others/兴趣/素描课程笔记（练习篇）.md'
             - '皇室战争': 'Others/兴趣/皇室战争.md'
             - '数回': 'Others/兴趣/数回.md'
+            - '吉他': 'Others/兴趣/吉他.md'
         - '日常':
             - '发型': 'Others/日常/发型.md'
             - '每日小结': 'Others/日常/每日小结.md'

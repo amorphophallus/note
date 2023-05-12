@@ -99,6 +99,92 @@ Relaxation Method
 
 Iterative Refinement
 
+## ch8 Approxiamation Theory
+
+### discrete least squares approximation 离散最小二乘法
+
+`n << m`: 采样点远大于多项式阶数。若 `n > m` 可以用插值使得采样点误差为 0
+
+$P(\textbf{a}, x)=a_0+a_1 x+a_2x^2+\ldots+a_n x^n$ 是一个多项式，系数为 $\textbf{a}=(a_0, a_1, \ldots, a_n)^T$ 在最小二乘法中需要求一个向量 $\textbf{a}$ 使得 $P(\textbf{a}, x)$ 逼近目标函数 $f(x)$
+
+如何衡量近似函数和目标函数的接近程度呢？定义 $$E_2(\textbf{a})=\sum_{i=1}^m (P(\textbf{a}, x_i)-y_i)^2$$
+
+如果用所有采样点的数据组成 m 维向量
+
+$$
+\left\{\begin{matrix}
+  X=\begin{pmatrix}
+  1 & x_1 & \ldots & x_1^n\\
+  1 & x_2 & \ldots & x_2^n\\
+  \vdots& \vdots & \ddots & \vdots\\
+  1& x_m &\ldots & x_m^n
+\end{pmatrix}_{m\times n} \\
+  X\textbf{a}=(P(\textbf{a}, x_1), P(\textbf{a}, x_2), \ldots, P(\textbf{a}, x_m))^T \\
+  \textbf{y}=(y_1, y_2, \ldots, y_m)^T
+\end{matrix}\right. 
+$$
+
+然后把 error 看成差向量的范数，有
+
+$$
+\begin{align*}
+E_2(\textbf{a}) &= ||X\textbf{a}-\textbf{y}||_2^2\\
+&=(X\textbf{a}-\textbf{y})^T(X\textbf{a}-\textbf{y})\\
+&=\textbf{a}^TX^TX\textbf{a}-2\textbf{a}^TX^T\textbf{y}+\textbf{y}^T\textbf{y}
+\end{align*}
+$$
+
+推导中可以合并两个交叉项，因为其结果是一个 $1\times 1$ 的矩阵，相当于一个标量，而他们的标量数值显然是相等的。即 $(X\textbf{a})^T\textbf{y}=\textbf{y}^T(X\textbf{a})$
+
+因为最小二乘法的要求是最小化 error，所以其必要条件是 $\textbf{a}$ 是 $E_2(\textbf{a})$ 的极值点。所以我们对 $E_2(\textbf{a})$ 求导
+
+$$\frac{\partial E_2(\textbf{a})}{\partial\textbf{a}}=2X^TX\textbf{a}-2X^T\textbf{y}=0$$
+
+$$X^TX\textbf{a}=X^T\textbf{y}$$
+
+可以令 $A=X^TX$，之后的正交向量部分就是构造具有特殊性质的矩阵 $A$
+
+Linearization: 把非线性的多项式通过换元等操作变成多项式，比如 $y=ae^\frac{b}{x}$ 可以变成多项式
+
+### 正交向量 & 连续最小二乘法
+
+线性空间：所有不超过 n 阶的多项式组成的线性空间 $\Pi_n$
+
+线性无关的定义：（几何直观：向量不平行）[线性无关](https://zhuanlan.zhihu.com/p/411455683)
+
+多项式空间内积的定义：
+- 内积可以有很多种，这里使用带 weight 的版本
+- 定义离散的内积：取 m 个采样点（常数），把对应采样点的函数值乘起来
+
+![NA](./imgs/2023-04-26-14-27-05.png)
+
+使用内积得到正交的条件：（几何直观：向量垂直）两个多项式内积为 0
+
+将 $\Pi_n$ 的一组正交基 $\phi_0(x),\phi_1(x),\ldots,\phi_n(x)$ 代入 $X$，得到的 $X$ 长这样：
+
+$$
+X=\begin{pmatrix}
+  \phi_0(x_1) & \phi_1(x_1) & \ldots & \phi_n(x_1)\\
+  \phi_0(x_2) & \phi_1(x_2) & \ldots & \phi_n(x_2)\\
+  \vdots& \vdots & \ddots & \vdots\\
+  \phi_0(x_m)& \phi_1(x_m) &\ldots & \phi_n(x_m)
+\end{pmatrix}
+$$
+
+因为 $\phi_0(x),\phi_1(x),\ldots,\phi_n(x)$ 是一组正交基，根据内积的性质，$A=X^TX$ 除了对角线之外全都为 0，即 $A$ 是一个对角阵，求解 $A\textbf{a}=X^T\textbf{y}$ 就方便多了。
+
+使用施密特正交化求一组正交基，可以得到条件数更小的 $A$。 
+
+![NA](./imgs/2023-04-26-14-53-57.png)
+
+### 切比雪夫多项式
+
+![NA](./imgs/2023-05-09-14-47-43.png)
+
+#### 应用：幂级数降阶
+
+![NA](./imgs/2023-05-09-15-05-27.png)
+
 ## Project 记录
 
 ### Proj 3 求解周期性三对角阵方程组

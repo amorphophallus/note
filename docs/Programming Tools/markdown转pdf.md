@@ -121,4 +121,5 @@ head.tex 样例
 *在线转换*：需要把图片上传到图床
 
 1. [哈希文档](https://www.hashspace.cn/markdown/)
-2. [markdowntopdf](https://www.markdowntopdf.com/)
+1. [markdowntopdf](https://www.markdowntopdf.com/)
+1. 真正的解决方案：typora，orz
