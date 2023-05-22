@@ -165,7 +165,7 @@ nav:
             - '吉他': 'Others/兴趣/吉他.md'
         - '日常':
             - '发型': 'Others/日常/发型.md'
-            - '每日小结': 'Others/日常/每日小结.md'
+            # - '每日小结': 'Others/日常/每日小结.md'
         - 'Something to read':
             - 'Others/something to read/index.md'
         - '杭州':

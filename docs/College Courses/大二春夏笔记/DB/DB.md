@@ -322,8 +322,298 @@ lossless 和 dependency-preserved 的区别：前者是分开的两个 relation 
 1. Buffer tree: ppt 61，有点 lazy 操作的味道，插入的 record 可能存在非叶子节点里，等满了再往下更新
 1. bitmap indices: ppt 62
 
+### ch15 Query Processing
+
+#### 基本查询步骤
+
+![DB](./imgs/2023-05-21-15-05-19.png)
+
+#### 查询优化——逻辑优化（关系代数的顺序）
+
+1. 尽早执行选择算子
+1. 先进行结果 item 更少的 join
+
+![DB](./imgs/2023-05-21-15-05-33.png)
+
+最终结果等价，但是效率不同。
+
+#### 查询优化——物理优化（关系代数的实现）
+
+1. 选择算子可以有很多种实现方法：比如线性扫描、B+树索引
+1. join 算子可以有多种实现方法：比如 hash join, merge join
+1. pipeline 方法：部分结果产出之后直接送到上层，上层算子可以并行执行
+
+![DB](./imgs/2023-05-21-15-07-22.png)
+
+#### 查询代价估算
+
+如何简化代价估算？
+
+1. 仅考虑磁盘 IO 代价，不考虑 CPU 运行时间等代价（并不是不存在时间代价，但是只考虑 dominate 的因素）
+1. 不区分磁盘读和写的速度，看成一样的。
+
+代价估算中考虑哪些因素？
+
+1. 磁盘寻找(seek)：磁头移动到磁盘中的特定位置
+1. 磁盘传输(transfer)：将磁盘块读到内存中或者将内存中的数据写到磁盘中
+
+![DB](./imgs/2023-05-21-15-20-10.png)
+
+![DB](./imgs/2023-05-21-15-21-45.png)
+
+---
+
+在估算代价时考虑最坏情况：
+
+1. 内存：只给最小的内存空间
+1. 磁盘读写次数：默认所有需要的磁盘块都不在内存中(miss)，都需要进行 seek 和 transfer
+
+#### 选择算子
+
+##### A1 (Linear Search)
+
+worst case: $Cost = t_S + t_T * b_r$，$b_r$ 是用于存放表的磁盘块的总数
+
+如果是带条件的选择，可以认为 average case: $Cost = t_S + t_T * \frac{b_r}{2}$。如果 attribute 只有两个不同的取值，那么选择出的 item 期望只有 50%。
+
+##### A2 (primary B+-tree index / clustering B+-tree index, equality on key)
+
+主键上建立的索引，不存在重复的键值：$Cost = (h_i+1)*(t_T+t_S)$
+
+![DB](./imgs/2023-05-21-15-34-00.png)
+
+##### A3 (primary B+-tree index/ clustering B+-tree index, equality on nonkey)
+
+主键上建立的索引（键值相同的数据连续存储），存在重复的键值：$Cost = h_i*(t_T+t_S) + t_S + t_T*b$
+
+![DB](./imgs/2023-05-21-15-34-21.png)
+
+##### A4 (secondary B+-tree index , equality on key)
+
+非主键上建立的索引，不存在重复的键值：$Cost = (h_i+1)*(t_T+t_S)$
+
+![DB](./imgs/2023-05-21-15-38-12.png)
+
+##### A4' (secondary B+-index on nonkey, equality on nonkey)
+
+非主键上建立的索引，存在重复的键值: $Cost=(h_i+n+m)*(t_T+t_S)$
+
+- 假设最坏情况，n 个记录都在不同的块上
+- n pointers may be stored in m blocks
+
+![DB](./imgs/2023-05-21-15-38-30.png)
+
+##### 范围选择
+
+A5 (primary B+-index / clustering B+-index index, comparison)
+
+主键上建立的索引，范围查找：$Cost = h_i*(t_T+t_S) + t_S + t_T*b$
+
+A6 (secondary B+-tree index, comparison)
+
+非主键上建立的索引，范围查找：非常大
+
+##### 多条件选择
+
+A7: 先用一个条件（优先选有索引的条件）选出磁盘块，读到内存中再检查其他的条件
+A8: 存在复合索引，可以一次筛选多个条件，那就先用复合索引找
+A9: 先分别筛选各个条件，最后取交集
+
+![DB](./imgs/2023-05-21-16-06-18.png)
+
+---
+
+A10: 如果所有条件都有索引，先用索引查找，最后取并集。否则直接线性扫描
+Negation: 考虑正难则反
+
+![DB](./imgs/2023-05-21-16-06-41.png)
+
+#### 磁盘排序 external sort
+
+##### 排序过程
+
+先进行 in memory 的排序，生成长度为内存大小的归并段
+- run 的个数为 $b / M$ 总块数除以内存块数
+
+![DB](./imgs/2023-05-21-19-58-12.png)
+
+---
+
+然后进行合并操作
+
+- 在一次合并中，给每个归并段分配一个内存缓冲区（大小为一个 page），给结果分配一个内存缓冲区
+- 如果归并段数量大于等于缓冲区数量，则需要多次归并
+
+![DB](./imgs/2023-05-21-19-59-06.png)
+
+##### 代价估计
+
+**simple version**：假设每个 run 只分配一个缓冲区。这样做会导致 seek 的次数增加。
+
+首先估算磁盘读写的次数
+
+- 注意最后一次不写入磁盘，默认使用 pipeline，将结果送到上层
+- 注意能够给 run 使用的缓冲区个数只有 M-1，剩下的一个要给结果用
+- block transfer 包含三部分：
+    1. in memory 排序，每个 page 都要读写各一次
+    1. 归并过程，归并轮数乘以块个数
+    1. 最后一次归并，只读不写
+
+![DB](./imgs/2023-05-21-20-19-39.png)
+
+---
+
+然后估算磁盘寻找的次数
+
+- 最后一次不写入磁盘，所以 seek 次数也要相应减一
+
+![DB](./imgs/2023-05-21-20-21-02.png)
+
+---
+
+**advanced version**：假设每个 run 分配多个缓冲区。能够减少 seek 的次数，但是归并轮数增加
+
+- $b_b$ 的选择是 seek 次数和归并轮数的 tradeoff，可以写出解析公式尝试求解
+
+![DB](./imgs/2023-05-21-20-29-22.png)
+
+![DB](./imgs/2023-05-21-20-29-34.png)
+
+#### 连接算子
+
+##### nested-loop join
+
+![DB](./imgs/2023-05-21-20-50-48.png)
+
+- 估算磁盘读写次数：外层循环中每个块都需要被读一次 + 内层循环中每个块都需要被读外层循环次数次
+- 估算磁盘寻址次数：
+    - 因为磁头只有一个，虽然在进入内层循环后外层循环的块不需要进行读写，但磁头不会继续指向外层循环的块。每次重新开启一轮外层循环，就需要重新对外层循环的块进行寻址
+    - 每次进入内层循环，都只需要寻址一次，之后是线性扫描，不需要 seek
+- 默认使用 pipeline，结果将直接进入上层，不会被写入磁盘
+
+![DB](./imgs/2023-05-21-20-52-03.png)
+
+##### Block nested-loop join
+
+和 nested-loop join 的区别在于：外层循环每次取出一个块而不是一条记录。减少了外层循环的读写和寻址次数
+
+![DB](./imgs/2023-05-21-20-58-27.png)
+
+![DB](./imgs/2023-05-21-20-59-44.png)
+
+可以发现：外关系越小越好
+
+---
+
+improvement：之前都默认内存只有三个缓冲区，分别给内存循环、外层循环、输出使用。现在将缓冲区增加到 M 块。然后我们将多出来的缓冲区全都分给**外层循环**。
+
+- 为什么分给外层循环有用？根据 block nested-loop join 的代价估算公式，外关系需要多少次读写会影响性能，但是内关系就不会影响
+
+![DB](./imgs/2023-05-21-21-09-14.png)
+
+两种优化思想：
+
+1. 如果 join 是等值连接，且等值条件的 attribute 是内关系的 key，则一旦找到一条符合的记录就可以退出循环了。对外层循环同理
+1. Scan inner loop forward and backward alternately, to make use of the blocks remaining in buffer (with LRU replacement)
+    - 解释：如果 buffer 策略是 LRU（最近最少访问），那么上一次内层循环的最后几条记录将会留在缓冲区中，改变循环方向将会减少内存读写
+
+##### Indexed nested-loop join
+
+外层循环同 block nested-loop join，内层循环用 index 查询
+
+- 外循环代价：每次读一个块
+- 内循环代价：$n_r$ 次用 index 进行查询
+
+![DB](./imgs/2023-05-21-21-21-42.png)
+
+##### Merge-join
+
+使用条件：必须是等值连接（包含自然连接），最好能已经有序
+
+算法：
+- 先按连接属性排序
+- 再执行一个归并过程，碰到两个相同属性就合并产生结果
+
+![DB](./imgs/2023-05-21-21-26-30.png)
+
+---
+
+代价估算：
+
+简单计算：假设每个 run 分配的内存 page 数相同，为 $b_b$
+- 注意：如果原来数据没有排序好，则需要对两个序列分别做排序，计算排序的代价
+
+![DB](./imgs/2023-05-22-08-53-46.png)
+
+再优化：每个 run 分配的内存 page 数不同
+
+![DB](./imgs/2023-05-22-08-55-15.png)
+
+##### hybrid merge-join
+
+使用条件：一个序列已经排好，另一个序列的连接属性上有 secondary-index
+- 先把【有序序列】和【无序序列的索引】连接
+- 然后排序，用线性扫描的方法把索引换成记录
+
+![DB](./imgs/2023-05-22-08-59-55.png)
+
+##### Hash-join
+
+使用条件：等值连接（包含自然连接）
+
+哈希函数：用于做 partition，把需要连接的两个关系都分割成 n 块
+- n 的取值需要满足：s 的每个 partition 能放到内存中
+- 修正因子 (fudge factor)：一般来说块数都取得稍微大一点
+
+![DB](./imgs/2023-05-22-09-12-15.png)
+
+![DB](./imgs/2023-05-22-09-33-34.png)
+
+分片：
+- build input (relation)
+- probe input (relation)
+
+![DB](./imgs/2023-05-22-09-13-45.png)
+
+---
+
+算法流程：
+- 在内存中需要给每个 partition 分配一个 page 用于 output（先假设内存够用）
+- 在 build input 中再使用一个哈希函数，用于 probe input 快速查找对应的 build input
+
+![DB](./imgs/2023-05-22-09-21-18.png)
+
+---
+
+recursive partition:
+- 使用条件：本来应该给每个 partition 分配一个 page 用于 output，但是内存 page 数 M 比 partition 个数 n 小，一次放不下
+- 重要公式：$M>\sqrt{b_s}$ 则不需要 recursive partition
+    - 例题：需要至少多大的内存，才不用 recursive partition
+
+![DB](./imgs/2023-05-22-09-45-12.png)
+
+---
+
+代价估算：
+- block transfer 代价组成
+    - 分片的过程要把所有 block 读写各一次，probe 的时候再读一次，写到 pipeline 里
+    - 由于每个 partition 实际存储的记录数量往往比预期的要多一点，会导致 partition 不是全满的，从而导致分片之后需要的存储空间比原来的多了 $n_h$ 个 block。但一般忽略这块代价
+- block seek 代价组成
+    - 分片过程中，每次读入和写出块都需要 seek，因为读写是交错的，不能保证磁头是移动到相邻位置。probe 过程只需要线性扫描，seek 次数为 2，可以忽略。
+    - 通过增加每次读写的内存块数，减少 seek 的次数
+
+![DB](./imgs/2023-05-22-09-53-59.png)
+
+---
+
+含 recursive partition 的代价估计：
+- 主要就是 partition 轮数的公式
+
+![DB](./imgs/2023-05-22-10-12-55.png)
 
 ## 错题摘录
+
+### 某次小测（标注章节）
 
 except 注意加括号，否则运算顺序容易出错。
 
@@ -345,7 +635,63 @@ where not exists ((
 
 两张表具有同名但含义不同的列时特别注意，不能直接用 natrual join
 
+### query processing
+
+1. 
+
+![DB](./imgs/2023-05-22-08-33-28.png)
+
+![DB](./imgs/2023-05-22-08-33-46.png)
+
+答案有误，不用参考。但是需要注意的是有很多因素会影响代价估算公式：
+
+1. 内存的 page 数
+    - 分类讨论：内存 page 数和表的 block 数之间的大小关系
+1. 谁是 outer relation
+1. 对 merge sort / merge join / hash join 这些需要输入输出缓冲区的方法，缓冲区大小 $b_b$ 也是人为设置的
+1. 对 hash join 来说，还有是否 recursive partition，需要讨论
+
+如果题目没有明确说明就要讨论。
+
 ---
+
+2. 
+
+![DB](./imgs/2023-05-22-11-04-50.png)
+
+Q1 和 Q2 的区别在于 Q1 只用输出一条记录，但是 Q2 可能输出多条。
+
+一般情况下，estimated cost 用 **average case cost** 表示。所谓的 **worst case** 是指不特别说明的情况下默认使用最少的内存。
+
+![DB](./imgs/2023-05-22-12-05-37.png)
+
+---
+
+3. 
+
+![DB](./imgs/2023-05-22-11-08-39.png)
+
+![DB](./imgs/2023-05-22-11-08-26.png)
+
+辨析一下这两题的区别，同样是 block nested-loop join，前者默认只有 3 个缓冲区，后者有更多的缓冲块可以使用。
+
+**注意是 $M-2$，不是 $M-1$**
+
+---
+
+4. 
+
+![DB](./imgs/2023-05-22-11-11-05.png)
+
+B+树索引，**默认根节点不在内存中**，按照公式计算 transfer 和 seek 都是 $h_i+1$ 次。
+
+---
+
+5. 
+
+![DB](./imgs/2023-05-22-11-12-39.png)
+
+注意 external sorting 包含 in-memory sorting 和 merging **两个部分**，total number 就是指两个过程的总和。
 
 
 ## 实验记录
@@ -358,6 +704,7 @@ where not exists ((
 
 - trigger 的语法
 - function 的语法
+- query processing 代价估计公式
 
 
 ## OceanBase 讲座

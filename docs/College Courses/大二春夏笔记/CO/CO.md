@@ -637,10 +637,14 @@ pipeline datapath:
     - ![计组](./imgs/2023-04-26-12-01-31.png)
     - 蓝线表示读数据对写数据的依赖
     - 红线是一种解决方法：在 datapath 中增加连线提前把数据送到下一条指令
+    - 三种解决方案：stall, double bump, forwarding
 1. control hazard: 分支或者跳转指令导致下一条指令的地址是不确定的
-1. stall
+
+### data hazard 数据冒险
     
 
+
+### control hazard 控制冒险
 
 
 
@@ -680,6 +684,10 @@ IP核文件夹包含 xgui 和 component 以及其对应的源文件（有源文�
 #### 使用 VSCode 作为编辑器
 
 [使用 VSCode 作为编辑器](https://zhuanlan.zhihu.com/p/378739805)
+
+```c
+F:\programfiles2022\Microsoft VS Code\Code.exe -g [file name]:[line number]
+```
 
 
 #### 新建工程
@@ -765,6 +773,16 @@ RAM U3 (
 
 ```
 
+##### RAM 设置 tips
+
+![CO](./imgs/2023-05-16-15-47-28.png)
+
+关闭输出寄存器，仿真时 RAM 在上升沿输出；打开输出寄存器，仿真时 RAM 在下降沿输出。
+
+---
+
+RAM
+
 #### 上板
 
 lab0 PPT 52
@@ -826,6 +844,8 @@ SW[7:5]=111；输出 CPU 指令地址 PC_out[31:0]
 `SW[10]` 用于单步调试
 - `SW[10]` 上升沿执行下一条指令
 - 使用按键阵列中第一列的按键也能达到同样的效果，但 `SW[10]` 更稳定。
+
+`BTNRST` 重启 CPU
 
 #### vh 文件的使用
 

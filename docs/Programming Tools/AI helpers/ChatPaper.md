@@ -12,4 +12,12 @@
 python chat_paper.py --pdf_path "D:\CollegeCourses\信息安全大赛\ERNN_Error-Resilient_RNN_for_Encrypted_Traffic_Detection_towards_Network-Induced_Phenomena.pdf"
 ```
 
+```shell
+python chat_paper.py --pdf_path ".\src\A re-evaluation of intrusion detection accuracy.pdf"
+python chat_paper.py --pdf_path ".\src\Certificate-Aware Encrypted Traffic Classification Using Second-Order Markov Chai.pdf"
+python chat_paper.py --pdf_path ".\src\MaMPF_ Encrypted Traffic Classification Based on Multi-Attribute Markov Probability Fingerprints.pdf"
+python chat_paper.py --pdf_path ".\src\Markov chain fingerprinting to classify encrypted traffic.pdf"
+python chat_paper.py --pdf_path ".\src\Robust_smart_phone_app_identification_via_encrypted_network_traffic_analysis.pdf"
+```
+
 会读取本地的 pdf 文件，并把结果输出到 `./export` 文件夹下

@@ -896,6 +896,153 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 ![ADS](./imgs/2023-05-10-16-32-03.png)
 
+## 近似算法
+
+### 定义
+
+目标：
+
+1. Correctness
+1. General-purpose
+1. Efficiency
+
+---
+
+- approxiamation ratio: 评价近似算法的结果，$C \leq \alpha C^{*}$
+- PTAS(polynomial-time approximation scheme): 在输入 N 的多项式时间内求解
+- FPTAS(fully polynomial-time approximation scheme)：在输入 N 和 $\frac{1}{\epsilon}$ 的多项式时间内求解
+
+---
+
+性质：
+
+- 求 approxiamation ratio(minimization problem)：因为精确最优解求不出来，所以需要估计最优解的一个下界，$\alpha=\sup_I \frac{C(I)}{OPT(I)}\leq\sup_I \frac{C(I)}{C^*(I)}$，其中 $OPT(I)$ 是理论上的最优解，$C^*(I)$ 是 $OPT(I)$ 的一个下界
+    - for optimization problem: $\alpha=\sup_I \max\{\frac{C(I)}{C^*(I)}, \frac{C^*(I)}{C(I)}\}$
+- FPTAS 一定是 PTAS
+
+---
+
+例题：
+
+![ADS](./imgs/2023-05-21-10-25-48.png)
+
+### Bin Packing
+
+#### Bin Packing 是 NP-Complete 问题
+
+证明是 NPC：Partition 可以规约到 Bin Packing
+
+#### 离线算法
+
+1. Next Fit: : Place each item in a single bin until an item does not fit in. When an item doesn’t fit, **close it** and opens a new one.
+1. Best Fit: Try to place an item in the **fulles**t bin that can accommodate it. If there is no such bin, open a new one.
+1. First Fit: Try to place an item in the **first** bin that accommodates it. If no such bin is found, open a new one.
+1. First Fit Decreasing: Same as FF after sorting the items by decreasing order.
+
+---
+
+例题：
+
+![ADS](./imgs/2023-05-21-10-36-23.png)
+
+#### 证明 NF 算法的近似比上界
+
+证明 $\alpha\leq 2$：
+
+相邻两个箱子合并，体积一定大于 1。如果 NF 用了 2M 个箱子，那么最优解一定大于 M ；如果 NF 用了 2M+1 个箱子，那么最优解一定大于等于 M+1 个箱子。
+
+所以 $\alpha \leq \frac{2M+1}{M+1} \leq 2$
+
+---
+
+举例说明 2 并不是一个很宽松的上界：
+
+物体体积依次为: $\frac{1}{2}, \varepsilon, \frac{1}{2}, \varepsilon, \ldots$，近似比是 2
+
+#### 证明在线算法的近似比下界
+
+证明 $\alpha \geq \frac{5}{3}$
+
+简单版：对于任何一种在线算法，都可以构造一个长度为 5 的序列，使得这种在线算法结果为 5，但是最优解小于等于 3；或者构造一个长度为 6 的序列，使得这种在线算法结果为 5，但是最优解为 4。
+
+![ADS](./imgs/2023-05-21-12-13-25.png)
+
+#### 不可近似性 Inapproximability
+
+证明 Bin Packing 不存在 $(1.5-\epsilon)-$approxiamation 的近似算法。
+
+反证法。
+
+假设存在 $(1.5-\epsilon)-$approxiamation 算法 ALG。对于一个 partition 问题，令箱子容量为所有物体总体积的一半，转化为一个 Bin Packing 问题。partition 问题有解当且仅当 ALG 的解为 2。因为如果 ALG 的解大于等于 3，精确解就一定严格大于 2，导致 partition 问题无解。
+
+但是 partition 问题是一个 NPC 问题，所以 Bin Packing 是否存在 $(1.5-\epsilon)-$approxiamation 可以规约为 P 是否等于 NP。
+
+（如果假设 P 不等于 NP，则可以说明 Bin Packing 不存在 $(1.5-\epsilon)-$approxiamation）
+
+### KnapSack 背包问题
+
+#### 难度
+
+0/1 背包是 NP-hard：Partition 是 0/1 背包的一种特殊情况
+
+#### 贪心算法及其近似比
+
+第一种：按照性价比从大到小选
+
+第二种：按照价值从大到小选
+
+第三种：前两种算法都做一遍，选一个更优的
+
+---
+
+证明第三种 (modified greedy) 的近似比小于等于 2
+
+先找最优解的下界：按照性价比选，如果最后一个放不下了，就切一部分放进去刚好把背包填满，这样的解一定不差于最优解。
+
+令放入最后一个切了一部分的物体之前，背包中的价值为 x，最后放入的为 y，我们有 $OPT\leq x+y,ALG\geq x,ALG\geq y$，即 $ALG \geq \max(x, y) \geq \frac{1}{2}(x+y) \geq \frac{1}{2}OPT$
+
+### Load Balancing
+
+#### 定义
+
+问题：只有 n 个箱子，一堆物体，怎么放能够使装物体体积最大的箱子中物体体积最小
+
+难度：partition 问题可以规约为 n=2 的 Load balancing 问题，是 NP-hard
+
+#### 贪心算法
+
+贪心算法：放在当前体积最小的箱子里
+
+定理：近似比等于 $2-\frac{1}{m}$
+
+证明分两步，首先证明近似比小于等于 $2-\frac{1}{m}$，然后证明存在一种最坏情况使得近似比刚好等于 $2-\frac{1}{m}$。
+
+先找最优解下界：$OPT \geq \max \{\max_i a_i, \frac{\sum a_i}{m}\}$
+
+然后假设**总体积最大的箱子**中放最后一个物体之前，箱子中总体积是 x，最后一个物体体积是 y。代入上面的式子估计最优解下界 $OPT\geq \max\{y, \frac{mx+y}{m}\}$
+
+所以 $ALG = x+y = (x+\frac{y}{m}) + (1-\frac{1}{m})y\leq OPT+(1-\frac{1}{m})OPT=(2-\frac{1}{m})OPT$
+
+---
+
+然后构造这么一种情况
+
+m 个箱子，先放了 (m-1)*m 个体积为 1 的物体，最后再放入一个体积为 m 的物体。
+
+贪心算法的解是 2m-1，最优解是 m，近似比为 $2-\frac{1}{m}$
+
+#### LPT 贪心
+
+算法：把所有的物体按照体积从大到小排序，然后再做贪心。
+
+证明 $y \leq \frac{1}{3}OPT$
+
+### K-center
+
+例题：考察 lecture note 中 11.4.1 节的定理
+
+![ADS](./imgs/2023-05-21-10-51-58.png)
+
 ## 错题整理
 
 ### AVL
@@ -1020,3 +1167,56 @@ True。
 ![ADS](./imgs/2023-05-10-16-44-42.png)
 
 注意 C 选项，Q 不是 P 说明了 NPC 也不是 P，所以所有 NP 问题都不是 P 问题。可以使用反证法，如果 NPC 是 P 那么所有的 NP 问题都是 P 问题，和 Q 不是 P 问题矛盾。
+
+
+### 近似算法
+
+1. 
+
+![ADS](./imgs/2023-05-21-21-30-26.png)
+
+近似算法可能有很多种，tight 仅说明对于本算法 $\alpha$ 是上确界，但并不能说明不存在别的算法近似效果比当前算法好
+
+2. 
+
+![ADS](./imgs/2023-05-21-21-32-46.png)
+
+A 跟证明 NF 是 2-approximation 思路差不多。因为 NF 相邻两个 bin 的总体积之和一定大于 1，所以如果有 N 个 bin，总体积 $S \geq \lfloor \frac{N}{2}\rfloor$
+
+B 跟上面一样证明
+
+C 因为一旦放不下就会被永久舍弃，所以可以构造这么一个序列 `{0.4, 0.7, 0.4}` 这就有两个不到一半的
+
+D 只要有两个不到一半的就一定会被合并
+
+3. 
+
+![ADS](./imgs/2023-05-21-21-42-11.png)
+
+A + B 两种情况都有可能出现。
+- 如果原图是一条链，且每条边长度单调，那么有 S=T
+- 如果原图有两条没有公共点的边，且他们的权值都大于所有其他边，那么 $|S|\leq |V|-2<|V|-1=|T|$，显然两者不可能相等
+
+C 
+
+1. $S\subseteq T$。可以使用反证法，如果有边 e 是点 s 的最大边，但是不在树上，加上 e 构成的环上与 s 相连的另一条边是 d，那么用 e 换 d 一定能得到一棵更大的树。
+2. $|T - S|\leq |V|/2 \leq |S|$。因为每条边最多是两个点的最大边，所以 $|S|\geq |V|/2$，根据结论 1 可知 $|T-S|=|V|-1-|S|\leq |V|/2\leq |S|$
+3. $\forall d, e\in T-S, d\neq e$，a，b 分别是最大生成树上 d, e 连接的两个点中深度更大的点，则 a 和 b 的最大边不是同一条。用反证法证明，因为 a 和 b 是树上两条不同的边的更深的节点，所以 a 和 b 之间的边不是树边，但是 a 和 b 的连线是一条最大边，根据结论1，必须是一条树边。矛盾。
+4. 对于 T-S 中的任意一条边 $e_i, 1\leq i\leq m$，可以在 S 中找到两两不同的 $d_i, 1\leq i\leq m$ 使得 $\forall i, e_i\leq d_i$。构造 $\{d_i\}$ 的方法就是对于每条 $e_i$ 取其深度较深点的最大边作为 $d_i$。
+5. $w(T-S)\leq w(S)$。由结论 4 得到。
+6. 最终，$w(T)=w(T-S)+w(S)\leq 2w(S)$
+
+---
+
+
+4. 
+
+![ADS](./imgs/2023-05-21-21-52-10.png)
+
+性质：首先，因为这里使用欧式距离，我们有三角形两边之和大于第三边的性质，即 $w(a, b)\leq w(a, c, d, ..., b)$，假如 a 和 b 在树上没有连边，可以看成是走树上的路径从 a 到 b
+
+pre-order: 假设最小生成树的所有边权之和为 T，则最优解 $OPT > T$，而先序遍历最坏情况下就是每条边走两次——下一次上一次，得到的答案是 $PRE\leq 2T$，所以是一个 2-approximation
+
+post-order: 同上
+
+level-order: 构造这么一种情况，所有地点都处在一条直线上，而起点位于中间。那么构造出的生成树也是一条链，但是 level-order traversal 会导致 post officer 在 post office 两边左右横跳，显然结果可以超过两倍的最优解。
