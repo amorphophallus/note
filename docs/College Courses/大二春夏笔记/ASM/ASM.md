@@ -463,7 +463,7 @@ imul 的第二类用法可以包含 2 个或 3 个操作数：
     - 和 sub 的区别在于 cmp 不保存减法的结果
 
 
-##### 浮点数运算指令
+##### 浮点数运算指令 & 浮点数寄存器
 
 硬件支持：
 
@@ -491,6 +491,7 @@ CPU 内部一共有 8 个小数寄存器，分别叫做 st(0), st(1), ..., st(7)
 1. fld 执行类似于压栈的操作，最后一次 load 的内容存放在 `st(0)` 中，其余的依次往后推
     - 支持压入 float, double & long double
 1. fild 把整数转换成小数压入
+1. fstp 弹出
 
 ```asm
 ;Turbo Debugger跟踪时，
@@ -518,11 +519,19 @@ code ends
 end main
 ```
 
+---
+
+硬件实现：
+
+1. `st(0)` 是逻辑编号，从堆顶往下分别写作 st(0), st(1), st(2), ...
+1. 实际上 8 个浮点数寄存器都有其物理编号，物理编号是不会随入栈出栈改变的。
+1. 浮点状态寄存器
+    - 第 11 位到 13 位保存当前指针所指的浮点寄存器物理编号
 
 #### 逻辑运算
 
 - 位运算：and, or, xor, not
-- 移位运算：shl, shr, rol, ror, sal, sar。对应左移(shift left)、右移(shift right)、循环左移(rotate lefts)、循环右移(rotate right)、算术左移（shift arithmetic left）、算术右移(shift arithmetic right)
+
 
 e.g.
 
@@ -532,6 +541,47 @@ shl ah, 1   ; ah = 01101100b
 ```
 
 p.s. **逻辑右移使用 zero-extension，算术右移使用 sign-extension**
+
+---
+
+test 指令：执行一条 and 指令，但是不保留运算结果，只保留 flag 结果
+
+例如可以用这样的方法判断 ax 是否为 0，可以避免使用 cmp 做减法操作，节省时间。
+
+```asm
+    test ax, ax
+    jnz next
+```
+
+#### 移位运算
+
+移位运算：shl, shr, rol, ror, sal, sar, rcl, rcr。对应:
+1. 逻辑左移(shift left)
+1. 逻辑右移(shift right)：左边补上 0
+1. 循环左移(rotate lefts)
+1. 循环右移(rotate right)
+1. 算术左移（shift arithmetic left）
+1. 算术右移(shift arithmetic right)：左边补上原数的最高位
+1. 带进位循环左移(rotate with carry left)：和 CF 组成 n+1 位的整体，循环左移
+1. 带进位循环右移(rotate with carry right)：和 CF 组成 n+1 位的整体，循环右移
+
+---
+
+在 C 语言中，无符号类型使用 shl 和 shr，有符号数使用 sal 和 sar。可以通过 td 查看编译产生的汇编代码，比较二者的区别。
+
+---
+
+- `CF = 0, al = 10110110` 执行 `rcl` 得到 `CF = 1, al = 01101100`，最低位从 CF 来
+- `CF = 0, al = 10110110` 执行 `rol` 得到 `CF = 1, al = 01101101`，最低位从最高位来
+
+rcl 的应用：对存储在多个寄存器中的数实现逻辑左移运算
+
+```asm
+    mov dx 1234h    ; 高 16 位
+    mov ax 0ABCDh   ; 低 16 位
+    shl ax          ; 低 16 位逻辑左移，进位存到 CF 中
+    rcl dx          ; 高 16 位逻辑左移，并处理进位
+```
 
 #### 跳转指令
 
@@ -580,6 +630,14 @@ jbe next
 ---
 
 可以在 TB 中，修改 FL 的值观察跳转指令是否有向下的箭头。这样可以测试跳转指令通过什么条件判断跳转。
+
+##### 无条件跳转
+
+1. 短跳
+1. 近跳
+1. 远跳
+
+主引导区 boot
 
 
 #### 栈操作指令
@@ -678,7 +736,7 @@ FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值�
     mov bl,-2   ; BL=0FEh=-2
     idiv bl     ; AL=02h(商)，AH=00h(余数)
 ```
-#### 赋值相关语句 mov & xchg
+#### 赋值相关指令 mov & xchg
 
 1. mov
     - `mov word ptr [0426],0001` 把 16 位数据 0x0001 移动到地址 0x0426 的内存中。[] 表示取地址，相当于 C 中的 *。
@@ -701,7 +759,7 @@ FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值�
     - e.g. `lds di, ds:[bx]` 把内存中的 32 bit 数据，高 32 位赋值给 es，低 32 位赋值给 di
     - 操作数长度固定：第一个操作数是 16 位的，第二个操作数是 32 位的
 
-#### XLAT
+#### XLAT 换码指令
 
 - 换码指令 XLAT(Translate) 也称查表指令
     - 在 XLAT 执行前必须让 ds:bx 指向表，AL 必须赋值为数组的下标
@@ -709,6 +767,123 @@ FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值�
 
 一个应用：十六进制数转 ASCII 码，本来是用比较语句加上 `'0'` 或者 `'A'`。现在可以在内存中存一张表，然后使用查表指令找到要输出的字符
 
+#### 字符串操作指令
+
+##### 字符串复制指令
+
+1. movsb
+    - 准备工作：
+        1. `cx`: 复制多少个 byte
+        1. `ds:[si]`: 源字符串地址 (si = source index)
+        1. `es:[di]`: 目标字符串地址 (di = destination index)
+        1. `DF`: 0 表示正向，1 表示反向 (使用 std, cld 指令)
+    - 调用：`rep movsb` 表示重复复制 cx 次，`movsb` 表示单次复制
+    - 结果：si 和 di 会跟着指令一起累加，最后指向字符串的末尾。cx 会跟着指令一起减，最后变成 0。
+1. movsw
+    - 同上，但是每次复制一个 word(2 byte)
+1. movsd
+    - 同上，但是每次复制一个 double word(4 byte)
+
+加速复制内存块的速度：
+
+```asm
+    push ecx
+    shr ecx, 2
+    rep movsd
+    pop ecx
+    and ecx, 3
+    rep movsb
+```
+
+##### 字符串比较指令
+
+1. cmpsb
+    - 准备工作：
+        1. `cx`: 比较多少个 byte
+        1. `ds:[si]`: 第一个比较字符串地址 (si = source index)
+        1. `es:[di]`: 第二个比较字符串地址 (di = destination index)
+        1. `DF`: 0 表示正向，1 表示反向 (使用 std, cld 指令)
+    - 调用：
+        1. `repe cmpsb` (repeat if equal)，如果 ZF = 1 则继续循环，否则退出循环
+        1. `repne cmpsb` (repeat if equal)，如果 ZF = 0 则继续循环，否则退出循环
+    - 结果：
+        1. `ds:[si]` 和 `es:[di]` 指向最后一次比较的字符的后一个地址。如果字符串不想等，则指向第一个不相等的字符的后一位地址
+        1. cx 可以表示还剩多少个字符没有参与比较
+        1. ZF 显示最终结果，两个字符串是否相等
+1. cmpsw
+1. cmpsd
+
+---
+
+提问：能否通过 `cx == 0` 判断两个字符串全等？
+
+不能。最后一个字符不等也会得到 `cx == 0`
+
+正确的做法是 `ZF == 1` 表示两个字符串全等。
+
+##### 字符串扫描指令
+
+1. scasb
+    - 准备工作：
+        1. `cx`: 最多扫描多少个 byte
+        1. `al`: 用于扫描的字符
+        1. `es:[di]`: 扫描字符串地址 (di = destination index)
+        1. `DF`: 0 表示正向，1 表示反向 (使用 std, cld 指令)
+    - 调用：
+        1. `repe scasb` (repeat if equal)，如果 `es:[di] == al` 则继续循环，否则退出循环
+        1. `repne scasb` (repeat if equal)，如果 `es:[di] != al` 则继续循环，否则退出循环
+    - 结果：
+        1. `ds:[si]` 和 `es:[di]` 指向最后一次比较的字符的后一个地址。如果在字符串中找到了字符，则指向第一个找到的位置的后一位地址（需要 `dec di` 才能指向找到字符的位置）
+        1. cx 可以表示还剩多少个字符没有参与比较
+        1. ZF 显示最终结果，`ZF == 1` 表示找到了，否则就是没找到
+1. scasw
+1. scasd
+
+---
+
+应用：求 C 字符串的长度。
+
+做法是 scasb 找 `\0` 的位置，注意最后要把结果减一， `\0` 不算长度。
+
+##### 字符串填充指令
+
+1. stosb
+    - 准备工作：
+        1. `cx`: 填充多少个 byte
+        1. `al`: 用于填充的字符
+        1. `es:[di]`: 需要填充的字符串地址 (di = destination index)
+        1. `DF`: 0 表示正向，1 表示反向 (使用 std, cld 指令)
+    - 调用：`rep stosb`
+    - 结果：di 会跟着指令一起累加，最后指向字符串的末尾。cx 会跟着指令一起减，最后变成 0。
+
+---
+
+应用：实现字符串初始化 `memset`
+
+##### 字符串读取指令
+
+1. lodsb
+    - 准备工作：
+        1. `al`: 读取的字符存储的位置
+        1. `ds:[si]`: 需要读取的字符串地址 (si = source index)
+    - 调用：`lodsb`
+    - 结果：`al = ds:[si], si++`
+
+---
+
+应用：使用 `lodsb` 和 `stosb` 过滤掉字符串中的一些字符
+
+```asm
+    ; 假设准备工作已经做好
+again:
+    lodsb
+    cmp al, '#'
+    je next
+    stosb       ; 如果是要过滤的字符，就不存储到目标字符串中
+next:
+    dec cx
+    jnz again
+```
 
 #### 其他常用指令
 
@@ -2610,5 +2785,74 @@ code ends
 stk segment stack
 dw 100h dup(0)
 stk ends
+end main
+```
+
+### 自定义除 0 异常的中断处理 int00.asm
+
+在调用 int 00h 之前，CPU 会执行以下三条命令：
+1. `pushf` 保存程序运行的状态，退出中断后不影响继续运行
+1. `push cs`
+1. `push offset here`
+
+在执行 iret 时，CPU 是在执行以下三条命令：
+1. `pop ip`
+1. `pop cs`
+1. `popf`
+
+```asm
+code segment
+assume cs:code
+old_00h dw 0, 0
+main:
+   xor ax, ax
+   mov es, ax
+   mov bx, 0
+   mov ax, es:[bx]      ; es:[0] = 0:[0]
+                        ; 即 int 00h 的中断向量
+   mov old_00h[0], ax
+   mov ax, es:[bx+2]
+   mov old_00h[2], ax   ; 先把原来的中断向量保存下来
+   ;
+   mov word ptr es:[bx], offset int_00h
+   mov es:[bx+2], cs    ; 再把自定义的中断向量存进去
+   ;
+   mov ax, 1234h
+   mov dh, 0
+;int 00h
+here:
+   div dh               ; 做一个除 0 的除法
+                        ; 在执行 div 指令之前会触发 int 00h 中断
+next:
+   mov ax, old_00h[0]
+   mov es:[bx], ax
+   mov ax, old_00h[2]
+   mov es:[bx+2], ax    ; 恢复原来的中断向量
+   ;
+   mov ah, 4Ch
+   int 21h              ; 退出程序
+msg db "Divided by 0!!!", 0Dh, 0Ah, '$'     ; 在 code 段存储的数据
+int_00h:
+   push bp
+   mov bp, sp       ; sp 是指向栈顶的指针
+   ; 下面这段用于输出提示字符串
+   push ax
+   push dx
+   push ds
+   push cs
+   pop ds
+   mov ah, 9
+   mov dx, offset msg
+   int 21h              ; int 21h 的 9 号功能：输出字符串
+   pop ds
+   pop dx
+   pop ax
+   ;
+   mov word ptr [bp+2], offset next ; 修改 iret 返回地址的 offset 部分
+                                    ; 使得 iret 返回到 next 标签执行
+                                    ; 相当于跳过了除零的 div 指令
+   pop bp
+   iret
+code ends
 end main
 ```

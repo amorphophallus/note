@@ -910,7 +910,7 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 - approxiamation ratio: 评价近似算法的结果，$C \leq \alpha C^{*}$
 - PTAS(polynomial-time approximation scheme): 在输入 N 的多项式时间内求解
-- FPTAS(fully polynomial-time approximation scheme)：在输入 N 和 $\frac{1}{\epsilon}$ 的多项式时间内求解
+- FPTAS(fully polynomial-time approximation scheme)：在输入 N 和 $\frac{1}{\epsilon}$ 的多项式时间内求解，其中 $1+\varepsilon$ 是近似比。
 
 ---
 
@@ -1042,6 +1042,10 @@ m 个箱子，先放了 (m-1)*m 个体积为 1 的物体，最后再放入一个
 例题：考察 lecture note 中 11.4.1 节的定理
 
 ![ADS](./imgs/2023-05-21-10-51-58.png)
+
+## 局部搜索 Local Search
+
+
 
 ## 错题整理
 
@@ -1175,7 +1179,7 @@ True。
 
 ![ADS](./imgs/2023-05-21-21-30-26.png)
 
-近似算法可能有很多种，tight 仅说明对于本算法 $\alpha$ 是上确界，但并不能说明不存在别的算法近似效果比当前算法好
+近似算法可能有很多种，tight 仅说明对于本算法 $\alpha$ 是上确界（构造一组输入使近似比恰好为 $\alpha$），但并不能说明不存在别的算法近似效果比当前算法好
 
 2. 
 
@@ -1208,7 +1212,6 @@ C
 
 ---
 
-
 4. 
 
 ![ADS](./imgs/2023-05-21-21-52-10.png)
@@ -1220,3 +1223,11 @@ pre-order: 假设最小生成树的所有边权之和为 T，则最优解 $OPT >
 post-order: 同上
 
 level-order: 构造这么一种情况，所有地点都处在一条直线上，而起点位于中间。那么构造出的生成树也是一条链，但是 level-order traversal 会导致 post officer 在 post office 两边左右横跳，显然结果可以超过两倍的最优解。
+
+---
+
+5. 
+
+![ADS](./imgs/2023-05-23-10-15-42.png)
+
+多项式规约对近似比没有约束。Clique 的大小和 Vertex Cover 的大小相加等于图上总点数，规约产生的 Clique 的近似比与图的总点数相关，并不是常数。

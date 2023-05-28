@@ -93,7 +93,7 @@ nav:
             - 'VScode 调试 C/C++ 代码': 'Programming Tools/VScode/VScode 调试 C 和 C++ 代码.md'
         - 'Visual Studio':
             - 'Programming Tools/VS/index.md'
-        - 'AI helpers'
+        - 'AI helpers':
             - 'new Bing': 'Programming Tools/AI helpers/new_bing.md'
             - 'chatPaper': 'Programming Tools/AI helpers/ChatPaper.md'
         - '微信小程序':

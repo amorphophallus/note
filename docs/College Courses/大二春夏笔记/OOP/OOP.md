@@ -14,6 +14,7 @@
     - [The Cherno C++](https://www.youtube.com/playlist?list=PLlrATfBNZ98dudnM48yfGUldqGD0S4FFb) 超纲知识学习
     - [C++ 新闻](https://isocpp.org/) [cpp_reference](https://en.cppreference.com/w/)
     - MUD(multi-user dungeon) 游戏示例：NetHack，guidebook 很重要，[nethack 官网](https://nethack.org/), [nethack-wiki](https://nethackwiki.com/), [nethack 服务器](https://alt.org/nethack/), [快速上手文档](https://lug.ustc.edu.cn/planet/2021/09/nethack-gitgud/)，[所有按键列表](https://tieba.baidu.com/p/1438247556)
+    - [显示 C++ 编译产生的汇编代码](https://godbolt.org/)
     - 助教-陆子仪：ziyilu@zju.edu.cn
     - 陈翔：xchencs@zju.edu.cn
 2. 成绩
@@ -92,8 +93,6 @@ class 内的 static 常量：所有类共享的常量数据
 
 #### 函数重载(overload)
 
-条件：
-
 - 返回值，函数名，作用域一样（三者有任意一个不一样都算是不同函数，不算重载）
 - 参数不一样（参数一样，仅函数体不一样不允许，会报重复定义的错误）
 
@@ -117,7 +116,51 @@ void print_array(T* arr[], int n){
 
 ![OOP](./imgs/2023-04-07-18-09-17.png)
 
-#### template
+#### template 泛型编程
+
+##### 基础知识
+
+泛型编程的两种分类：
+
+1. 函数泛型，例如: `std::sort()`
+1. 类泛型，例如：`std::queue`, `std::stack`, etc
+
+---
+
+1. 可以用 `typename T` 或者 `class T` 表示泛型
+1. 同一个泛型函数或者泛型类可以定义多个泛型。例如：`template<class Key, class Value>`
+
+---
+
+泛型编程可能存在隐式的约束条件：例如 `class T` 可能需要有 copy constructor 和重载的 assignment operator，否则在函数内部用到会报奇怪的错。
+
+---
+
+template 显式指定类型和隐式指定类型：
+1. 显式：`swap<float>(1, 2.3);`，如果函数没有参数，则必须要显式指定类型
+1. 隐式：`swap(1.2, 3.4);` 通过参数判断类型，但如果多个参数类型不同且可以相互隐式转换，则编译会报错
+
+---
+
+注意：
+
+1. template 最好放在 header file 里（声明和定义都放），不然开发者将很难了解如何使用模板。
+1. template 所在的 header file 被多个编译单元 ( cpp 文件) 引用，不会导致 linking error
+    - 原理：编译之后 `.s` 文件会给函数打上 `.weak_definition` 标签，表示可以在编译单元中多次存在
+    - 带 `.weak_definition` 标签的除了 template 还有 inline 的函数
+1. 最好先写非模板的函数，再把其中某个类型改成模板，否则报错会比较奇怪
+
+##### 函数泛型
+
+一个函数调用寻找函数原型的过程：
+1. 先找有没有匹配的普通函数（可能存在参数类型的隐式转换）
+1. 如果没有，再去匹配泛型函数
+
+例如：`swap(1, 2.3)` 会优先找 `void swap(float &, float &)`，而不是找 `template<class T>void swap(T &, T &)`
+
+---
+
+函数泛型的例子：
 
 ```cpp
 template<typename T, typename Compare>
@@ -134,6 +177,128 @@ void selection_sort(T arr[], int n, Compare comp)
 
 - 存在 `std::Compare` 类型，比如优先队列中可以使用的 `less`, `priority_queue<int,vector<int>,less<int> > big_heap;`
 
+##### 类泛型
+
+类泛型的例子：
+
+![OOP](./imgs/2023-05-23-10-28-59.png)
+
+实现成员函数（使用泛型函数）：
+
+![OOP](./imgs/2023-05-23-10-32-42.png)
+
+成员函数可以定义新的泛型：
+
+![OOP](./imgs/2023-05-23-12-09-42.png)
+
+---
+
+类泛型的嵌套：`Vector< Vector<double*> >`
+
+---
+
+template 和类的继承：
+
+1. template inherit from non-template
+1. template inherit from template
+1. non-template inherit from non-template
+1. non-template inherit from template
+
+四种都可以
+
+##### 奇异递归
+
+也叫静态多态，效果和多态类似，比多态的效率更高，但是比较抽象。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class AbstractBase {
+public:
+    virtual ~AbstractBase() = default;
+    virtual void interface() = 0;
+};
+
+template<class T>
+struct Base: public AbstractBase{
+    void interface() override {
+        static_cast<T*>(this)->implementation();
+    }
+    static void static_interface(){
+        T::static_implementation();
+    }
+};
+
+struct Derived1: public Base<Derived1>{
+    void implementation(){
+        cout << "Derived1::implementation()" << endl;
+    }
+    static void static_implementation(){
+        cout << "Derived1::static_implementation()" << endl;
+    }
+};
+
+struct Derived2: public Base<Derived2>{
+    void implementation(){
+        cout << "Derived2::implementation()" << endl;
+    }
+    static void static_implementation(){
+        cout << "Derived2::static_implementation()" << endl;
+    }
+};
+
+template<class T>
+void foo(Base<T>&b){
+    b.interface();
+    b.static_interface();
+}
+
+int main(){
+
+    // 多个派生类只需要定义一个 foo 函数
+    Derivedl dl;
+    Derived2 d2;
+    foo(d1);
+    foo(d2);
+
+    // 不能直接把 Base<Derived1> 和 Base<Derived2> 放在同一个 vector 里
+    // 但是可以再定义一个公共基类（不带模板的）
+    vector<AbstractBase*> v;
+    v.push_back(&d1);
+    v.push_back(&d2);
+    return 0;
+}
+```
+
+##### 通过 template 传入参数 (Non-type parameter)
+
+例如：封装一个 Array 类
+
+作用：可以直接进行深拷贝，使用 assignment 和拷贝构造等原生数组无法做到的行为。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template<class T,int N>
+class Array{
+public:
+    int size() const {return N;}
+    T & operator[](int i){return m arr[i];}
+private:
+    T m arr[N];
+};
+int main(){
+    Array<int,3>a;
+    a[0]=2, a[1]=3, a[2]=1;
+    Array<int,4>b{};
+    b = a;
+    return 0;
+}
+```
+
+
 #### inline
 
 - inline 函数不会产生函数调用的 jal 语句。
@@ -145,6 +310,11 @@ void selection_sort(T arr[], int n, Compare comp)
 ![OOP](./imgs/2023-04-07-17-46-15.png)
 
 - header only library: inline 函数允许重复定义，可以把函数实现包含在头文件中
+
+#### 参数默认值 default argument
+
+1. 一般在声明处说明默认值。同时在声明和定义处说明默认值会报错
+1. 有默认值的参数只能在参数表的最后
 
 ### 类 Class
 
@@ -1070,7 +1240,11 @@ for (auto [fruit, f_price]: price) cout << '{' << fruit << ", " << f_price << '}
 
 #### 迭代器 iterator
 
-把各种不同的指针统一起来，使用统一的算法处理。
+##### 基础知识
+
+迭代器存在的意义：把各种不同的指针统一起来，使用统一的算法处理，但不暴露容器的底层实现。
+1. 统一
+1. 隐藏复杂度
 
 - random-access: 可以比大小
 - contiguous-access：不能比大小
@@ -1095,6 +1269,61 @@ copy(evens.begin(), evens.end(), ostream_iterator<int>(cout, ", "));
 tips:
 
 - [获取 iterator 指向的元素的地址](https://blog.csdn.net/cwdben/article/details/116034666)
+
+### 流 streams
+
+#### 常用知识
+
+常用 stream 类型
+
+![OOP](./imgs/2023-05-23-09-36-25.png)
+
+---
+
+想要加速 stream？ `std::ios::sync_with_stdio(false);` 取消同步。
+
+#### input
+
+1. extractor: `>>`
+
+重载 extractor：
+
+![OOP](./imgs/2023-05-23-08-38-26.png)
+
+2. `in.get()`
+3. `in.get(char *buf, int limit, char delim='\n')`
+4. `in.getline(char *b, int l, char d='\n')`
+5. `in.gcount()` 返回 int，已经读了多少个字符
+6. `in.peek()`
+
+#### output 
+
+1. inserter: `<<`
+
+重载 inserter：
+
+![OOP](./imgs/2023-05-23-09-44-12.png)
+
+2. `out.put(char)`
+3. `out.flush()`
+
+#### manipulators
+
+头文件：`#include<iomanip>`
+
+常用 manipulator:
+
+![OOP](./imgs/2023-05-23-09-45-52.png)
+
+自定义 manipulator：
+
+![OOP](./imgs/2023-05-23-09-46-52.png)
+
+使用 flag 进行控制：
+
+![OOP](./imgs/2023-05-23-09-47-44.png)
+
+![OOP](./imgs/2023-05-23-09-47-59.png)
 
 ### 其他
 

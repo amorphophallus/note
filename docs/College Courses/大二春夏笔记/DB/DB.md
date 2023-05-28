@@ -285,21 +285,193 @@ lossless 和 dependency-preserved 的区别：前者是分开的两个 relation 
     - json
 
 
-### ch9 数据存储
+### ch12 数据存储
 
 1. 物理存储介质
+    - 分类和评价标准： ![DB](./imgs/2023-05-25-19-50-24.png)
     - 存储级别：![DB](./imgs/2023-05-10-14-41-22.png)
     - 磁盘
         - 相关概念：ppt 6
         - 磁盘性能指标：ppt 10 - 12
         - 磁盘性能优化方案：ppt 13 - 15
-    - flash: SSD: ppt 16
+    - flash & SSD: ppt 16
     - NVM: ppt 18
 
 1. 数据存储结构
 
 - [数据存储模型：NSM, DSM, PAX](https://www.jianshu.com/p/eb44bd5bc786)
 - [cache miss](https://www.cnblogs.com/jokerjason/p/10711022.html)
+
+### ch13 Data Storage Structure
+
+#### File Organization
+
+概念辨析：
+
+- The **database** is stored as a collection of **files**.
+- Each **file** contains a sequence of **blocks**
+- Each **block** is a sequence of **records**.  
+- A **record** is a sequence of **fields**.
+
+---
+
+1. 单文件：所有元数据 & 数据都存在同一个大文件里
+1. 多文件
+
+#### Record Structure
+
+##### Fixed-length Record
+
+1. 简化文件组织：不允许跨 block 的 Record（允许残余空间）
+1. 实现删除操作
+    1. 移动 Record：把后面所有记录往前移 or 把最后一个记录往前移
+    1. 不移动 Record：用链表标记所有被释放的 Record
+
+![DB](./imgs/2023-05-26-20-36-42.png)
+
+##### Variable-length Record
+
+Record 的组成：
+
+1. 定长部分：存储定长属性 & 不定长属性的 (offset, length)
+1. NULL bitmap：1 表示是 NULL，0 表示不是 NULL
+1. 不定长部分：存储不定长属性的属性值
+
+---
+
+不同属性的存放方式：
+
+1. 定长属性
+1. NULL 属性
+1. 不定长属性
+
+![DB](./imgs/2023-05-26-20-38-04.png)
+
+---
+
+Record 在 block 中的存放方式：(slotted page structure 分槽页)
+
+1. block header
+    1. entries: 存放 record 数量
+    1. (offset, length) of records
+    1. pointer to end of free space：用于插入新的数据
+1. free space
+1. records
+
+![DB](./imgs/2023-05-26-20-49-33.png)
+
+---
+
+slotted page 如何实现删除：
+
+1. 打标签标记删除的 record
+1. 定期重整：移动 record 并修改 pointer，在 records 之间不留 free space
+
+slotted page 的利弊：
+
+1. 利：方便维护
+1. 弊：增加空间
+
+---
+
+其他存储方式：
+
+1. 将同一个 record 中的不同 field 分别在不同地方存储（需要一个隐含的内部排序）
+1. 按行存放 -> 按列存放
+
+#### Record Organization in File
+
+这节讨论怎么把新的 record 分配到空闲 block 中存储
+
+##### Heap
+
+随机分配，只要有空闲就可以分
+
+如何维护空闲空间
+
+1. 链表：把所有空闲空间串起来
+1. free-space map
+
+![DB](./imgs/2023-05-26-21-04-18.png)
+
+##### Sequential
+
+file 中所有 record 按照顺序存储。优点是针对 key 的范围查找效率高。
+
+细节实现：
+1. 删除操作
+1. 插入操作
+1. 重整
+
+![DB](./imgs/2023-05-26-21-10-48.png)
+
+##### B+ tree
+
+##### Hashing
+
+##### 其他文件组织方式
+
+把多张表混合存放在同一块空间中：
+1. 优点：如果混合存储的表经常需要连接，那磁盘 IO 会比较连续
+1. 缺点：单取其中一张表不方便
+
+![DB](./imgs/2023-05-26-21-13-24.png)
+
+#### Data Dictionary Storage
+
+本节讨论如何管理 metadata
+
+可以采用类似 OOP 中类的模式进行管理
+
+#### Buffer Manager
+
+##### buffer manager 实现
+
+Buffer manager 的作用：
+
+![DB](./imgs/2023-05-26-21-24-05.png)
+
+Buffer manager 的行为：
+
+![DB](./imgs/2023-05-26-21-28-42.png)
+
+---
+
+用 Pin & Unpin 限制 buffer 中内存块写回 disk：
+
+1. **Pinned block**: memory block that is not allowed to be written back to disk
+    - **Pin** done before reading/writing data from a block
+    - **Unpin** done when read /write is complete
+
+---
+
+用 lock 进行并发控制：
+
+1. 读 buffer 中的一个块会给块施加一个 **shared lock**, 修改 buffer 中的一个块会给块施加一个  **exclusive lock**
+1. lock 规则：
+    - Only one process can get exclusive lock at a time
+    - Shared lock cannot be concurrently with exclusive lock
+    - Multiple processes may be given shared lock concurrently
+
+##### LRU replacement
+
+Least Recently Used, 最近最少用到
+
+假设 block 访问模式为：最近访问多的之后也会多访问。如果违反这个模式，LRU 的效率就会很低。理想的方法是：预测未来的访问模式。
+
+![DB](./imgs/2023-05-26-21-26-54.png)
+
+##### clock replacement
+
+LRU 的一种实现方式：
+1. 当 buffer 中某个 block 没有被任何进程 pin 时，将其 reference bit 置 1
+1. 当需要找一个 block 进行替换时，采用以下策略
+
+![DB](./imgs/2023-05-26-21-41-54.png)
+
+why does it make sense?
+
+如果在循环到某个 block 时发现其 reference bit 为 0，说明在整个循环中他都没有被置 1，即没有被访问过，这说明他是最近最少被用到的 block。
 
 ### ch14 索引 Indexing
 

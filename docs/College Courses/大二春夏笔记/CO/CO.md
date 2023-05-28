@@ -588,6 +588,109 @@ controller 的作用：选择数据通路
 
 1. ALUop：控制 ALU 的初步信号，书 P342 fig 4.18
 
+### 中断和异常 Interrupt & Exception
+
+#### 定义
+
+- Interruption 一般指外部设备通过 I/O 打断当前程序的运行
+- Exception 一般指 CPU 内部发生错误打断当前程序的运行
+
+#### 异常处理流程
+
+1. 保存 CPU 现场：
+    1. 保存当前 PC (mEPC 寄存器)
+    1. 保存发生异常的原因 (mCAUSE 寄存器)
+    1. 其他信息，一般不用 (比如：Exception code field: 2 for undefined opcode, 12 for hardware malfunction, ...) 
+1. 执行异常处理程序 (handler)
+1. 如果能够恢复运行则返回原 PC 继续执行 (mRET 指令退出，读取 mEPC 中保存的 PC)，否则退出运行并报告错误（使用 mEPC, mCAUSE, etc）
+
+#### RISC-V 的特权结构
+
+![CO](./imgs/2023-05-23-20-19-13.png)
+
+- reserved 可以是 hyper-mode，给虚拟机使用
+- 每个特权级别有自己的 ISA，只提供给某特权模式使用
+
+#### 特权寄存器 CSR
+
+- CSR：Control Stauts Register
+- 总共 4096 个
+
+中断相关的 CSR：
+
+![CO](./imgs/2023-05-23-20-10-10.png)
+
+#### 特权指令 CSR instruction
+
+CSR instruction：只能在 machine mode 下运行
+
+指令格式：
+
+![CO](./imgs/2023-05-23-20-25-37.png)
+
+常用指令：
+
+![CO](./imgs/2023-05-23-20-48-12.png)
+
+1. CSRRW(read & write): `rd = csr, csr = rs1`
+1. CSRRS(read & set): `rd = csr, csr |= rs1`
+1. CSRRC(read & clear): `rd = csr, csr &= ~rs1`
+1. CSRRWI, CSRRSI, CSRRCI: 使用立即数
+
+![CO](./imgs/2023-05-23-20-53-27.png)
+
+1. wfi = wait for interrupt
+
+#### 重要特权寄存器——mstatus(0x300)
+
+![CO](./imgs/2023-05-23-20-27-44.png)
+
+1. MIE, SIE, UIE: 中断使能(interrupt enable)，分别控制 machine mode, supervisor mode, user mode
+    - 例如：在进入中断之后，同级或者低级的中断不能打断当前中断处理程序，但是高级的可以
+1. MPIE, SPIE, UPIE：存储先前的中断使能，用于中断嵌套中保存程序运行状态
+1. MPP：执行中断之前处在什么运行状态
+
+![CO](./imgs/2023-05-23-20-34-23.png)
+
+#### 重要特权寄存器——mie & mip(0x304/0x344)
+
+![CO](./imgs/2023-05-23-20-34-45.png)
+
+- 使能不同类型的中断：外部中断、软件中断、时钟中断
+
+#### 重要特权寄存器——mtvec(0x305)
+
+![CO](./imgs/2023-05-23-20-36-00.png)
+
+- 存储中断向量的基地址 + mode
+- 两种中断模式：
+    1. direct
+    1. vectored: 中断向量中，每种中断只存一句指令，可以跳到真正的 handler
+
+#### 重要特权寄存器——mcause
+
+![CO](./imgs/2023-05-23-20-41-49.png)
+
+- 最高位 INT 表示是中断还是异常
+- exception code 和 mtvec 一起用于计算 handler 地址
+
+一些常见的异常原因：
+
+![CO](./imgs/2023-05-23-20-43-23.png)
+
+#### 如何处理异常
+
+1. 增加检测逻辑
+1. 增加控制信号（修改 CSR）
+1. 增加写入 CSR 的数据通路
+1. 判断使能信号，跳转到异常处理程序
+1. 返回中断的位置继续执行
+
+![CO](./imgs/2023-05-23-20-58-41.png)
+
+![CO](./imgs/2023-05-23-21-09-02.png)
+
+![CO](./imgs/2023-05-23-21-09-22.png)
 
 ### 4.5 Pipeline intro
 
