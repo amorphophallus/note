@@ -907,6 +907,207 @@ load stall 对性能产生的影响：
 
 ### control hazard 控制冒险
 
+#### 用 stall 解决控制冒险
+
+需要 stall 三个时钟周期。因为在 MEM 阶段才把 next PC 算好写入 PC 中，再下一个阶段才能被后一条指令的 IF 阶段读取。
+
+![CO](./imgs/2023-06-06-14-50-03.png)
+
+#### 用 prediction 解决控制冒险
+
+对 stall 做简单改进 - predict not taken
+
+![CO](./imgs/2023-06-06-14-51-46.png)
+
+如果 branch 指令计算完之后发现预测错误，实际上要跳转，就把预测错的计算结果 flush 掉
+
+#### reduce branch delay
+
+修改 datapath，在 ID 阶段就把 next PC 算好
+
+![CO](./imgs/2023-06-06-14-57-45.png)
+
+这样预测错误只损失了一个时钟周期（看如下的时序图）
+
+![CO](./imgs/2023-06-06-15-05-23.png)
+
+#### flush
+
+IF 寄存器新增 flush 信号。如果 branch 预测错误，就把上一条读出来的指令变成 nop 指令
+
+![CO](./imgs/2023-06-06-15-09-40.png)
+
+![CO](./imgs/2023-06-06-15-10-40.png)
+
+#### reduce branch delay 导致的 data hazard
+
+ld 指令和 beq 指令之前至少要隔 2 条指令，R-type 指令和 beq 指令之间至少要隔 1 条指令。
+
+![CO](./imgs/2023-06-06-15-11-39.png)
+
+reduce branch delay 虽然减少了预测错误带来的 stall，但是却增加了 data hazard 带来的 stall。
+
+#### Dynamic Branch Prediction - 1 bit predictor
+
+使用 PC 低地址作为索引
+
+会导致的问题：如果两条指令 PC 低地址相同，会被当做同一条指令进行预测。
+
+![CO](./imgs/2023-06-06-15-16-17.png)
+
+---
+
+效率降低的情况：inner loop，每次进内层循环都必须连错两次
+
+![CO](./imgs/2023-06-06-15-18-13.png)
+
+#### Dynamic Branch Prediction - 2 bit predictor
+
+增加 predictor 状态个数为 4 个，有限状态机如下：
+
+![CO](./imgs/2023-06-06-15-19-43.png)
+
+相当于一个计数器，每次预测错误就 +1，预测正确就 -1，当计数器值大于等于 10 才预测跳转。
+
+---
+
+如何 predict taken？
+
+新增一个 branch target buffer，存跳转的 PC 地址。那么下一条指令就不用等 branch 指令的 ID 执行完才能 IF，而是可以直接取指令。
+
+![CO](./imgs/2023-06-06-15-37-35.png)
+
+### pipeline CPU 中的 Exception
+
+datapath 需要修改：
+1. flush 信号
+    - 整个 datapath 中有 3 个 flush 信号
+        1. IF.flush
+        1. ID.flush
+        1. EX.flush
+    - 发生异常的指令之前的指令继续执行，之后的指令全 flush 掉。（因此只有前 3 个流水线寄存器需要 flush 信号）
+1. PC 新增输入来源
+    - 如果发生中断，next PC 就是中断处理程序的 PC
+
+![CO](./imgs/2023-06-06-15-41-40.png)
+
+---
+
+举个例子：
+
+![CO](./imgs/2023-06-06-15-55-32.png)
+
+![CO](./imgs/2023-06-06-15-55-46.png)
+
+![CO](./imgs/2023-06-06-15-56-02.png)
+
+---
+
+与单周期 CPU Exception 的区别：
+1. 因为同一时刻有多条指令在执行，所以可能同时产生 **multiple exception**
+1. 发生 exception 的时候，PC 并不是产生 exception 的指令的 PC。如果能确定具体是哪条指令产生 exception，就叫 **precise exception**。一般来说精确中断比较困难，**inprecise exception** 也够用了 ![CO](./imgs/2023-06-06-15-57-32.png)
+
+### chapter 5 存储结构 Memory Hierarchy
+
+#### Memory Technology
+
+常见存储介质：
+1. SRAM：触发器
+1. DRAM：电容。需要刷新
+    - DDR：上升沿和下降沿都可以读写，所以 double data rate
+    - QDR：增加输入输出端口，quad data rate
+1. Flash：nonvolatile。
+    - 损耗均衡：优先把写的地址映射到被写次数少的内存上
+    - ![CO](./imgs/2023-06-06-16-16-47.png)
+1. disk
+    - cylinder & track 磁道 & sector 扇区
+    - 寻址操作：寻道 -> 旋转 -> 读写
+    - 磁盘读写时间计算： ![CO](./imgs/2023-06-06-16-19-52.png)
+
+---
+
+读写时间 & 成本：
+
+![CO](./imgs/2023-06-06-16-03-14.png)
+
+#### Memory Hierarchy
+
+##### Locality
+
+建立存储结构的理论基础：
+
+1. temporal locality: If an item is referenced, it will tend to be referenced again soon.
+1. spatial locality: If an item is referenced, items whose addresses are close by will tend to be referenced soon.
+
+---
+
+访存相关概念：
+
+1. block: minimum unit of data (block) for transfers 
+1. hit: data requested is in the upper level
+    - 参数：hit time - The time to access the upper level of the memory hierarchy, which includes the time needed to determine whether the access is a hit or a miss.
+    - 参数：hit rate
+1. miss: data requested is not in the upper level
+    - 参数：miss penalty - The time to replace a block in the upper level with the corresponding block from the lower level, plus the time to deliver this block to the processor.
+    - 参数：miss rate
+
+##### Memory Hierarchy
+
+![CO](./imgs/2023-06-06-16-42-47.png)
+
+其他技术：
+1. cache：解决速度问题
+1. virtual memory：解决容量问题
+
+#### The basics of Cache
+
+##### direct mapped cache
+
+lower memory 中每个块只能放在 cache 中的一个确定的块中。比如说 lower memory 中的地址截取低 n 位作为 cache 中的地址。
+
+![CO](./imgs/2023-06-06-16-47-59.png)
+
+- 优点：寻址简单
+- 缺点：miss 的概率非常大
+
+---
+
+寻址模式：
+1. byte offset: 块内偏移量，即字节数据与块首地址的偏移量
+    - 如果 byte offset 有 n 位，说明块内字节数为 $2^n$
+1. index: cache 地址
+    - 如果 index 有 n 位，说明 cache 存储空间大小（不包含索引数据）为 $2^n$ 个 block
+1. tag: tag + index 是内存中的地址
+    - tag 存在 cache 中，用于判断 miss 还是 hit
+    - 如果 tag + index 有 n 位，说明 memory 大小为 $2^n$ 个 block
+
+![CO](./imgs/2023-06-06-16-54-30.png)
+
+---
+
+举个例子理解一下 cache 怎么寻址，以及 cache 中除了存数据之外还存了什么
+
+![CO](./imgs/2023-06-06-17-00-38.png)
+
+![CO](./imgs/2023-06-06-17-00-53.png)
+
+---
+
+cache 大小计算例题：
+
+一个 block 需要的 bit 数 = data bit + tag bit + valid bit
+
+![CO](./imgs/2023-06-06-17-04-14.png)
+
+##### 
+
+#### Measuring and improving cache performance
+
+
+
+#### Virtual Memory
+
+
 
 
 ## Vivado
