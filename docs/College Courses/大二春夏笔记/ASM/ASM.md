@@ -32,6 +32,10 @@
         - 调用 `main.c` 之前会调用初始化模块，turbo C 的初始化函数在 `c0s.obj` 中
         - 调用 main 函数的汇编语言 `call 01FA`
 
+---
+
+**文档内搜索 `[TODO]` 查找待办事项！**
+
 ## 知识点
 
 ### 硬件知识
@@ -631,14 +635,98 @@ jbe next
 
 可以在 TB 中，修改 FL 的值观察跳转指令是否有向下的箭头。这样可以测试跳转指令通过什么条件判断跳转。
 
-##### 无条件跳转
+##### 跳转的分类：短跳、近跳、远跳
 
 1. 短跳
 1. 近跳
 1. 远跳
 
-主引导区 boot
+---
 
+**注意：短跳和近跳指令（远跳不是）的机器码中存储的是相对距离而不是绝对距离。这样做的目的是：当代码被移动时，仍旧能够正确执行。** 下面是一个移动代码块的例子。
+
+硬盘：磁道、磁头、扇区
+
+主引导区 master boot: 大小为 512B，在磁盘上的 0 道 0 头 1 扇区
+
+1. 开机之后，ROM 会把 master boot 的代码读取到 `0000:7C00`
+1. `jmp 0000:7C00`
+1. 主引导区代码会找到操作系统所在的磁盘分区（例如 C: 盘），然后把自身代码复制到 `0000:0600`，把 C: 盘的第一个扇区读到 `0000:7C00`
+1. `jmp 0000:7C00`
+1. 再由操作系统代码读取 ntldr 程序到内存
+
+---
+
+**注意：短跳和近跳指令只能实现段内跳转，但远跳是直接跳转到目标地址，可以跨段跳转**
+
+##### 其他跳转指令
+
+1. `loop next`
+    - 是一条简写指令，功能等价于 `dec cx` + `jnz next`，`cx` 是循环次数
+    - 注意最大的循环次数需要 `cx=0` 开始
+
+##### 函数调用和返回指令 & 函数参数传递方式 & 堆栈传参规范
+
+1. 近调用
+    - `call near ptr dest`：堆栈中仅压入 offset
+    - `retn`：`pop ip`
+1. 远调用
+    - `call far ptr dest`：堆栈中先后压入 segment 和 offset
+    - `retf`：`pop ip` + `pop cs`
+
+---
+
+函数传参方式：
+
+1. 使用寄存器
+1. 变量传递: 全局变量（不能用于递归函数或者多线程）or 局部变量
+1. 堆栈传递
+    - 注意 `call`（近调用） 指令一定会把下一条指令的 offset 压入堆栈，所以进入函数之后 `ss:[sp]` 存储的是 offset，`ss:[sp+2]` 存储的
+
+```asm
+f:
+    push bp
+    mov bp, sp
+    mov ax, [bp+4]
+    add ax, [bp+6]
+    mov [bp+4], ax
+    pop bp
+    ret
+main:
+    mov ax, 4
+    push ax
+    mov ax, 6
+    push ax
+    call f
+    pop ax      ; 取出结果
+    add sp, 2   ; 没用的参数也 pop 掉
+```
+
+上面的代码为什么参数在 `bp+4` 和 `bp+6`？
+1. `[bp]` 存储 old bp
+1. `[bp+2]` 存储 offset back
+1. `[bp+4]` 和 `[bp+6]` 存储两个 push 进去的参数
+
+---
+
+堆栈传参的三种规范（讲义 P154）
+
+1. `__cdecl`
+    - 参数从右到左压入堆栈，返回值存放在 ax 中
+    - 函数返回后，调用者负责清理堆栈中的参数
+    - 只有 `__cdecl` 规范能够处理参数个数不确定的情况
+1. `__pascal`
+    - 参数从左到右压入堆栈
+    - 被调用者通过 `ret 4` 清理参数，例如这个 4 的意思是 `sp += 4`
+1. `__stdcall`
+    - 参数从右到左压入堆栈
+    - 被调用者通过 `ret 4` 清理参数，例如这个 4 的意思是 `sp += 4`
+    - 部分 Windows API 的参数传递规范
+
+p.s. 在 TC 中使用 `int pascal f(int a, int b)` 语法使得函数以 pascal 规范传递参数
+
+p.s. 在 C 规范中，函数有义务保护 bp, bx, si, di。一般先创建局部变量，再保护寄存器
+1. bp 一般用于保存栈顶指针 sp
 
 #### 栈操作指令
 
@@ -736,6 +824,7 @@ FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值�
     mov bl,-2   ; BL=0FEh=-2
     idiv bl     ; AL=02h(商)，AH=00h(余数)
 ```
+
 #### 赋值相关指令 mov & xchg
 
 1. mov
@@ -778,7 +867,7 @@ FL 是不能直接引用的，需要通过压栈弹栈的操作把其中的值�
         1. `es:[di]`: 目标字符串地址 (di = destination index)
         1. `DF`: 0 表示正向，1 表示反向 (使用 std, cld 指令)
     - 调用：`rep movsb` 表示重复复制 cx 次，`movsb` 表示单次复制
-    - 结果：si 和 di 会跟着指令一起累加，最后指向字符串的末尾。cx 会跟着指令一起减，最后变成 0。
+    - 结果：si 和 di 会跟着指令一起累加，最后指向字符串的末尾。如果 rep 的话 cx 会跟着指令一起减，最后变成 0；**但如果不 rep 的话 cx 不会跟着一起减**。
 1. movsw
     - 同上，但是每次复制一个 word(2 byte)
 1. movsd
@@ -1052,6 +1141,130 @@ data ends
 ##### 使用远指针进行跳转
 
 
+#### 局部变量
+
+局部变量是在堆栈中定义的。考虑以下 C 语言函数：
+
+```c
+int add(int a, int b){
+    int c;
+    c = a + b;
+    return c;
+}
+```
+
+编译成汇编语言：
+
+```asm
+func_add:
+    push bp
+    mov bp, sp
+; int c;
+    sub sp, 2   ; 在堆栈空间中创建局部变量
+; a + b
+    mov ax, [bp+4]
+    add ax, [bp+6]
+; c = a + b;
+    mov [bp-2], ax
+; return c;
+    mov ax [bp-2]
+    mov sp, bp
+    pop bp
+    ret
+```
+
+在汇编语言中很容易看出局部变量的生命周期
+
+#### 递归
+
+注意 C 规范的函数需要保护 bp, bx, si, di 四个寄存器
+
+考虑以下递归函数：
+
+```c
+int f(int n){
+    if (n == 1) return 1;
+    return n+f(n-1);
+}
+```
+
+编译成汇编语言如下：
+
+```asm
+f:
+    push bp
+    mov bp, sp
+    mov ax, [bp+4]      ; ax = n
+                        ; 取出参数
+    cmp ax, 1
+    je do_ret
+    dec ax              ; ax = n-1
+    push ax             ; 设置参数
+    call f              ; 递归调用函数 f，ax = f(n-1)
+    add sp, 2           ; 调用者负责回收参数空间
+    add ax, [bp+4]      ; ax(return value) = f(n-1) + n
+do_ret:
+    pop bp
+    ret
+```
+
+#### 中断
+
+中断向量：
+
+1. `int n` 的中断向量一定保存在 `0:(n*4)` 的位置
+1. 每个中断向量是一个远指针，存储中断处理程序的逻辑地址
+
+在跳转中断处理函数之前，CPU 会执行以下 5 条命令：
+
+1. `pushf` 保存程序运行的状态，退出中断后不影响继续运行
+1. `push cs`
+1. `push offset here`
+1. `cli`: `IF = 0` 不允许中断嵌套
+1. `clt`: `TF = 0` 不允许单步模式，目的也是防止中断嵌套
+
+在执行 iret 时，CPU 是在执行以下三条命令：
+
+1. `pop ip`
+1. `pop cs`
+1. `popf`
+
+#### 结构体
+
+声明结构体：
+
+```asm
+_WORD struc
+    __letter db 21 dup(0)
+    __x dw 0
+    __y dw 0
+    __status dw 0
+    __hit_len dw 0
+    __old_char db 0
+    __old_color db 0
+    __px dw 0
+    __py dw 0
+    __bx dw 0
+    __by dw 0
+_WORD ends
+```
+
+定义结构体变量：
+
+```asm
+_w _WORD 25 dup (<>)
+```
+
+使用结构体变量：
+1. 使用 `.` 运算符
+1. 成员变量地址 = 结构体首地址 + 成员变量偏移地址
+
+```asm
+   mov ax, _a.score
+   xchg ax, [bx].score
+   mov _a.score, ax
+```
+
 
 ### DOS Interrupt
 
@@ -1118,6 +1331,228 @@ no_key:
     int 21h
 ```
 
+#### read string
+
+`int 21h(AH=0Ah)` 把字符串读到 buffer 中
+
+调用前的设置：
+1. 设置 `FD`
+1. `ds:dx` 指向 buf 的首地址
+1. `buf[0]` 写入 buffer 的最大容量（单位为 byte）
+
+调用后的结果：
+1. 读取到回车结束
+1. `buf[1]` 写入字符串长度（长度不包含回车），`buf[2]` 开始存储读入的字符串
+
+```asm
+   cld
+   mov ax, data
+   mov ds, ax
+   mov ah, 0Ah
+   mov dx, offset buf   ; ds:dx 指向 buf 的首地址
+   int 21h              ; int 21h 0Ah 号功能：输入字符串
+   xor bx, bx
+   mov bl, buf[1]       ; BL=输入字符串的长度
+   mov buf[bx+2], 00h   ; 把输入的回车符替换成00h
+                        ; buf[2]起是字符串的内容
+```
+
+#### 程序驻留
+
+`int 21h(AH=31h)`，设置 dx 为驻留的代码段长度（单位：节，1 节 = 16 byte）
+
+程序结束运行后部分内存仍驻留在内存中。可用于修改中断向量供别的程序使用。
+
+```asm
+    mov dx,offset initialize    ; DX=len before label initialize
+    add dx,100h                 ; include PSP's len
+    add dx,0Fh                  ; include remnant bytes
+    mov cl,4
+    shr dx,cl                   ; DX = program's paragraph size to keep resident
+    mov ah,31h
+    int 21h                     ; keep resident
+```
+
+#### set cursor
+
+`int 10h(AH = 02h)` 修改光标位置
+1. BH = page number
+    - 0-3 in modes 2&3
+    - 0-7 in modes 0&1
+    - 0 in graphics modes
+1. DH = row (00h is top)
+1. DL = column (00h is left)
+
+### 混合语言编程
+
+编译链接流程：
+
+1. `tcc -S hello.c` 可以把 C 程序编译成汇编语言，方便查看其结构
+    - 直接输入 `tcc` 可以查看 tcc 的所有参数
+    - 使用 `_TEXT segment` 定义代码段，可以参考下面的框架
+1. 把 C 函数翻译成 asm 代码
+    - 可以把参数对应的 `[bp+x]` 事先写好
+    - 注意保护用到的寄存器 ![ASM](./imgs/2023-05-31-20-43-49.png)
+1. `masm /Ml called;` 生成 `called.obj`
+1. `copy called.obj d:/tc` 拷贝到同目录下
+1. `tcc -v caller.c called.obj` 编译链接生成 exe 文件
+    - `-v` 调试时可以看到源代码
+
+汇编代码规范：
+
+asm_fun.asm：
+1. 汇编为 C 提供函数 & 全局变量：声明 `public`
+1. 汇编使用 C 函数 & 全局变量：声明 `extrn`
+1. 汇编中的变量名命名：C 中对应变量名前加下划线
+1. 可以使用 32 位寄存器: `.386` & `use16`
+1. 记得 `assume`，最后加一个 `end`
+
+```asm
+public _char2hex, _show_char, _hello_str; public使它们变成全局, C语言中才可以引用它们
+extrn _cfun:near, _vp:dword ; 声明C语言函数_cfun的类型为near ptr, C语言变量
+                            ; _vp的类型为dword ptr, 汇编语言中才可以引用它们
+
+.386
+_DATA	segment word public 'DATA' use16
+t db "0123456789ABCDEF"
+_hello_str db "Hello,world!", 0
+_DATA ends
+
+_TEXT segment byte public 'CODE' use16
+assume  cs:_TEXT, ds:_DATA
+
+; void show_char(int x, int y, char c, char color)
+; {
+;    char far *p = _vp + (y*80+x)*2;
+;    *p = c;
+;    *(p+1) = color;
+; }
+_show_char:
+  push bp
+  mov bp, sp
+  push bx
+  push es
+  les bx, [_vp]    ; ES=0B800h, BX=0000h
+                   ; _vp是定义在C语言中的远指针: 
+                   ; char far *vp = (char far *)0xB8000000;
+;------------------;
+; mov ax, [bp+6]   ; AX = y
+; mov cx, 80       ; CX = 80
+; mul cx           ; AX = y*80
+; add ax, [bp+4]   ; AX = y*80 + x
+; shl ax, 1        ; AX = (y*80+x) * 2
+;------------------;
+  push word ptr [bp+6]; y
+  push word ptr [bp+4]; x
+  call _cfun          ; 调用C语言函数int cfun(int x, int y)
+  add sp, 4           ; 清理堆栈中的2个参数
+                      ; cfun()返回AX = (y*80+x) * 2
+  add bx, ax       ; ES:BX就是远指针p
+  mov al, [bp+8]   ; AL = c
+  mov es:[bx], al  ; *p = c
+  mov al, [bp+10]  ; AL = color
+  mov es:[bx+1], al; *(p+1) = color
+  pop es
+  pop bx
+  pop bp
+  ret
+
+; void char2hex(char xx, char s[]) /* 把8位数转化成16进制格式 */
+; {
+;    char t[] = "0123456789ABCDEF";
+;    s[0] = t[(xx >> 4) & 0x0F]; /* 高4位 */
+;    s[1] = t[xx & 0x0F];        /* 低4位 */
+; }
+_char2hex:
+  push bp
+  mov bp, sp
+  push bx
+  push si
+  mov bx, offset t
+  mov al, [bp+4]
+  shr al, 4
+  and al, 0Fh
+  xlat; AL=[BX+AL]
+  mov si, [bp+6]; si=s
+  mov [si], al  ; s[0] = AL
+  mov al, [bp+4]
+  and al, 0Fh
+  xlat
+  mov [si+1], al; s[1] = AL
+  pop si
+  pop bx
+  pop bp
+  ret
+_TEXT ends
+end
+```
+
+cmain.c：
+1. 在汇编代码中实现的函数 & 全局变量，在 C 代码中用 `extern` 声明
+
+```c
+#include <stdio.h>
+#include <string.h>
+extern void show_char(int x, int y, char c, char color);
+extern void char2hex(char xx, char s[]);
+extern char hello_str[13];
+char far *vp = (char far *)0xB8000000;
+
+int cfun(int x, int y)
+{
+   return (y*80+x) * 2;
+}
+
+main()
+{
+   int i, n;
+   char buf[2], c;
+   n = strlen(hello_str);
+   for(i=0; i<n; i++)
+   {
+      c = hello_str[i];
+      char2hex(c, buf);
+      show_char(0, i, c, 0x71);
+      show_char(1, i, buf[0], 0x17);
+      show_char(2, i, buf[1], 0x17);
+   }
+}
+```
+
+注意点：
+1. int 和 short int 是 16 位的，long int 是 32 位的
+1. char 作为参数会被拓展到 16 位，因为栈里不能 push 单个字节
+1. 不能用双斜杠注释 `\\`，只能用 `\**\` 注释
+
+以上这些细节都可以通过查看 `tcc -S hello.c` 生成的 `hello.asm` 得知。
+
+---
+
+其他混合语言编程方法：
+
+1. 在 C 语言中内嵌
+    - 在 TC 中
+        ```c
+        int main(){
+            int x = 10, y = 20, z;
+            asm mov ax, x
+            asm add ax, y
+            asm mov z, ax
+            printf("%d\n", z);
+        }
+        ```
+        - 发现内嵌汇编语言可以用标签调用局部变量，编译器会帮忙编译成 `[bp+x]` 的形式
+    - 在 VC 中
+        ```c
+        __asm int 3
+        __asm{
+            mov ax, x
+            ...
+        }
+        ```
+        - 在代码中设置软件断点：加上 `int 3`，直接 run 就可以停在想停的地方
+        - VC 中可以用汇编语言编写整个函数，函数头需要酱紫写：`__declspec(naked) int f(int a, int b)`，`naked` 的作用是不让编译器加任何汇编语句。函数参数从左到右压入堆栈，然后压入返回值（留一块堆栈空间用于返回值）
+1. 
 
 ## 工具
 
@@ -1186,6 +1621,14 @@ MASM是Microsoft Macro Assembler的缩写，是微软公司为x86微处理器家
 - masm sum16.asm; 编译产生 obj 文件（可以省略后缀名）
 - link sum16.obj; 链接产生 exe 文件（可以省略后缀名）
 - td sum16.exe 在调试模式中运行
+
+#### tasm
+
+1. `tasm /m2 movcode;`
+1. `tlink movcode;`
+1. `td movcode`
+
+多次扫描解决 forward reference 的问题。如果 jmp 是 short jump，那指令就只有 2 个字节。如果用 masm 的话，会默认填充 nop 变成 3 个字节。
 
 ### 010 Editor
 
@@ -1334,6 +1777,20 @@ tips：soft-ICE 如何实现硬件断点？因为 bochs 是解释型的，所以
 1. F7: 编译链接
 1. F10: 单步跟踪
 1. 菜单栏 - view - debug windows - disassemble：显示源代码编译成的汇编代码
+
+### GameBuster
+
+1. 打开 bochs 虚拟机
+1. `cd game` + `gb` 打开 gamebuster
+1. `pc` 打开 pacman
+1. 双击 left ctrl 打开 game buster 面板
+1. 分析血量值的存储地址
+    - 进入 address analysis，选择低精度（Low），输入当前血量值。然后在游戏中通过死亡减少血量值，多次输入当前血量值。gb 会逐渐缩小查询范围，最终确定存储血量的地址
+1. 设置锁血挂
+    - 在 address analysis 中，回车：选中数据
+    - 在 list address 中，`alt + 1` 对表格的第 1 行的备注和地址进行修改，看到 `*` 的时候敲回车可以填入刚刚选中的数据
+    - `1` 修改锁定的值
+    - `shift + 1` 锁定刚刚修改的地址和值
 
 ## 实验
 
@@ -2297,6 +2754,11 @@ end main
 
 按键按下和松开都会被抓取。ctrl，shift，caps lock 等键的行为也会被抓取。
 
+注意点：
+1. 使用 `in` 和 `out` 读取和写入端口
+1. 中断结束之后，发EOI(End Of Interrupt)信号给中断控制器，表示我们已处理当前的硬件中断(硬件中断处理最后都要这2条指令)。因为我们没有跳转到的old_9h，所以必须自己发EOI信号。
+1. 如果跳到old_9h的话，则old_9h里面有这2条指令，这里就不要写。但是跳转 old_9h 的时候注意把 old_9h 变量定义在代码段内，用 `jmp dword ptr cs:[old_9h]` 进行跳转。因为自定义中断处理程序在代码段中，我们可以保证 cs 一定的值和我们的预期相同，但 ds 就不能保证了。
+
 ```asm
 ;---------------------------------------
 ;PrtSc/SysRq: E0 2A E0 37 E0 B7 E0 AA  ;
@@ -2598,7 +3060,7 @@ end initialize
 
 ### 使用定时器中断和声卡端口实现播放音乐 music.asm
 
-程序功能：播放一段音乐
+程序功能：播放一段音乐（讲义 P162）
 
 ```asm
 NOTE_1  =  440 ; 音调频率
@@ -2788,7 +3250,9 @@ stk ends
 end main
 ```
 
-### 自定义除 0 异常的中断处理 int00.asm
+### 自定义中断处理函数
+
+#### 自定义除 0 异常的中断处理 int00.asm
 
 在调用 int 00h 之前，CPU 会执行以下三条命令：
 1. `pushf` 保存程序运行的状态，退出中断后不影响继续运行
@@ -2855,4 +3319,630 @@ int_00h:
    iret
 code ends
 end main
+```
+
+[TODO] 尝试修改代码，使得中断处理函数返回之后跳过 div 指令直接执行下一条指令
+
+#### int 80h
+
+```asm
+code segment
+assume cs:code
+old_80h dw 0, 0
+main:
+   xor ax, ax
+   mov es, ax
+   mov bx, 80h*4; mov bx, 200h
+   mov ax, es:[bx]
+   mov old_80h[0], ax
+   mov ax, es:[bx+2]
+   mov old_80h[2], ax
+   ;
+   mov word ptr es:[bx], offset int_80h
+   mov es:[bx+2], cs
+   ;
+   mov ah, 1
+   int 80h; AL=键盘输入的ASCII码
+next:
+   mov ah, 2
+   mov dl, al
+   int 80h
+   ;
+   mov ax, old_80h[0]
+   mov es:[bx], ax
+   mov ax, old_80h[2]
+   mov es:[bx+2], ax
+   ;
+   mov ah, 4Ch
+   int 21h
+int_80h: ; ISR(Interrupt Service Routine)
+         ; 中断服务函数
+   cmp ah, 1
+   je is_1
+is_2:
+   push es
+   push bx
+   push ax
+   mov bx, 0B800h
+   mov es, bx
+   mov byte ptr es:[160], dl
+   mov byte ptr es:[161], 17h
+   pop ax
+   pop bx
+   pop es
+   jmp done
+is_1:
+   int 21h
+done:
+   iret
+code ends
+end main
+```
+
+#### int 8h System Timer
+
+程序功能：每隔 1 秒打印 1 个数字（精确计时），到 9 的时候退出
+
+```asm
+data segment
+s db '0',17h
+count db 0
+stop db 0
+data ends
+code segment
+assume cs:code, ds:data
+main:
+   mov ax, data
+   mov ds, ax
+   xor ax, ax
+   mov es, ax; ES=0
+   mov bx, 8h*4
+   push es:[bx]
+   pop cs:old8h[0]; old8h[0] = es:[bx]
+   push es:[bx+2]
+   pop cs:old8h[2]
+
+   cli; IF=0禁止中断
+   mov word ptr es:[bx], offset int8h
+   mov es:[bx+2], cs; 或seg int8h或code
+   sti; IF=1允许中断
+wait_a_while:
+   cmp stop, 1
+   jne wait_a_while
+   cli
+   mov ax,cs:old8h[0]
+   mov es:[bx], ax
+   mov ax,cs:old8h[2]
+   mov es:[bx+2],ax
+   sti
+   mov ah, 4Ch
+   int 21h
+int8h:    ; interrupt service routine
+   push ax
+   push cx
+   push si
+   push di
+   push ds
+   push es
+   mov ax, 0B800h
+   mov es, ax
+   mov di, 0
+   mov ax, data
+   mov ds, ax
+   inc count
+   cmp count, 18
+   jb skip
+   mov count, 0
+   mov si, offset s
+   mov cx, 2
+   cld
+   rep movsb
+   inc s[0]
+   cmp s[0], '9'
+   jbe skip
+   mov stop, 1
+skip:
+   pop es
+   pop ds
+   pop di
+   pop si
+   pop cx
+   pop ax
+   ;push ax
+   ;mov al, 20h
+   ;out 20h, al
+   ;pop ax
+   ;iret
+   jmp dword ptr cs:[old8h]
+old8h dw 1234h, 5678h
+;设原int 8h的中断向量为5678h:1234h
+code ends
+end main
+```
+
+[TODO] 理解代码功能
+
+### 代码复制 movcode.asm & printf.c
+
+程序功能：
+1. 把 `begin_flag` 到 `end_flag` 部分的代码复制到 `cs:1000` 处
+1. 把 `main` 到 `endflag` 部分用 0 覆盖
+
+代码的自我修改是反调试的一种方法
+
+```asm
+code segment
+assume cs:code, ds:code, es:code
+main:
+   push cs
+   pop ds; DS=CS
+   push cs
+   pop es; ES=CS
+   cld
+   mov ah, 2
+   mov dl, 'A'
+   int 21h
+   mov si, offset begin_flag                    ; 源字符串地址
+   mov di, 1000h                                ; 目标字符串地址
+   mov cx, offset end_flag-offset begin_flag    ; 复制的字节数
+   rep movsb
+   mov cx, offset end_flag - offset main
+   mov di, offset main
+   mov bx, 1000h
+   jmp bx               ; 跳转到 0000:1000 的位置继续执行
+begin_flag:
+   jmp next
+next:
+   mov al, 0
+   rep stosb
+   mov ah, 2
+   mov dl, 'B'
+   int 21h
+   mov ah, 4Ch
+   int 21h
+end_flag:
+code ends
+end main
+```
+
+--- 
+
+程序功能：用自定义函数覆盖 printf 函数
+
+```c
+/* 用DosBoxTc编译，菜单Options->Compiler->Model->Tiny
+    Compile->Compile to OBJ
+    Compile->Link EXE file
+    Run->Run
+    Run->User Screen
+ */
+
+extern int printf();
+int f(int a, int b)
+{
+   return a+b;
+}
+void zzz(void)
+{
+}
+main()
+{
+   char buf[100];
+   char *p = (char *)printf;
+   char *q = (char *)f;
+   int n = (char *)zzz - (char *)f; // 通过后一个函数的首地址减去当前函数首地址计算函数的长度
+                                    // 强制类型转换为 char*，减法的结果单位是字节。C 中指针相减和 ASM 中不同。
+   int y;
+   memcpy(buf, p, n);
+   memcpy(p, q, n);
+   y = printf(10, 20);
+   memcpy(p, buf, n);
+   printf("y=%d\n", y);
+}
+```
+
+![ASM](./imgs/2023-05-31-12-30-58.png)
+
+C 中的函数参数通过堆栈传递。顺序为从后往前依次 push 到堆栈中。
+
+![ASM](./imgs/2023-05-31-12-38-59.png)
+
+C 调用函数参数的方法：把栈顶指针 sp 赋值给 bp，然后用 bp 寻址找到栈里的参数。
+
+TC 编译器特有的 C++ 编译指令：`#pragma comment(linker, "/SECTION:.text,RWX")`，告诉链接器代码段 `text` 改为可读可写
+
+### 短跳近跳远跳的比较 jmp.asm
+
+注意事项：
+1. 短跳和近跳可以交给编译器去区分。
+1. `jmp` 不能用立即数作为参数，例如 `jmp 6h` 是不行的
+
+远跳的汇编指令：
+1. 在 `jmp` 指令前加上 `far ptr`
+1. 如果是远跳，且是向后引用，可以不加 `far ptr`，在跳转的标签上加上 `label far`，但是比较鸡肋
+
+---
+
+使用 far ptr 的写法：
+
+```asm
+code segment
+assume cs:code
+main:
+   jmp next ; jmp short next
+            ; 机器码是 2 个字节
+exit:
+   mov ah, 4Ch
+   int 21h
+next:
+   mov ah, 2
+   mov dl, 'A'
+   int 21h
+   jmp abc  ; jmp near ptr abc
+            ; 机器码是 3 个字节
+   db 200h dup(0)
+abc:
+   jmp far ptr away ; jmp far ptr away
+                    ; 机器码是 5 个字节
+code ends
+
+fff segment
+assume cs:fff
+away:
+   mov ah, 2
+   mov dl, 'F'
+   int 21h
+   jmp far ptr exit ; jmp far ptr exit
+                    ; 机器码是 5 个字节
+fff ends
+end main
+```
+
+---
+
+使用 label far 的写法：
+
+```asm
+code segment
+assume cs:code
+main:
+   jmp next; jmp short next
+exit label far:
+   mov ah, 4Ch
+   int 21h
+next:
+   mov ah, 2
+   mov dl, 'A'
+   int 21h
+   jmp abc; jmp near ptr abc
+   db 200h dup(0)
+abc:
+   jmp far ptr away; jmp far ptr away
+code ends
+
+fff segment
+assume cs:fff
+away:
+   mov ah, 2
+   mov dl, 'F'
+   int 21h
+   jmp exit; jmp far ptr exit
+fff ends
+end main
+```
+
+---
+
+使用硬编码的写法实现跳转到立即数：
+
+```asm
+    db 0EAh
+    dd 0FFFF0000h
+```
+
+以上代码相当于 `jmp far ptr FFFF:0000`
+
+### 可变参数个数函数实现 myprintf.c
+
+函数 f 的功能是：读入一个 format 字符串，根据 format 计算后面的参数之和
+
+```c
+#include <stdio.h>
+double f(char *s, ...) // 三个点是 C 语法，表示后面的参数有多少个不确定
+{  double y=0;
+   char *p = (char *)&s; /* p = bp+4 */
+   p += sizeof(s); /* p = bp+6 */
+   while(*s != '\0')
+   {
+      if(*s == 'i')
+      {
+         y += *(int *)p;
+         p += sizeof(int);
+      }
+      else if(*s == 'l')
+      {
+         y += *(long*)p;
+         p += sizeof(long);
+      }
+      else if(*s == 'd')
+      {
+         y += *(double *)p;
+         p += sizeof(double);
+      }
+      s++;
+   }
+   return y;
+}
+main()
+{
+   double y;
+   y = f("ild", 10, 20L, 3.14);
+   printf("y=%lf\n", y);
+}
+```
+
+### HW5 简易计算器
+
+本题中用到了 `call` 的一种非常规用法。`call word ptr fun[bx]` 将会根据内存中存储的绝对地址进行近跳，跳转到 `ds:fun[bx]`。
+
+```asm
+;本题要求:
+comment %
+键盘输入一个表达式, 该表达式中包含若干个十进制非符号数(≤4294967295)及以下运算符:
+   + * /
+输出该表达式的十六进制值。
+其中除法运算只需要计算商(丢弃余数),
+表达式中的运算符不需要考虑优先级即一律按从左到右顺序计算。
+若表达式中的任何一步计算结果超过32位(即大于0FFFFFFFFh),
+则该步运算结果仅保留低32位(丢弃高32位)。
+例如：
+输入：
+12345+56789*54321/9876
+输出：
+0005CD62
+=======================================================================%
+;==========请把以下代码保存到src\main.asm==============================
+;==========选中main.sh及src文件夹->右键->压缩成submit.zip提交==========
+.386
+data segment use16
+t db "0123456789ABCDEF"
+buf  db 81, 0, 81 dup(0)   ; buf 第一个字节存储最大长度
+                           ; buf 第二个字节存储输入字符串的长度
+b    dd 0      ; b 的含义是前项计算结果 ds:[63h]
+c    dd 0      ; c 的含义是当前读入的数 ds:[67h]
+prev_op  dw 1; 1 means '+', 2 means '*', 3 means '/', 0 means '\0'
+fun  dw 0000h, fun_add, fun_mul, fun_div ; 从 ds:[6Dh] 开始
+s    db 00h, '+', '*', '/'
+data ends
+
+code segment use16
+assume cs:code, ds:data
+output:
+   push eax
+   push ebx
+   push ecx
+   push edx
+   mov bx, offset t
+   mov ecx, 8
+next:
+   rol eax, 4
+   push eax
+   and eax, 0Fh
+   xlat
+   mov ah, 2
+   mov dl, al
+   int 21h
+   pop eax
+   loop next
+   mov ah, 2
+   mov dl, 0Dh
+   int 21h
+   mov dl, 0Ah
+   int 21h
+   pop edx
+   pop ecx
+   pop ebx
+   pop eax
+   ret
+
+main:
+   cld
+   mov ax, data
+   mov ds, ax
+   mov ah, 0Ah
+   mov dx, offset buf   ; ds:dx 指向 buf 的首地址
+   int 21h              ; int 21h 0Ah 号功能：输入字符串
+   xor bx, bx
+   mov bl, buf[1]    ; BL=输入字符串的长度
+   mov buf[bx+2], 00h; 把输入的回车符替换成00h
+                     ; buf[2]起是字符串的内容
+   mov ah, 2
+   mov dl, 0Dh
+   int 21h           ; 输出回车
+   mov dl, 0Ah
+   int 21h           ; 输出换行
+   ;
+   lea si, buf[2]    ; ds:si->输入的字符串
+   ;
+;请在#1_begin和#1_end之间补充代码实现以下功能:
+;    计算ds:si指向的表达式,运算结果保存到变量[b]中
+;注意: 
+;    所有补充代码包括自定义函数及变量均必须
+;    放在#1_begin和#1_end之间
+;#1_begin-------------------------------------
+loop_begin:
+   lodsb             ; 读取 ds:[si], 并且 si++
+   xor ecx, ecx
+   mov cl, al        ; cl = 下一个字符
+   cmp cl, '0'
+   jb not_number
+   cmp cl, '9'
+   ja not_number
+is_number:           ; 如果下一个字符是数字
+   mov eax, [c]
+   mov ebx, 10
+   mul ebx           ; eax = c * 10
+   sub cl, '0'
+   add eax, ecx      ; eax = c * 10 + (new_char-'0')
+   mov [c], eax
+   jmp done
+not_number:          ; 如果下一个字符是运算符
+                     ; 先把上一个运算符的结果算出来
+                     ; 再用一个循环判断字符是什么，存到 prev_op 中
+   mov bx, [prev_op]
+   shl bx, 1                  ; 数组元素两个字节，这边要 * 2
+   call word ptr fun[bx]      ; 调用函数计算结果
+   mov bx, 4
+loop_find_op:
+   dec bx
+   cmp cl, s[bx]
+   je set_prev_op
+   and bx, bx
+   jnz loop_find_op
+set_prev_op:
+   mov [prev_op], bx
+done:
+   cmp [prev_op], 0
+   jne loop_begin    ; 只有读到字符串末尾的 00h 才会把 prev_op 置 0
+                     ; 在字符串读取完毕后退出
+   jmp do_output
+; 自定义计算函数
+fun_add:
+   push eax
+   push ebx
+   mov eax, [b]
+   mov ebx, [c]
+   add eax, ebx
+   mov [b], eax   ; b = b + c
+   xor ebx, ebx
+   mov [c], ebx   ; c = 0
+   pop ebx
+   pop eax
+   ret
+fun_mul:
+   push eax
+   push ebx
+   mov eax, [b]
+   mov ebx, [c]
+   mul ebx
+   mov [b], eax   ; b = b + c
+   xor ebx, ebx
+   mov [c], ebx   ; c = 0
+   pop ebx
+   pop eax
+   ret
+fun_div:
+   push eax
+   push ebx
+   push edx
+   mov eax, [b]
+   mov ebx, [c]
+   xor edx, edx
+   div ebx        ; 除法指令为 edx:eax / ebx = eax ... edx
+                  ; 所以事先要清空 edx
+   mov [b], eax   ; b = b + c
+   xor ebx, ebx
+   mov [c], ebx   ; c = 0
+   pop edx
+   pop ebx
+   pop eax
+   ret
+;#1_end=======================================
+do_output:
+   mov eax, [b]   ; 计算结果存储在 b 中
+   call output    ; 用16进制格式输出变量b的值
+exit:
+   mov ah, 4Ch
+   int 21h
+code ends
+end main
+;==========请把以上代码保存到src\main.asm==============================
+```
+
+
+### pacman 锁血挂！
+
+程序思路：
+1. 使用 gamebuster 得到血量在内存中的地址
+1. 使用 softICE 设置硬件断点，找到修改血量的语句；`map` 命令查看程序的 psp，cs 和 ds 是 softICE 中显示的逻辑地址减去 psp。
+    - 例如 `ds-psp=14Bh`, `cs-psp=20h`
+    - 在程序中通过 `int 21h(AH=62h)` 把当前程序 psp 读到 bx 中
+1. 修改 int 8h 中断，先看看之前算出来的减血量语句的位置是不是放着减血量语句，如果是的话表示进入游戏，可以修改。每隔一段时间就把血量值重置。
+1. 使用 int 21h 的 61h 号功能程序驻留，让自定义的 int 8h 中断处理函数留在内存中
+
+```asm
+;==============源程序开始========================
+code segment
+assume cs:code,ds:code
+;--------------Int_8h---------------------------
+int_8h:
+    cmp cs:fixed, 1
+    je goto_old_8h
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+    push di
+    push ds
+    push es
+    mov ah, 62h
+    int 21h; BX=psp
+    add bx, 20h
+    mov ds, bx
+    cmp byte ptr ds:[785h], 48h
+    jne skip
+    mov byte ptr ds:[785h], 90h
+    mov cs:fixed, 1
+skip:
+    pop es
+    pop ds
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+goto_old_8h:
+    jmp dword ptr cs:[old_8h]
+fixed  db 0
+old_8h dw 0,0; old vector of int_8h
+;---------End of Int_8h----------
+;============以上代码需要驻留=====================================
+
+;程序从此处开始运行
+initialize:
+    push cs
+    pop ds ; DS=CS
+    xor ax, ax
+    mov es, ax
+    mov bx, 8*4; ES:BX-> int_8h's vector
+    push es:[bx]
+    pop old_8h[0]
+    push es:[bx+2]
+    pop old_8h[2]; save old vector of int_8h
+    mov ax, offset int_8h
+    cli    ; disable interrupt when changing int_8h's vector
+    push ax
+    pop es:[bx]
+    push cs
+    pop es:[bx+2]; set vector of int_8h
+    sti    ; enable interrupt
+install:
+    mov ah,9
+    mov dx,offset install_msg
+    int 21h
+
+    mov dx,offset initialize; DX=len before label initialize
+    add dx,100h; include PSP's len
+    add dx,0Fh; include remnant bytes
+    mov cl,4
+    shr dx,cl ; DX=program's paragraph size to keep resident
+    mov ah,31h
+    int 21h   ; keep resident
+install_msg db 'MyPcMan',0Dh,0Ah, '$'
+code ends
+end initialize
+;==============源程序结束========================
+
 ```

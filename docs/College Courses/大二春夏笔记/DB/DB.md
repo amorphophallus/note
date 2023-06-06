@@ -513,7 +513,8 @@ why does it make sense?
 
 1. 选择算子可以有很多种实现方法：比如线性扫描、B+树索引
 1. join 算子可以有多种实现方法：比如 hash join, merge join
-1. pipeline 方法：部分结果产出之后直接送到上层，上层算子可以并行执行
+1. **pipeline 方法**：部分结果产出之后直接送到上层，上层算子可以并行执行
+1. 并行方法
 
 ![DB](./imgs/2023-05-21-15-07-22.png)
 
@@ -782,6 +783,351 @@ recursive partition:
 - 主要就是 partition 轮数的公式
 
 ![DB](./imgs/2023-05-22-10-12-55.png)
+
+### ch16 Query Optimization
+
+#### introduction
+
+- cost estimation 的依据
+    1. statistical information: 数据库的统计信息，比如说是否有索引，有多少不同值
+    1. cadinality estimation: 对中间结果大小的估计
+- 查看 evaluation plan: `explain`
+
+#### 关系代数表达式的化简
+
+关系代数等价变换：
+
+- 第一条和第二条可以用在：如果 $\theta_1$ 条件上有索引，可以把 $\theta_1$ 放到底层去做，$\theta_2$ 需要处理的数据量就变少了
+- 第四条、第六条、第七条可以用在：减少中间结果的大小，方法可以是小表先连接、选择操作先做
+- 第五条可以用在：一些连接算法外层循环越小，代价就越小
+- 第八条、第十一条可以看看
+
+但是检测等价变换规则并替换代价太大，实际中一般是运用启发式规则。
+
+![DB](./imgs/2023-05-29-09-56-03.png)
+![DB](./imgs/2023-05-29-09-58-47.png)
+![DB](./imgs/2023-05-29-09-59-02.png)
+![DB](./imgs/2023-05-29-10-01-18.png)
+![DB](./imgs/2023-05-29-10-01-31.png)
+![DB](./imgs/2023-05-29-10-01-43.png)
+
+#### 使用统计信息进行代价估计
+
+##### 常用统计信息
+
+1. 估计值
+1. 直方图
+
+![DB](./imgs/2023-05-29-10-23-00.png)
+
+##### 选择操作的估算方法
+
+1. 单条件单值选择：**假设平均分布**
+1. 单条件范围选择：**假设平均分布**
+1. 多条件选择：**假设不同条件之间独立，且都是平均分布**
+
+![DB](./imgs/2023-05-29-10-28-38.png)
+
+![DB](./imgs/2023-05-29-10-32-45.png)
+
+##### 连接操作的估算方法
+
+1. 笛卡尔积
+1. 自然连接
+    - 如果共同属性是 key，则用两表大小的较小值来估计
+    - 如果共同属性是 foreign key
+    - 如果共同属性不是 key，则需要估计 r 中的一个 tuple 可能需要和 s 中的多少个 tuple 连接，这个值用 $V(A, s)$ 来估计
+
+估值原则：一般来说是往大了估计
+
+![DB](./imgs/2023-05-29-11-06-42.png)
+![DB](./imgs/2023-05-29-11-09-54.png)
+![DB](./imgs/2023-05-29-11-10-09.png)
+
+##### 其他操作的估算方法
+
+![DB](./imgs/2023-05-29-11-11-38.png)
+
+##### 估计中间结果的统计数据
+
+估计 $V(A, r)$：
+1. 选择操作的结果
+    - 如果选择条件直接规定了选择哪些属性值，那就不用估计了
+    - 如果选择条件是范围查询，就用最大值最小值计算选中率
+    - 其他情况：假设每个 tuple 的 A 属性值都不同
+1. 连接操作的结果
+    - 如果属性 A 只存在于其中一张表中
+    - 如果属性 A 是一个复合属性，且两张表都包含其中的一部分属性
+1. 投影操作的结果
+1. 统计（聚合）操作的结果
+    
+
+![DB](./imgs/2023-05-29-11-15-54.png)
+![DB](./imgs/2023-05-29-11-19-16.png)
+![DB](./imgs/2023-05-29-11-24-46.png)
+
+#### 选择 Evaluation Plan
+
+1. cost-based optimizer
+    - 考虑操作的连贯性：例如 hash join 代价比 merge join 低，但是 merge join 的结果是排好序的，可能会利于上层操作的执行
+    - 优化代价 & 优化结果的 tradeoff：如果 evaluation plan 将会被反复使用，则花更多的代价对其进行优化
+
+##### Cost-based Join Order Selection
+
+1. 可能性个数计算公式：可以看成是树的计数，左右子树交换算不同 ![DB](./imgs/2023-05-29-11-33-12.png)
+1. 动态规划方法：无后效性 ![DB](./imgs/2023-05-29-11-32-17.png)
+1. join order optimization algorithm 通用算法：简单来说就是先枚举当前 relation 集合 S 的分割，再枚举用什么方法把分割后的集合连接起来 ![DB](./imgs/2023-05-29-11-36-56.png)
+1. left deep join tree：通过限制树的形状，减少通用算法的 cost ![DB](./imgs/2023-05-29-11-42-01.png)
+
+#### 其他查询优化
+
+##### 优化嵌套查询
+
+先看一个例子：
+
+![DB](./imgs/2023-05-29-11-52-45.png)
+
+1. 暴力算法：两重循环
+1. 优化：使用半连接 ![DB](./imgs/2023-05-29-11-55-08.png)
+
+再推广到一般形式：
+
+![DB](./imgs/2023-05-29-11-58-35.png)
+
+再推广到包含聚合操作的形式：
+
+![DB](./imgs/2023-05-29-12-04-15.png)
+
+##### 维护 materialized view
+
+incremental view maintenance 增量维护：
+1. join operation: ![DB](./imgs/2023-05-29-12-10-52.png)
+1. selection operation: ![DB](./imgs/2023-05-29-12-11-34.png)
+1. aggregation operation: 修改所属聚类的统计值
+1. 复合条件增量维护
+
+使用 materialized view 优化 evaluation plan：把子查询的结果提前 materialize 了
+
+materialized view 和 index 的选择：
+
+### ch17 事务 Transaction
+
+#### Transaction Concept
+
+##### Two main issues to deal with
+
+1. Failure
+1. Concurrent 并发
+
+##### ACID properties
+
+1. 原子性由数据库的恢复机制保证
+1. 一致性由程序员实现
+1. 隔离性由数据库的并发访问机制保证
+
+![DB](./imgs/2023-06-05-09-07-14.png)
+
+#### A Simple Transaction Model
+
+##### 简化模型
+
+仅保留 read 和 write 两个动作
+
+![DB](./imgs/2023-06-05-09-14-25.png)
+
+##### 举个转账的例子
+
+![DB](./imgs/2023-06-05-09-16-58.png)
+
+![DB](./imgs/2023-06-05-09-17-15.png)
+
+![DB](./imgs/2023-06-05-09-17-39.png)
+
+##### 事务状态 Transaction State
+
+![DB](./imgs/2023-06-05-09-19-11.png)
+
+#### Concurrent Executions
+
+本节讨论并发操作可能产生的问题以及解决办法
+
+##### Lost Update（丢失修改）
+
+![DB](./imgs/2023-06-05-09-26-12.png)
+
+##### Dirty Read（读脏数据）
+
+![DB](./imgs/2023-06-05-09-28-39.png)
+
+##### Unrepeatable Read （不可重复读）
+
+![DB](./imgs/2023-06-05-09-28-53.png)
+
+##### Phantom Problem（幽灵问题 ）
+
+![DB](./imgs/2023-06-05-09-29-08.png)
+
+不可重复读和幽灵问题的区别：不可重复读是针对单个数据，而幽灵问题是针对整张表。后者更难处理，耗费的资源也更多。
+
+##### Schedule
+
+Schedule: a sequences of instructions that specify the chronological order in which instructions of concurrent transactions are executed
+
+---
+
+举个例子，串行调度：
+
+![DB](./imgs/2023-06-05-10-13-37.png)
+
+下面这个 schedule 就等价于串行调度：
+
+![DB](./imgs/2023-06-05-09-42-07.png)
+
+#### Serializability 可串行化
+
+A (possibly concurrent) schedule is serializable if it is equivalent to a serial schedule (preserves database consistency).
+
+##### conflict serializability(冲突可串行化)
+
+定义：
+
+1. 冲突：Instructions li and lj of transactions Ti and Tj respectively, **conflict** if and only if there exists some item Q accessed by both li and lj, and at least one of these instructions wrote Q.
+
+![DB](./imgs/2023-06-05-11-05-58.png)
+
+2. 冲突等价：If a schedule S can be transformed into a schedule S´  by a series of **swaps of non-conflicting instructions**, we say that S and S´ are **conflict equivalent**.
+
+![DB](./imgs/2023-06-05-10-20-59.png)
+
+---
+
+用 **Precedence graph(前驱图)** 判断冲突可串行化：
+
+两重循环，判断每对事务之间是否有冲突，若有冲突就连一条有向边。如果最终得到的有向图是一个 DAG，说明可串行化，否则不行。
+
+![DB](./imgs/2023-06-05-10-26-32.png)
+
+##### view serializability(视图可串行化)
+
+视图可串行化：串行化，且保证
+1. 所有读的结果都和串行化之前一样
+1. 所有事务结束之后的数据和串行化之前一样（即最后一次写的数据一样，除了最后一次之外的写顺序无关紧要）
+
+---
+
+举例：
+
+![DB](./imgs/2023-06-05-10-32-05.png)
+
+以上例子中，
+1. T27 必须在其他两个事务之前，因为他要读没有写过的数据
+1. T29 必须在其他两个事务之后，因为他最后一次写 Q
+
+---
+
+性质：
+
+Every conflict serializable schedule is also view serializable.
+
+##### Other Notions of Serializability
+
+因为加减法具有交换律，所以是可串行化的。但是数据库系统不考虑语句的语义，所以这两个事务不是冲突可串行化的。
+
+![DB](./imgs/2023-06-05-10-38-02.png)
+
+#### Recoverability
+
+**Recoverable schedule**（可恢复调度） — if a transaction Tj reads a data item previously written by a transaction Ti , then the commit operation of Ti  appears before the commit operation of Tj.
+
+*可恢复* 比 *可串行化* 多考虑了 commit 和 abort
+
+不可恢复的例子：
+
+![DB](./imgs/2023-06-05-11-12-42.png)
+
+---
+
+![DB](./imgs/2023-06-05-10-43-11.png)
+
+If T10 fails, T11 and T12 must also be rolled back.
+
+cascading rollback 会导致效率降低，所以是需要避免的
+
+---
+
+无级联可恢复
+
+Cascadeless schedules（无级联调度） — cascading rollbacks cannot occur; for each pair of transactions Ti and Tj such that Tj  reads a data item previously written by Ti, the commit operation of Ti  appears before the read operation of Tj.
+
+#### Transaction Isolation Levels
+
+四种隔离级别：
+
+![DB](./imgs/2023-06-05-11-18-36.png)
+
+设置隔离级别的语句：In SQL `set transaction isolation level serializable`
+
+#### Concurrency Control Protocols
+
+**数据库系统的实现**：通过协议，规定事务的形式，从而保证事务满足 *视图可串行化*、*冲突可串行化* 或者 *可恢复* 的性质。
+
+![DB](./imgs/2023-06-05-11-29-17.png)
+
+### ch18 并发控制 Concurrency Control 
+
+#### Lock-Based Protocols
+
+##### 基本概念
+
+基于锁的协议基本约定：访问数据之前一定要申请锁，访问结束之后解除锁。
+
+两种锁：
+1. exclusive (X) mode. Data item can be both read as well as written. X-lock is requested using  lock-X instruction.
+2. shared (S) mode. Data item can only be read. S-lock is requested using  lock-S instruction.
+
+![DB](./imgs/2023-06-05-11-35-43.png)
+
+##### The Two-Phase Locking Protocol
+
+最简单的协议：所有加锁动作必须在所有解锁动作之前。能够保证事务一定 conflict-serializable 的。
+
+![DB](./imgs/2023-06-05-11-38-42.png)
+
+![DB](./imgs/2023-06-05-11-38-56.png)
+
+---
+
+证明可串行化：
+
+![DB](./imgs/2023-06-05-11-42-45.png)
+
+先证明一个引理：如果在前驱图中 Ti -> Tj 有一条有向边，则 Ti 的 lock point 一定在 Tj 的 lock point 之前
+
+有向边说明 Ti 和 Tj 一定都访问了同一块数据 D，且 Ti 对 D 的访问一定在 Tj 开始访问 D 之前结束了。所以 Ti 的 unlock D 一定在 Tj lock D 之前。最后用以下 two-phase protochol 的性质得出结论。
+
+![DB](./imgs/2023-06-05-11-50-11.png)
+
+再证明：lock point 最早的事务一定可以交换到序列的最前端
+
+反证法。假设 T1 是 lock point 最早的事务，但是有一条有向边从 Tx -> T1。那么 Tx 的 lock point 就比 T1 早（引理），矛盾。 
+
+#### Deadlock Handling
+
+
+
+#### Multiple Granularity
+
+
+
+#### Insert and Delete Operations
+
+
+
+#### Multiversion Schemes
+
+
+
+
 
 ## 错题摘录
 

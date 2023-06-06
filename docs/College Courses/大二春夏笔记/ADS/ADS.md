@@ -1045,7 +1045,228 @@ m 个箱子，先放了 (m-1)*m 个体积为 1 的物体，最后再放入一个
 
 ## 局部搜索 Local Search
 
+### 定义和使用场景
 
+- 使用场景：已知一个**可行解**（可能是由近似算法得到的），使用局部搜索寻找可行解的**改进方案**。
+- Local：定义 neighbor relation，不断在 neighborhood 中搜索更优的解，直到达到局部极值或者超出迭代次数（具体算法框架如下）
+
+![ADS](./imgs/2023-05-29-14-27-22.png)
+
+### Vertex Cover
+
+把 decision problem 改写成 optimization problem 的形式：
+
+![ADS](./imgs/2023-05-29-14-49-14.png)
+
+- 初始可行解：S=V
+- 迭代寻找更优的 neighbor：每次从 S 中删除一个点
+    - 问题 1：如何寻找 neighbor？对于 TSP 问题，可以选出两条边四个点，将平行的边换成交叉的边，即改变了路线的顺序
+    - 问题 2：如何评估 neighbor 之间的优劣，选择更优的 neighbor 方向？
+    - 问题 3：如何跳出局部最优点？使用模拟退火算法
+
+### 模拟退火
+
+- 温度越高，越容易选择上坡；温度越低，越接近梯度下降
+- 降温方法？
+
+![ADS](./imgs/2023-05-29-15-00-11.png)
+
+### Hopfield Neural Networks 霍普菲尔德神经网络
+
+问题描述：
+
+![ADS](./imgs/2023-05-29-15-07-19.png)
+
+量化定义一个 configuration 的好差程度：
+
+![ADS](./imgs/2023-05-29-15-09-09.png)
+
+做个例题理解一下 satisfied 和 unsatisfied 的定义：
+
+![ADS](./imgs/2023-05-29-15-16-47.png)
+
+如何找到更好的 neighbor：翻转一个 unsatisfied 的点
+- 由此产生的问题：算法会终止吗？
+
+![ADS](./imgs/2023-05-29-15-15-08.png)
+
+简单理解就是，我们知道最优解的一个下界，即所有边都为 good 的情况；我们也知道局部搜索保证每次迭代一定会更优，否则算法就停下来了。所以局部搜索一定会在有限步达到最优解或者提前停下。
+
+### Maximum Cut 最大割
+
+问题描述以及应用：
+
+![ADS](./imgs/2023-05-29-15-22-55.png)
+
+- 初始可行解：随便找一个分割
+- 如何找到更好的 neighbor：把某个点变换阵营
+- 算法是否会终止？会。因为每次迭代割都会增加，最大不会超过所有边的权重之和
+- 局部极值有多好？下面证明一下
+
+![ADS](./imgs/2023-05-29-15-28-02.png)
+
+1. 为什么 $\forall u\in A, \sum_{v\in A}w_{uv}\leq \sum_{v\in B}w_{uv}$ ? 如果不满足这个性质，把 u 换到 B 里一定可以获得一个更大的割
+1. 然后就是把最优解放缩到所有边权之和
+
+---
+
+最大割相关的近似算法：（有空可以看看）
+
+![ADS](./imgs/2023-05-29-17-26-03.png)
+
+### Local Search 的优化策略
+
+证明以最大割为例
+
+1. big-improvement-flip
+
+![ADS](./imgs/2023-05-29-17-28-10.png)
+
+证明中把 $\varepsilon$ 前面那个 2 去掉，毫无意义，看着实在太难受了。
+
+证明：$\forall u\in A, \sum_{v\in A}w_{uv}\leq \sum_{v\in B}w_{uv}$ 这个结论换成
+
+$$
+\forall u\in A, \sum_{v\in A}w_{uv}\leq \sum_{v\in B}w_{uv}+\frac{\varepsilon}{n}w(A,B)
+$$
+
+所以有
+
+$$2\sum_{\{u,v\}\in A}w_{uv}=\sum_{u\in A}\sum_{v\in A}w_{uv}\leq \sum_{u\in A}\sum_{v\in B}w_{uv}+\frac{\varepsilon}{n}\sum_{u\in A}w(A,B)$$
+
+另一边也同理，
+
+$$
+2\sum_{\{u,v\}\in B}w_{uv}=\sum_{u\in B}\sum_{v\in B}w_{uv}\leq \sum_{u\in B}\sum_{v\in A}w_{uv}+\frac{\varepsilon}{n}\sum_{u\in B}w(A,B)
+$$
+
+两式相加，后面那项刚好有 n 个 $w(A,B)$ 累加，和分母的 n 抵消掉，
+
+$$
+2(\sum_{\{u,v\}\in A}w_{uv}+\sum_{\{u,v\}\in B}w_{uv})\leq (2+\varepsilon)w(A,B)
+$$
+
+所以最后公式就变成了
+
+$$
+w(A*,B*)\leq (2+\frac{\varepsilon}{2})w(A,B)
+$$
+
+证明：每次 flip 至少增加 $1+\frac{\varepsilon}{n}$ 倍，又因为 $(1+\frac{\varepsilon}{n})^{\frac{n}{\varepsilon}}\geq 2$，所以经过 $\frac{n}{\varepsilon}$ 次翻转之后，价值一定会翻一倍。所以最终复杂度为 $O(\frac{n}{\varepsilon}\log W)$。
+
+2. k-flip：在最大割问题中，就是相邻 k 次翻转的点互不相同
+
+## 随机算法 Randomized Algorithms
+
+对什么做随机？
+1. 随机输入：可以测试平均情况下的效率
+1. 随机算法：
+    - 以大概率给出正确解 (Monte-Carlo)
+    - 总是能得到正确解，在期望下时间复杂度低 (Las Vegas Algorithm)
+
+### The Hiring Problem
+
+目标：雇佣到的价值最大的人价值尽量大
+
+#### Naive solution in randomized input case
+
+![ADS](./imgs/2023-05-31-09-50-31.png)
+
+![ADS](./imgs/2023-05-31-09-52-49.png)
+
+$$E(X)=E(\sum_{i=1}^n X_i)=\sum_{i=1}^n E(X_i)=\sum_{i=1}^n\frac{1}{i}=\ln N+O(1)$$
+
+#### 离线随机算法
+
+![ADS](./imgs/2023-06-04-10-34-15.png)
+
+解决 naive 算法对输入的要求
+
+#### 只雇佣一个人的在线算法
+
+![ADS](./imgs/2023-06-04-10-47-24.png)
+
+前 k 个人用于估算平均水平。
+
+![ADS](./imgs/2023-06-04-10-53-28.png)
+
+$\frac{k}{i-1}$ 的解释：假设是每个人成为最大的概率相等，所以前 i-1 个人中最大出现在前 k 个的概率就是 $\frac{k}{i-1}$
+
+然后用公式估算出 Pr[S] 的范围
+
+![ADS](./imgs/2023-06-04-10-56-01.png)
+
+对 $f(k)=\frac{k}{N}\ln(\frac{N}{k})$ 求导，发现 $k=\frac{N}{e}$ 的时候取到最大值
+
+### 快速排序
+
+pivot 的选取方法不同将导致算法效率不同
+
+#### central splitter
+
+![ADS](./imgs/2023-06-04-11-03-25.png)
+
+如何选 pivot：保证选取的 pivot 一定在原序列的 25% 到 75% 位置
+
+如何找 central splitter：随机找一个数，用 $O(N)$ 线性扫描判断这个数是不是 central splitter。期望通过 2 次线性扫描找到 central splitter。
+
+假设在第 $X$ 次找到 central splitter，易知 $X\sim GE(\frac{1}{2})$ 服从几何分布，$E(X)=\frac{x}{(1-x)^2}=2$，所以找 central splitter 是 $O(N)$ 的
+
+![ADS](./imgs/2023-06-05-14-00-08.png)
+
+注意：$O(N\log N)$ 是期望复杂度
+
+#### Randomized Quicksort
+
+如何选 pivot：随机选择
+
+如何近似计算复杂度：用比较次数表示时间复杂度。
+
+假设 $X$ 是总的比较次数，$X_{ij}$ 是 i 和 j 交换的次数，其中下标满足 $a_1\leq a_2\leq ... \leq a_N$。
+
+$a_i$ 和 $a_j,i<j$ 在两种情况下会交换：
+1. $a_i$ 被选为 pivot，并且此时 $a_j$ 和 $a_i$ 在同一个子序列中
+1. $a_j$ 被选为 pivot，并且此时 $a_i$ 和 $a_j$ 在同一个子序列中
+
+$a_i$ 和 $a_j$ 在同一个子序列中，当且仅当 $a_i, a_{i+1}, ..., a_{j-1}, a_j$ 都没有被选做 pivot，否则这两个元素会被分到两个不同的子序列中。**所以 $X_{ij}=1$ 等价于“在 $a_i, a_{i+1}, ..., a_{j-1}, a_j$ 中第一个被取走的元素是 $a_i$ 或者 $a_j$”**，其概率为 $P(X_{ij})=\frac{2}{j-i+1}$，所以
+
+$$E(X)=\sum_{i=1}^{n-1}\sum_{j=i+1}^{n}E(X_{ij})=\sum_{i=1}^{n-1}\sum_{j=i+1}^{n}\frac{2}{j-i+1}=2\sum_{i=1}^{n-1}\sum_{j=2}^{n-i+1}\frac{1}{j}=O(N\log N)$$
+
+### 最大割问题
+
+随机算法：每个点分别以 $\frac{1}{2}$ 的概率分配到两个点集中。
+
+证明： $E[w(A, B)] \geq \frac{OPT}{2}$
+
+假设 $X_{uv}=1/0$ 表示 u 和 v 不在 / 在同一个集合中。$E(X_{uv})=P(X_{uv})=\frac{1}{2}\cdot\frac{1}{2}+\frac{1}{2}\cdot\frac{1}{2}=\frac{1}{2}$，总共就四种等概率的情况，其中两种是在同一个集合中，两种是不在同一个集合中。所以
+
+$$E[w(A, B)]=\frac{\sum e}{2}\geq \frac{OPT}{2}$$
+
+### 最大 3-SAT 问题
+
+问题：要求 $c_1\wedge c_2\wedge ...\wedge c_k$ 尽量多的子句为真
+
+随机算法：每个随机变量都以 $\frac{1}{2}$ 的概率为真或者假。
+
+结论：
+1. 为真的子句数量期望值为 $\frac{7}{8}k$
+1. $P(X\geq \frac{7}{8}k)\geq \frac{1}{8k}$
+
+证明结论1：每个子句都以 $1-\frac{1}{2}^3=\frac{7}{8}$ 的概率为真，虽然不同子句之间不独立，但是期望的线性性永远满足，期望相加即可。
+
+证明结论2：
+
+设 $P_i$ 表示有 i 个子句为真的概率
+
+$$
+\begin{align*}
+\frac{7}{8}k=E(X)&=\sum_{i=1}^{\lceil\frac{7}{8}k\rceil-1}i\cdot P_i+\sum_{i=\lceil\frac{7}{8}k\rceil}^{k}i\cdot P_i\\
+&\leq (\frac{7}{8}k-\frac{1}{8}) \sum_{i=1}^{\lceil\frac{7}{8}k\rceil-1} P_i + k \sum_{i=\lceil\frac{7}{8}k\rceil}^{k} P_i\\
+&\leq (\frac{7}{8}k-\frac{1}{8}) \cdot 1 + k \sum_{i=\lceil\frac{7}{8}k\rceil}^{k} P_i
+\end{align*}
+$$
+
+其中 $\frac{7}{8}k-\frac{1}{8}\geq \lceil\frac{7}{8}k\rceil-1$ 是因为 k 是正整数，$\lceil\frac{7}{8}k\rceil\leq \frac{7}{8}k+\frac{7}{8}$
 
 ## 错题整理
 
@@ -1231,3 +1452,43 @@ level-order: 构造这么一种情况，所有地点都处在一条直线上，�
 ![ADS](./imgs/2023-05-23-10-15-42.png)
 
 多项式规约对近似比没有约束。Clique 的大小和 Vertex Cover 的大小相加等于图上总点数，规约产生的 Clique 的近似比与图的总点数相关，并不是常数。
+
+### Local Search
+
+1. 
+
+![ADS](./imgs/2023-05-29-19-07-59.png)
+
+A. 构造一种情况，单次换边不能得到更优解，但是多次换边可以
+
+![ADS](./imgs/2023-05-29-19-11-09.png)
+
+C. 还是构造单次换边不能得到更优解，但是多次换边可以的情况。local search 找不到最优解的原因就在于跳不出局部最值，利用这一特点去构造。在 minimum degree 中，只要有两个点卡住最大度数且彼此间没有连边，就一定不可能只换一条边得到更优解。
+
+![ADS](./imgs/2023-05-29-19-18-44.png)
+
+---
+
+2. 
+
+![ADS](./imgs/2023-05-29-19-20-20.png)
+
+有一个非常简单的反例：n 个点分布在圆周上，k=n，初始 k 个中心点都选在圆心上。初始状态就是局部最优，答案为圆的半径，但是显然最优解是 0。
+
+这题的难点是看出结论不对，然后往找反例的方向去思考。如果想着证明这条结论那就没救了。
+
+### 随机算法
+
+1. 
+
+![ADS](./imgs/2023-06-05-15-33-26.png)
+
+注意：**worst case expected running time** 的含义，对于每一个输入有一个 expected running time，然后在所有输入的 expected running time 里取最大的就是 worst case expected running time
+
+---
+
+2. 
+
+![ADS](./imgs/2023-06-05-15-43-00.png)
+
+P(雇佣第 N 个人) = P(前 N-1 个人中的最大值是前 k 个人中的一个) = $\frac{k}{N-1}=\frac{1}{3}$

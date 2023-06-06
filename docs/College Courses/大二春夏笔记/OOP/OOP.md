@@ -423,6 +423,10 @@ bool Student::operator > (const Student& y){
 
 ![OOP](./imgs/2023-05-06-14-02-46.png)
 
+##### 重载类成员访问符号 ->
+
+[菜鸟教程](https://www.runoob.com/cplusplus/class-member-access-operator-overloading.html#:~:text=C%2B%2B.%20%E7%B1%BB%E6%88%90%E5%91%98%E8%AE%BF%E9%97%AE%E8%BF%90%E7%AE%97%E7%AC%A6%20-%3E%20%E9%87%8D%E8%BD%BD.%20C%2B%2B%20%E9%87%8D%E8%BD%BD%E8%BF%90%E7%AE%97%E7%AC%A6%E5%92%8C%E9%87%8D%E8%BD%BD%E5%87%BD%E6%95%B0.%20%E7%B1%BB%E6%88%90%E5%91%98%E8%AE%BF%E9%97%AE%E8%BF%90%E7%AE%97%E7%AC%A6%EF%BC%88%20-%3E,-%3E%20%E8%BF%90%E7%AE%97%E7%AC%A6%EF%BC%8C%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%9E%8B%E5%BF%85%E9%A1%BB%E6%98%AF%E6%8C%87%E9%92%88%E6%88%96%E8%80%85%E6%98%AF%E7%B1%BB%E7%9A%84%E5%AF%B9%E8%B1%A1%E3%80%82.%20%E8%BF%90%E7%AE%97%E7%AC%A6%20-%3E%20%E9%80%9A%E5%B8%B8%E4%B8%8E%E6%8C%87%E9%92%88%E5%BC%95%E7%94%A8%E8%BF%90%E7%AE%97%E7%AC%A6%20%2A%20%E7%BB%93%E5%90%88%E4%BD%BF%E7%94%A8%EF%BC%8C%E7%94%A8%E4%BA%8E%E5%AE%9E%E7%8E%B0%22%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%22%E7%9A%84%E5%8A%9F%E8%83%BD%E3%80%82.%20%E8%BF%99%E4%BA%9B%E6%8C%87%E9%92%88%E6%98%AF%E8%A1%8C%E4%B8%BA%E4%B8%8E%E6%AD%A3%E5%B8%B8%E6%8C%87%E9%92%88%E7%9B%B8%E4%BC%BC%E7%9A%84%E5%AF%B9%E8%B1%A1%EF%BC%8C%E5%94%AF%E4%B8%80%E4%B8%8D%E5%90%8C%E7%9A%84%E6%98%AF%EF%BC%8C%E5%BD%93%E6%82%A8%E9%80%9A%E8%BF%87%E6%8C%87%E9%92%88%E8%AE%BF%E9%97%AE%E5%AF%B9%E8%B1%A1%E6%97%B6%EF%BC%8C%E5%AE%83%E4%BB%AC%E4%BC%9A%E6%89%A7%E8%A1%8C%E5%85%B6%E4%BB%96%E7%9A%84%E4%BB%BB%E5%8A%A1%E3%80%82.)
+
 ##### 重载小括号 functor
 
 如果需要把函数当做参数传进函数，可以使用 functor
@@ -656,6 +660,8 @@ Node x = y; // 两者等价，都调用了拷贝构造函数
 
 类内有指针的时候，特别是指针指向的地址是在成员函数中分配的事后，一般都需要重载拷贝构造 & 赋值符号，防止浅拷贝产生问题，或者重复析构同一块空间产生错误。
 
+**注意：拷贝构造可以调用参数的 private 成员**
+
 ---
 
 拷贝构造在什么时候被调用？
@@ -779,6 +785,9 @@ public:
     - class 之间不存在继承关系，而是包含关系
 - 继承：student **is a** human.
     - base class & derived class
+
+注意：
+1. 两个类相互包含的时候，需要“前置声明”，[参考博客：error: xxx does not name a type](https://blog.csdn.net/usstmiracle/article/details/106026446)
 
 ##### Name Hiding
 
@@ -1242,12 +1251,16 @@ for (auto [fruit, f_price]: price) cout << '{' << fruit << ", " << f_price << '}
 
 ##### 基础知识
 
-迭代器存在的意义：把各种不同的指针统一起来，使用统一的算法处理，但不暴露容器的底层实现。
+迭代器存在的意义：把各种不同的指针统一起来，使用统一的算法处理，但不暴露容器的底层实现。其优势在于：
 1. 统一
 1. 隐藏复杂度
 
+迭代器的分类：
+
 - random-access: 可以比大小
 - contiguous-access：不能比大小
+
+迭代器使用的例子：
 
 ```cpp
 // vector 的 back_inserter 迭代器，可以在尾部未定义的区域插入
@@ -1260,7 +1273,26 @@ copy(l.begin(), ,.end(), front_inserter(l)); // {4, 3, 2, 1, 1, 2, 3, 4}
 copy(evens.begin(), evens.end(), ostream_iterator<int>(cout, ", "));
 ```
 
-自定义 iterator ==还不会==
+##### 自定义迭代器
+
+![OOP](./imgs/2023-05-28-19-36-30.png)
+
+基本要求：
+
+1. 重载 `++` 运算符和 `*` 运算符（解引用）
+    - 例如 set 的 `++` 重载为：找到中序遍历中的下一个元素
+
+---
+
+可选要求：
+
+1. 重载 `+=` 运算符（random-access 的容器一般有 `+=` 的容器，例如 vector 有重载，但是 list 没有重载）
+
+---
+
+订制函数：
+
+通用实现的弊端在于，在某些特例下效率不够。例如 find 一般由线性查找实现，但是对于 set 来说使用 `++` 运算符进行线性查找是缓慢的。解决方法是
 
 ```cpp
 

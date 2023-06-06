@@ -546,7 +546,7 @@ p.s. 指令集分类：RV64I, RV32I, RV64M, RV64A, ...
 
 p.s. 一些规律：powerful instruction 不等于 higher performance, 比如说 x86。市场成功的指令集不一定最高效简洁，比如 x86。
 
-## chapter 4 The Processor
+## chapter 4-1 单周期 CPU
 
 ### 4.1 Introduction
 
@@ -692,6 +692,9 @@ CSR instruction：只能在 machine mode 下运行
 
 ![CO](./imgs/2023-05-23-21-09-22.png)
 
+
+## chapter 4-2 流水线 CPU
+
 ### 4.5 Pipeline intro
 
 单周期 CPU 有什么缺点？
@@ -704,6 +707,12 @@ CSR instruction：只能在 machine mode 下运行
 
 单周期 CPU 分阶段：
 - 从左往右的（黑色箭头）可以分阶段在流水线中执行，从右往左（蓝色箭头）可能使流水线出错（数据冒险, hazard）
+- **五个阶段**：
+    1. IF：取指令
+    1. ID：指令解码 & 读寄存器
+    1. EX：计算结果 / 计算跳转
+    1. MEM：读写数据内存
+    1. WB：写回寄存器
 
 ![计组](./imgs/2023-04-26-11-01-36.png)
 
@@ -732,7 +741,7 @@ pipeline datapath:
 - 控制信号的数据通路
 - rd 的数据通路
 
-数据冒险(hazard):
+数据冒险(hazard)概述:
 1. structure hazard: 同时多次访问同一个组件
     - 同时读写寄存器或者内存：double bound，上升沿写，下降沿读
     - 同时多个指令需要读内存：指令内存和数据内存分开存放，增加读写带宽
@@ -743,9 +752,158 @@ pipeline datapath:
     - 三种解决方案：stall, double bump, forwarding
 1. control hazard: 分支或者跳转指令导致下一条指令的地址是不确定的
 
-### data hazard 数据冒险
-    
+### stall
 
+1. 什么时候 stall（stall detection）：
+    - 后面的指令负责检测冒险
+    - 冒险判断条件 ![CO](./imgs/2023-06-06-12-46-48.png)
+        1. control hazard：EX 阶段结束之后跳转指令的 next PC 才计算出来，在此之前不执行其他命令
+        1. data hazard：WB 阶段才会写入寄存器，但 ID 阶段就已经读寄存器，EX 阶段就已经用到寄存器的值了。在写之前不读寄存器
+1. 如何 stall：使用 interlock，相当于插入空指令
+    - 添加 stall control logic 模块，用于检测冒险 ![CO](./imgs/2023-06-06-12-42-44.png)
+    - 如何插入空指令：设置写信号，不写入 PC 和寄存器，相当于暂停执行了一条指令 ![CO](./imgs/2023-06-06-14-19-04.png)
+
+---
+
+stall 的性能计算
+
+![CO](./imgs/2023-06-06-13-00-33.png)
+
+理想状态下，不存在 stall， CPI(clock cycly per instruction) 是 1。但是 stall 会增加流水线的 CPI
+
+![CO](./imgs/2023-06-06-13-01-28.png)
+
+### structure hazard 资源竞争
+
+1. 访问内存产生的资源竞争
+    - 解决方法一：将指令内存和数据内存分开
+    - 解决方法二：同一块内存开更多的读写端口
+1. 访问寄存器
+    - 解决方法一：multiple access
+    - 解决方法二：double bump，读写时序分离，上升沿写，下降沿读
+1. 访问计算单元（例如浮点数运算单元）：阶段划分的不好(not fully pipelined)会导致资源竞争
+    - 解决方法一：fully pipeline
+    - 解决方法二：用成本换效率，多加几个浮点数运算单元 ![CO](./imgs/2023-06-06-13-14-32.png)
+
+---
+
+性能计算：structual hazard 会降低 CPU 效率
+
+![CO](./imgs/2023-06-06-13-24-04.png)
+
+这里的内存没有分成指令内存 & 数据内存，也没有增加端口。因为每个时钟周期都一定有一条指令正在 IF 阶段，所以需要读内存的指令就一定会造成 structual hazard，增加一个时钟周期的 stall。
+
+---
+
+structual hazard 对性能影响的例子：
+
+![CO](./imgs/2023-06-06-13-29-12.png)
+
+![CO](./imgs/2023-06-06-13-29-42.png)
+
+### data hazard 数据冒险
+
+#### stall
+
+用一个例子理解一下数据冒险：
+
+![CO](./imgs/2023-06-06-13-34-05.png)
+
+ID 最早也只能跟 WB 在同一个时钟周期里
+
+#### forwarding
+
+##### 什么是 forwarding
+
+不等前一条指令写入寄存器，而是在计算好之后 / 从内存读出来之后就直接前递给 ALU 使用。
+
+第一种：运算指令的 forwarding
+
+![CO](./imgs/2023-06-06-13-36-22.png)
+
+第二种：load 指令的 forwarding
+- 可能要插入一个空指令(stall)
+
+---
+
+图解有 forwarding 的流水线中，寄存器的数据传递：
+1. 蓝色线表示数据依赖
+1. 红色线表示 forwarding
+
+![CO](./imgs/2023-06-06-13-40-41.png)
+
+##### 怎么做 forwarding
+
+1. 什么时候 forwarding (detection)
+    - 每个时钟周期需要把 rd 跟其他数据一起传到下一个流水线寄存器里
+    - forwarding 判断条件：前两句话的 rd 等于当前的 rs1 或者 rs2，并且 **RegWrite 为高电平** ![CO](./imgs/2023-06-06-13-48-24.png)
+    - 详细版判断条件 ![CO](./imgs/2023-06-06-13-58-01.png)
+1. 如何 forwarding
+    - 增加 forwarding 检测模块 ![CO](./imgs/2023-06-06-13-51-51.png)
+        1. 检测模块输入：ID/EX 的 rs1 和 rs2，EX/MEM 和 MEM/WB 的 rd
+        1. 检测模块的输出：ALU 输入信号的控制信号
+    - 增加 ALU 输入选择 ![CO](./imgs/2023-06-06-13-54-08.png)
+        1. 00 表示正常输入
+        1. 10 表示从第 i-1 条指令的 ALU 结果中输入（i 是当前指令）
+        1. 01 表示从第 i-2 条指令的内存读取结果中输入
+
+---
+
+实现思路：**枚举任意两种指令的排列组合**，看看他们之间会不会产生 data hazard。如果会产生的话，加入 forwarding 数据通路解决 hazard。
+
+##### Double Data Hazard
+
+例如：
+
+![CO](./imgs/2023-06-06-14-01-38.png)
+
+解决办法：如果 EX hazard 和 MEM hazard 同时发生，且发生 hazard 的寄存器相同，选择从 EX/MEM 输入。
+
+![CO](./imgs/2023-06-06-14-02-11.png)
+
+##### Load-use Data Hazard
+
+什么是 Load-use Data Hazard
+
+![CO](./imgs/2023-06-06-13-36-41.png)
+
+Load-use Data Hazard 有哪几种情况？
+- 如果 i-1 条指令产生了 Load-use Data Hazard，则需要 stall 一个时钟周期
+- 如果 i-2 条指令产生了 Load-use Data Hazard，只需要 forwarding
+
+![CO](./imgs/2023-06-06-14-17-21.png)
+
+load stall 的判断条件：
+
+![CO](./imgs/2023-06-06-14-13-13.png)
+
+---
+
+load stall 对性能产生的影响：
+
+![CO](./imgs/2023-06-06-14-21-21.png)
+
+---
+
+编译器优化减少 load stall：
+
+![CO](./imgs/2023-06-06-14-24-16.png)
+
+##### 加上 forwarding 和 stall 的 dataPATH
+
+![CO](./imgs/2023-06-06-14-19-49.png)
+
+##### 例题
+
+```asm
+    add R4, R5, R2
+    lw R15, 0(R4)
+    sw R15, 4(R2)
+```
+
+以上代码如何进行 forwarding 和 stall？
+
+![CO](./imgs/2023-06-06-14-28-54.png)
 
 ### control hazard 控制冒险
 
