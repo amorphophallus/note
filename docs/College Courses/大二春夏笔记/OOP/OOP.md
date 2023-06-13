@@ -298,6 +298,36 @@ int main(){
 }
 ```
 
+##### 全特化 & 部分特化
+
+部分特化：限制类型的范围，但是仍旧可以选择不同的类型
+
+部分特化的第一种形式：只特化部分类型
+
+![OOP](./imgs/2023-06-07-07-46-33.png)
+
+![OOP](./imgs/2023-06-07-07-46-45.png)
+
+---
+
+部分特化的第二种形式：特化为指针
+
+```cpp
+// 原始模板
+template<class T>
+class A{
+public:
+    A(){cout << "template T" << endl;}
+};
+
+// 部分例化
+// 限制了 T 必须是一个指针
+template<class T>
+class A<T*>{
+public:
+    A(){cout << "template T*" << endl;}
+};
+```
 
 #### inline
 
@@ -1255,10 +1285,18 @@ for (auto [fruit, f_price]: price) cout << '{' << fruit << ", " << f_price << '}
 1. 统一
 1. 隐藏复杂度
 
+---
+
 迭代器的分类：
 
 - random-access: 可以比大小
 - contiguous-access：不能比大小
+    1. forward
+    1. bidirectional
+
+可以根据迭代器能力不同，
+
+##### 迭代器的使用
 
 迭代器使用的例子：
 
@@ -1273,6 +1311,12 @@ copy(l.begin(), ,.end(), front_inserter(l)); // {4, 3, 2, 1, 1, 2, 3, 4}
 copy(evens.begin(), evens.end(), ostream_iterator<int>(cout, ", "));
 ```
 
+---
+
+tips:
+
+- [获取 iterator 指向的元素的地址](https://blog.csdn.net/cwdben/article/details/116034666)
+
 ##### 自定义迭代器
 
 ![OOP](./imgs/2023-05-28-19-36-30.png)
@@ -1286,21 +1330,138 @@ copy(evens.begin(), evens.end(), ostream_iterator<int>(cout, ", "));
 
 可选要求：
 
-1. 重载 `+=` 运算符（random-access 的容器一般有 `+=` 的容器，例如 vector 有重载，但是 list 没有重载）
+1. 重载 `+=` 运算符（random-access 的容器一般有 `+=` 的容器，例如 vector 有重载。但是 list 没有重载，因为时间复杂度是线性的）
 
 ---
 
 订制函数：
 
-通用实现的弊端在于，在某些特例下效率不够。例如 find 一般由线性查找实现，但是对于 set 来说使用 `++` 运算符进行线性查找是缓慢的。解决方法是
+通用实现的弊端在于，在某些特例下效率不够。例如 find 一般由线性查找实现，但是对于 set 来说使用 `++` 运算符进行线性查找是缓慢的。解决方法是 set 内部实现
+
+---
+
+实现一个迭代器：
 
 ```cpp
 
 ```
 
-tips:
+##### 获取迭代器内部类型 iterator_traits
 
-- [获取 iterator 指向的元素的地址](https://blog.csdn.net/cwdben/article/details/116034666)
+第一种解决方法：
+
+![OOP](./imgs/2023-06-07-07-33-09.png)
+
+![OOP](./imgs/2023-06-07-07-33-21.png)
+
+缺点：需要额外包一层函数，且只能获取指针指向的类型信息，不能获取其他信息。
+
+---
+
+第二种解决方法：
+
+![OOP](./imgs/2023-06-07-07-30-56.png)
+
+缺点：只有内部定义了 `value_type` 的类型才能使用这个模板函数，其他的比如 C++ 原生类型指针（`int*`, `double*` 等）不能套用这个模板。
+
+---
+
+第三种解决方法：iterator traits
+
+```cpp
+// 原始模板
+// 要求 I 是一个拥有 I::value_type 和 I::pointer_type 的类型（不使用）
+template<class I>
+class iterator_traits
+{
+public:
+    typedef typename
+    I::value_type value_type;
+    typedef typename
+    I::pointer_type pointer_type;
+    /* ... */
+};
+
+
+// 部分特化
+// 使用了模板 iterator_traits<T*>
+// 要求 T 是一个原生类型，T * 是原生类型指针
+template<class T>
+class iterator_traits<T*>
+{
+public:
+    typedef T value_type;
+    typedef T* pointer_type;
+    /* ... */
+};
+
+// 调用
+// 参数可以是自定义迭代器 MyIter 或者 int* double*
+template <class T>
+typename iterator_traits<T>::value_type
+func(T iter){
+    return *iter;
+}
+```
+
+1. 如果传入的参数是自定义迭代器，会使用原始模板。类型中一定要有定义 `value_type` 和 `pointer_type`
+1. 如果传入的参数是原生类型指针，则会使用部分特化模板。
+
+---
+
+为了更好的普适性，再重载一个 const 的
+
+![OOP](./imgs/2023-06-07-08-15-47.png)
+
+##### 指针类型 iterator_category
+
+C++ 中定义了以下这些类型，用于区分不同的指针
+
+![OOP](./imgs/2023-06-07-08-21-38.png)
+
+可以在 iterator_traits 中获取到指针类型信息（以函数 advance 为例）
+
+```cpp
+// 通用函数
+// 最外层函数接口，只需要传入迭代器和步长，不用考虑迭代器类型和具体实现
+template<class Iterator, class Distance>
+inline void advance(Iterator &i, Distance n)
+{
+    __advance(i, n, 
+    iterator_traits<Iterator>::iterator_category());
+}
+
+// random access iterator 的实现
+template<class RandomAccessIterator, class Distance>
+inline void __advance(RandomAccessIterator &i, 
+    Distance n,
+    random_access_iterator_tag)
+{
+    i += n;
+}
+
+// bidirectional iterator 的实现
+template<class BidirectionalIterator, class Distance>
+inline void __advance(BidirectionalIterator &i, 
+    Distance n,
+    bidirectional_iterator_tag)
+{
+if (n >= 0)
+    while (n--) ++i;
+else
+    while (n++) --i;
+}
+
+// ... 其他类型指针的实现
+```
+
+这里利用了函数重载的性质，同名函数的不同重载是用参数类型进行区分的。所以传入一个参数，不使用这个参数的值，但是用这个参数的类型区分不同的重载函数。
+
+---
+
+想要让原生类型指针也能使用 iterator_category，在部分特化模板中加上一句
+
+![OOP](./imgs/2023-06-07-08-33-08.png)
 
 ### 流 streams
 
@@ -1356,6 +1517,178 @@ tips:
 ![OOP](./imgs/2023-05-23-09-47-44.png)
 
 ![OOP](./imgs/2023-05-23-09-47-59.png)
+
+### 异常 Exception
+
+#### 异常的存在价值
+
+传统的错误处理方法：
+1. 返回错误码
+1. assert（适合 debug）
+
+为什么需要异常？因为异常相比于传统的错误码（返回值）有以下优势：
+1. 程序功能部分和异常处理部分划分清晰 
+    ```cpp
+    try {
+        // -----------------------
+        // main logic here
+        open the file;
+        determine its size;
+        allocate that much memory;
+        read the file into memory;
+        close the file;
+        // -----------------------
+    } catch ( fileOpenFailed ) {
+        doSomething;
+    } catch ( sizeDeterminationFailed ) {
+        doSomething;
+    } catch ( memoryAllocationFailed ) {
+        doSomething;
+    } catch ( readFailed ) {
+        doSomething;
+    } catch ( fileCloseFailed ) {
+        doSomething;
+    }
+    ```
+1. 出错了不需要层层上传，只要抛出异常了就会不断跳出函数，直到被 catch 块抓住
+
+#### 抛出异常
+
+抛出异常的语法：
+
+1. `throw exp;`
+1. `throw;` 只能在 catch 块中使用
+
+---
+
+传递什么类型的异常？
+- 变量？如果中途被某个函数 catch 了一下，把他的类型变成基类了，再 throw 出去的就是基类变量了
+    ```cpp
+    struct X {};
+    struct Y : public X {};
+    try {
+        throw Y();
+    } catch(X x) {
+        cout << "catch X" << endl;
+        throw;
+        // throw X
+    }
+    ```
+- 指针？麻烦之处在于内存要自己管理，new 出来的异常还得在最上层删掉
+- 引用？最佳解决方案
+    ```cpp
+    struct B {
+        virtual void print() { /* ... */ }
+    };
+    struct D : public B { /* ... */ };
+    try {
+        throw D("D error");
+    }
+    catch(B& b) {
+        b.print(); // print D's error.
+    }
+    ```
+
+---
+
+不允许函数抛出异常：`void abc(int a) noexcept { ... }`
+
+编译器会进行一些优化。
+
+如果 noexcept 函数抛出异常，则会调用 `std::terminate`。
+
+---
+
+异常会沿着 call stack 层层上传，并保证所有栈中的变量的**析构函数**都执行。但还是要注意内存泄露等问题。
+
+#### 处理异常
+
+caller 可以有以下这些状态：
+1. 不 care
+1. mildly interested: 处理一下，然后再把异常抛给上层
+    ```cpp
+    void outer2() {
+        string err_msg("exception caught");
+        try {
+            func();
+        } catch (VectorIndexError) {
+            cout << err_msg;
+            throw; // propagate the exception
+        }
+    }
+    ```
+1. 处理异常
+    ```cpp
+    void outer3() {
+        try {
+            outer2();
+        } catch (...) {
+            // ... catches ALL exceptions!
+            cout << "The exception stops here!";
+        }
+    }
+    ```
+    - 注意这里 `...` 是 C++ 语法
+
+---
+
+Handler 的匹配 - 按照 catch 块的顺序一个一个匹配。对于每一个 catch，按以下顺序判断能不能匹配：
+1. Check for exact match
+1. Apply base class conversions
+    - Reference and pointer types, only
+1. Catch-all handler `(...)`
+
+所以在 catch 基类之后 catch 派生类是没有用的。
+
+#### 异常类型
+
+C++ 标准库的异常类型
+
+![OOP](./imgs/2023-06-07-09-23-14.png)
+
+自定义异常最好能继承标准库中的异常
+
+#### 构造函数中的异常
+
+构造函数中抛出异常，将不会执行析构函数，可能导致内存泄漏。
+
+C++ 哲学：用栈管堆
+- i.e. RAII: resource aquisition is initialization
+- 因为在发生异常的时候，栈上的元素一定会被调用析构函数。所以最好的避免错误的方法是，不需要调用析构函数的变量才不在放在栈上。
+
+解决方法：外面套一层 Wrapper 进行内存管理（自定义 wrapper 或者使用 unique pointer）。保证 wrapper 的构造是 non-exception 的。
+
+```cpp
+#include <memory>
+
+class A
+{
+private:
+    unique ptr<int[]>up;
+public:
+    A():up(new int[10]()){
+        cout << "A::A()" << endl;
+        if (true){ //anything indicating a failure
+            throw 2;
+        }
+    }
+    -A(){
+        cout <"A::~A()"<<endl;
+    }
+};
+```
+
+#### 析构函数中的异常
+
+Throwing an exception in a destructor that is itself being called as the result of an exception will invoke `std::terminate()`
+
+#### write exception-safe code
+
+跟数据库的事务类似，如果在事务进行了一半的时候抛出异常了，怎么处理？
+
+```cpp
+
+```
 
 ### 其他
 
@@ -1504,7 +1837,7 @@ tips:
             - `ios::ate`	初始位置：文件尾
             - `ios::app`	所有输出附加在文件末尾
             - `ios::trunc`	如果文件已存在则先删除该文件
-            - `ios::binary`	二进制方式
+            - `ios::binary`	**二进制方式**
         3. 第三个参数（可选）：文件类型
             - 0	普通文件，打开操作
             - 1	只读文件
@@ -1570,3 +1903,14 @@ tips:
 [重定向](https://blog.csdn.net/feihe0755/article/details/90181822)
 
 [输出多行数据到文件中](http://www.bathome.net/thread-5160-1-1.html)
+
+
+### Final Project: Serialization
+
+#### TinyXML2
+
+#### reinterpret_cast 类型转换
+
+#### fstream 读写二进制文件
+
+#### 遍历结构体中的变量

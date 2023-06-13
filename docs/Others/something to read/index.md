@@ -36,3 +36,10 @@ gay 宝的推荐：
 
 1. [前端 50 个小项目](https://github.com/bradtraversy/50projects50days)
 2. 
+
+## 出国相关
+
+1. [一亩三分地](https://www.1point3acres.com/bbs/)：美加相关论坛
+1. [drafty - csprofessor](https://drafty.cs.brown.edu/csprofessors)：教授数据库
+    - [drafty](https://drafty.cs.brown.edu/)：其他数据库
+1. [cs application](https://opencs.app/)：国外项目申请经验分享

@@ -1099,14 +1099,230 @@ cache 大小计算例题：
 
 ![CO](./imgs/2023-06-06-17-04-14.png)
 
-##### 
+---
+
+计算内存地址对应的 cache 地址例题：
+
+![CO](./imgs/2023-06-13-19-39-47.png)
+
+##### miss & hit
+
+###### miss 情况 & 策略
+
+miss 的分类：
+1. compulsory miss: 启动时数据不在 cache 中 -> 减少关联度
+1. capacity miss: cache 大小不够 -> 增大 cache 大小
+1. conflict miss: 组容量不够 -> 增大关联度
+
+读数据的两种情况：
+1. 读指令：发生 miss 时 PC 已经累加，需要先把 PC 减掉再重新取指
+1. 读数据
+
+写数据 hit 的两种策略：
+1. write-through：cache 和 memory consistent
+1. write-back：只有需要被替换的 dirty 块才会被写回内存
+
+写数据 miss 的两种策略：
+1. write-allocate：替换到 cache 中再修改
+1. no write allocate(write around)：不写到 cache 中，直接在内存中更改，保证 consistency
+
+write buffer：优化写操作，排队等待写到内存中，减少 CPU 的 stall。
+
+###### miss penalty
+
+read & write miss penalty 的计算：因策略而异。直接看例题：
+
+![CO](./imgs/2023-06-13-20-12-15.png)
+
+可以看出不同 write miss 策略导致的 penalty 的差异。
+
+---
+
+early restart：读到想要的数据就重启 CPU，剩下的数据传输和 CPU 并行。一般用在取指令的时候。
+
+###### miss rate
+
+![CO](./imgs/2023-06-13-20-16-18.png)
+
+1. 横坐标：块大小
+1. 纵坐标：miss rate
+1. 不同线：cache 大小
+
+块大小变大 miss rate 减少，是因为利用了局部性。块大小过大 miss rate 又增加，因为块数量过少。
+
+##### cache 和 CPU 之间的数据传输方式
+
+基本流程：
+1. CPU 给 memory 发送地址
+1. access initialize：地址译码以及寻址等操作（耗时长）
+1. memory 通过 bus 将数据传回 CPU
+
+三种传输模式：
+
+![CO](./imgs/2023-06-13-20-34-28.png)
+
+![CO](./imgs/2023-06-13-20-34-51.png)
+
+![CO](./imgs/2023-06-13-20-35-38.png)
 
 #### Measuring and improving cache performance
 
+主要关注的是两点：miss rate 和 miss penalty
 
+##### 检测 cache 性能
+
+计算公式：
+1. read 的等待时间
+1. write 的等待时间
+1. 将 read write 放在一起考虑
+
+![CO](./imgs/2023-06-13-20-42-57.png)
+
+![CO](./imgs/2023-06-13-20-46-04.png)
+
+---
+
+例题：计算 cache miss 对 CPU 效率的影响
+
+![CO](./imgs/2023-06-13-20-59-47.png)
+
+在上题的基础上，如果
+1. CPI 减小了
+1. clock cycle time 减小了
+
+CPU time 会相应减小，但是 cache miss 对性能产生的影响就更大了
+
+![CO](./imgs/2023-06-13-21-03-23.png)
+
+![CO](./imgs/2023-06-13-21-03-43.png)
+
+##### 提升 cache 性能
+
+###### 第一种策略 - 降低 miss rate：set-associative cache 组相连 cache
+
+每个内存块对应 cache 中的一个组，可以被读到组中的任意一个 block。
+
+![CO](./imgs/2023-06-13-20-48-51.png)
+
+- 通过改变块映射关系减少 miss rate
+- direct mapping 是组相连的一种（每个组只有一个 block）
+- 组大小（关联度，associativity）是一个超参数，人为设置以得到最优效率。
+    - 增加组大小会减小 miss rate，但是每次对 miss or hit 的判断需要花费更多的时间
+
+---
+
+例题：
+
+![CO](./imgs/2023-06-13-21-09-00.png)
+
+![CO](./imgs/2023-06-13-21-09-16.png)
+
+###### 第一种策略 - 降低 miss rate：替换策略
+
+例如 LRU
+
+###### 第二种策略 - 降低 miss penalty：multi-level cache
+
+- 一级 cache 负责减少判断 hit 的时间，快速响应 CPU
+    - 一般使用 direct mapping
+- 二级 cache 复负责减少 miss rate，减少访存时间
+    - 一般使用组相连
+
+计算：
+
+![CO](./imgs/2023-06-13-21-16-12.png)
+
+![CO](./imgs/2023-06-13-21-16-48.png)
+
+
+##### 软件层面：利用 cache 和存储的局部性
+
+例如：
+1. 基数排序 & 快排的比较：基数排序的局部性较差，在数据规模较大时 cache 利用率低
+1. 矩阵乘法的分块技术：增加 cache 的利用率
 
 #### Virtual Memory
 
+将硬盘中的一部分当做主存(memory)使用。
+
+作用：
+1. 拓展主存空间
+1. 允许更多程序共享内存
+
+---
+
+基本概念：
+1. page：虚拟内存的一个内存大小单位
+    - 一般都比较大，因为硬盘的访问时间大于传输时间，所以最好尽量多的数据一起传输
+1. page fault：缺页，即虚拟内存中的 "miss"。数据不在内存中，从硬盘取数据到内存中
+    - 使用 write back 策略（只有 page 需要替换的时候才会写回），因为硬盘读写太慢了
+    - 使用全相连，最大程度上减少 page fault
+    - 使用 LRU 替换策略
+
+---
+
+address translation：
+1. 虚拟地址
+1. 物理地址
+1. 硬盘地址
+
+虚拟地址分配给程序用于寻址。虚拟地址映射到物理地址上或者硬盘地址上。每个虚拟地址只会映射到一个物理地址或者硬盘地址，但是同一个物理地址可以被多个虚拟地址映射（共享内存）。
+
+![CO](./imgs/2023-06-13-21-37-39.png)
+
+---
+
+page table：存储虚拟地址对应的物理地址，存放在内存中
+
+页表大小 = 虚页号的个数 = 虚拟地址总个数 / page 大小。页表的大小单位是 GB，还是相当大的。
+
+page table register：存储内存中页表的起始地址
+
+![CO](./imgs/2023-06-13-21-35-11.png)
+
+---
+
+优化页表的速度：TLB(translation lookaside buffer)块表
+
+在 cache 中存一部分最常用的页表项
+
+---
+
+一种可能得访问路径：
+1. TLB miss -> 访问 page table
+1. page fault -> 中断，右 OS 访问硬盘
+
+![CO](./imgs/2023-06-13-22-11-35.png)
+
+枚举访问路径的分支：
+1. 如果 TLB hit 了，page table 一定 hit
+1. 如果 cache hit 了，page table 一定 hit（说明数据存在内存中）
+
+![CO](./imgs/2023-06-13-22-14-22.png)
+
+---
+
+一种包含 TLB 的存储结构，接下来开始看图说话：
+1. 首先，从上到下依次是，虚拟地址，TLB，物理地址，cache（tag 和 data 分开存放）
+1. TLB 组织结构：全相连
+1. cache 大小：cache 有 256 个 block，每个 block 16 个 word，每个 word 4 byte
+1. cache 组织结构：direct mapping
+
+![CO](./imgs/2023-06-13-22-04-57.png)
+
+#### 总结 memory hierachy
+
+![CO](./imgs/2023-06-13-22-20-38.png)
+
+访存的整个过程大概来说就是，虚拟地址怎么查 TLB 和 page table 转换成物理地址，如果发生 miss 和 page fault 怎么办。然后知道物理地址之后，怎么判断 cache miss 还是 hit。这些过程中要分类讨论 TLB 和 cache 的组织形式，比如 direct mapping 和 set associative；以及要讨论替换策略，比如 write back 和 write through，write allocate 和 not allocate。
+
+---
+
+用有限状态机控制读写：
+
+![CO](./imgs/2023-06-13-22-47-43.png)
+
+#### 虚拟机 virtual machine
 
 
 

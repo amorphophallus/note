@@ -1081,6 +1081,8 @@ Cascadeless schedules（无级联调度） — cascading rollbacks cannot occur;
 
 基于锁的协议基本约定：访问数据之前一定要申请锁，访问结束之后解除锁。
 
+这是假设每次访问数据都会导致冲突，所以是一种 **“悲观的并发控制”** 。
+
 两种锁：
 1. exclusive (X) mode. Data item can be both read as well as written. X-lock is requested using  lock-X instruction.
 2. shared (S) mode. Data item can only be read. S-lock is requested using  lock-S instruction.
@@ -1089,15 +1091,17 @@ Cascadeless schedules（无级联调度） — cascading rollbacks cannot occur;
 
 ##### The Two-Phase Locking Protocol
 
+###### 定义
+
 最简单的协议：所有加锁动作必须在所有解锁动作之前。能够保证事务一定 conflict-serializable 的。
 
 ![DB](./imgs/2023-06-05-11-38-42.png)
 
 ![DB](./imgs/2023-06-05-11-38-56.png)
 
----
+###### 证明 2PL protocol 冲突可串行化
 
-证明可串行化：
+**证明可串行化**：使用反证法
 
 ![DB](./imgs/2023-06-05-11-42-45.png)
 
@@ -1111,22 +1115,199 @@ Cascadeless schedules（无级联调度） — cascading rollbacks cannot occur;
 
 反证法。假设 T1 是 lock point 最早的事务，但是有一条有向边从 Tx -> T1。那么 Tx 的 lock point 就比 T1 早（引理），矛盾。 
 
-#### Deadlock Handling
+最后：通过依次执行 lock point 最早的事务得到一个执行顺序
 
+--- 
 
+结论：2PL 是可串行的充分条件，但不是必要条件。
 
-#### Multiple Granularity
+反例如下，这个调度是冲突可串行化的
 
+![DB](./imgs/2023-06-12-09-58-28.png)
 
+但是不满足 2PL，因为 T1 需要先解锁再加锁
+
+![DB](./imgs/2023-06-12-10-00-34.png)
+
+###### Rigorous two-phase locking
+
+问题：不可恢复性。因为 2PL 允许读脏数据，如果后面的事务 commit 了，前面的事务 rollback 了数据就出错了。
+
+改进方案 - Rigorous two-phase locking（强两阶段封锁）: a transaction must hold all locks till commit/abort
+
+###### Implementation of locking
+
+谁来加锁？数据库系统自动实现
+
+read 操作自动加锁：
+
+```cpp
+if Ti has a lock on D
+    then
+        read(D) 
+    else begin 
+            if necessary wait until no other  
+                transaction has a lock-X on D
+            grant Ti a  lock-S on D;
+            read(D)
+        end
+```
+
+write 操作自动加锁：
+
+```cpp
+if Ti has a  lock-X on D 
+    then 
+        write(D)
+    else begin
+        if necessary wait until no other trans. has any lock on D,
+        if Ti has a lock-S on D
+                then
+                upgrade lock on D  to lock-X
+            else
+                grant Ti a lock-X on D
+            write(D)
+        end;
+```
+
+---
+
+锁加在哪里？lock table
+
+1. 用哈希表管理每一个对象
+1. 用一个链表管理每个对象的所有锁
+
+![DB](./imgs/2023-06-12-10-23-58.png)
+
+###### Deadlock Handling
+
+死锁：A 在等 B 解锁，B 在等 A 解锁
+
+Two-phase locking does not ensure freedom from deadlocks
+
+![DB](./imgs/2023-06-12-10-27-55.png)
+
+---
+
+如何避免死锁：
+1. 事务只能一次性申请所有的锁，不能分批获得锁（现实中不可行）
+1. 给所有数据增加一个偏序，所以访问同一组数据的顺序只有一种（现实中不可行）
+    - 例如：转账的事务，一定先修改账号编号小的，再修改账号编号大的
+1. 基于超时的方案(Timeout-Based Schemes)：等待超过 timeout interval 就直接 rollback
+    - starvation: 同一个事务多次等待都得不到数据
+    - time interval: 如何选择等待时间？
+
+---
+
+如何检测死锁：wait-for graph
+
+可以通过 lock table 构造出来，同一个数据下方所有等待的事务都有一条有向边指向已经获得锁的事务。
+
+![DB](./imgs/2023-06-12-10-47-00.png)
+
+检测出死锁之后怎么解除死锁？在环上找一个入度最多（最多事务在等待他）的点，把事务 rollback
+
+---
+
+例题：
+
+![DB](./imgs/2023-06-12-10-48-22.png)
+
+##### Graph-based protocols
+
+基于数据的偏序关系
+
+###### tree protocol
+
+1. 只有 exclusive lock
+1. 除了第一把锁，其他节点加锁一定要求父亲节点当前有锁，但是可以在任何时间解锁（不满足 2PL 协议）
+
+![DB](./imgs/2023-06-12-10-57-38.png)
+
+---
+
+优点：
+1. 冲突可串行化
+1. 不存在死锁
+
+缺点：
+1. 不可恢复（因为有读脏数据，需要处理 commit dependency）
+1. 会加很多没必要的锁
+
+#### Multiple Granularity 多粒度
+
+##### 基本概念
+
+Granularity of locking (level in tree where locking is done):
+- fine granularity（细粒度） (lower in tree): high concurrency, high locking overhead
+- coarse granularity（粗粒度）  (higher in tree): low locking overhead, low concurrency
+
+![DB](./imgs/2023-06-12-11-16-39.png)
+
+简单理解就是：数据库上，表上，记录上都可以加锁
+
+---
+
+在粗粒度层面增加 3 种锁：
+1. **intention-shared (IS)**: indicates explicit（显示） locking at a lower level of the tree but only with shared locks.
+1. **intention-exclusive (IX)**: indicates explicit locking at a lower level with exclusive or shared locks
+1. **shared and intention-exclusive (SIX)**: the subtree rooted by that node is locked explicitly in shared mode and explicit locking is being done at a lower level with exclusive-mode locks.
+    - SIX = S + IX
+
+![DB](./imgs/2023-06-12-11-26-45.png)
+
+---
+
+多粒度的 2-phase locking protocol:
+1. 加锁：从粗粒度到细粒度，层层判断，层层加锁
+1. 解锁：从细粒度到粗粒度，层层解锁
 
 #### Insert and Delete Operations
 
+##### 基本处理
+
+之前的并发控制仅考虑了读写操作，并没有考虑对表的操作（插入、删除等等）。
+
+插入删除和读写存在冲突：
+1. reads/writes conflict with deletes
+1. Inserted tuple is not accessible by other transactions until the transaction that inserts the tuple commits
+
+基于锁的并发控制：
+1. delete 要加 X 锁
+1. insert 在 commit 之前都必须有 X 锁（不允许读脏数据）
+
+##### 解决幽灵问题
+
+插入和删除导致的幽灵问题（同一个事务多次 select 到的数据不同）
+
+![DB](./imgs/2023-06-05-09-29-08.png)
+
+---
+
+第一种方法：index locking
+
+前提是查询的 attribute 存在索引。
+
+把可能影响查询结果的 index 叶子全锁上，不让插入记录
+
+![DB](./imgs/2023-06-12-12-05-23.png)
+
+---
+
+第二种方法：谓词锁
+
+每次插入都检测一下读语句，判断一下是否会影响读（实现起来比较麻烦）
+
+---
+
+第三种方法：Next-key locking
+
+在 index locking 的基础上，把锁从每个节点精细化到每个记录
+
+![DB](./imgs/2023-06-12-12-14-13.png)
 
 
 #### Multiversion Schemes
-
-
-
 
 
 ## 错题摘录
