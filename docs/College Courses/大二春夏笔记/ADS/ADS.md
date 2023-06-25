@@ -1412,6 +1412,96 @@ $W(n)$ 的推导：换元，套主定理
 
 ![ADS](./imgs/2023-06-11-17-05-12.png)
 
+## external sorting 外部排序
+
+### 考点总结
+
+1. run & pass & tape 概念
+1. uneven split 斐波那契数列
+1. 计算 number of passes & number of runns
+1. replacement selection 生成超过内存大小的 run
+1. 哈夫曼树合并不同长度的 run
+
+### 问题条件 & 基本算法
+
+条件：
+
+1. 数据 > 内存容量
+1. 存储介质为磁带，只支持顺序读写，但磁带有多个
+1. 内存一次只能排序三个数据
+
+概念：
+
+1. run: 一段被排好的数据（在图中一个 run 的长度为 M=3）
+1. pass: 把磁带从头到尾读一遍（在图中第一个 pass 把 T1 中的数据）
+
+![ADS](./imgs/2023-06-18-20-56-30.png)
+
+number of passes 怎么计算？
+1. 1 是把原数据划分成初始的 run
+1. 后面的 log 是把 log 合并
+
+### 优化 pass 数量：k-way merge
+
+要求：
+1. 2k 个磁带
+1. 能排序 k 个数据的内存
+
+![ADS](./imgs/2023-06-18-20-59-58.png)
+
+### 优化磁带个数：unevenly split
+
+要求：只用 3 个磁带
+
+基本算法中 merge 的结果分别写到两个磁带中，为了减少磁带数量，可以先写到一个磁带里，再花一个 pass 读到两个磁带里。
+
+---
+
+再优化：
+
+如果 number of runs 是一个斐波那契数 $f(n)$，则分到两个磁带中，run 的个数分别是 $f(n-1)$ 和 $f(n-2)$。
+
+![ADS](./imgs/2023-06-18-21-06-56.png)
+
+![ADS](./imgs/2023-06-18-21-12-53.png)
+
+![ADS](./imgs/2023-06-18-21-13-12.png)
+
+![ADS](./imgs/2023-06-18-21-14-11.png)
+
+![ADS](./imgs/2023-06-18-21-14-27.png)
+
+---
+
+再优化：
+
+3-way merge 怎么应用上面的 uneven split？
+
+![ADS](./imgs/2023-06-18-21-40-53.png)
+
+### i/o buffer
+
+基本想法：2 个 input buffer，1 个 output buffer，就可以满足 2-way merge 的需求
+
+减少 CPU 和磁盘读写的等待：4 个 input buffer，2 个 output buffer
+
+支持 k-way merge：2k 个 input buffer，2 个 output buffer
+
+内存大小有限，buffer 越多，block 越少。
+
+### 优化 run 的长度: replacement selection
+
+在内存中维护一个小根堆，每次把堆顶放到 run 里，再读入一个数据。如果读入的数字小于 run 里最大的数字，就把这个数字冻结（放在内存里但是不放在堆里，堆大小减一）。
+
+![ADS](./imgs/2023-06-18-21-42-39.png)
+
+如果原序列已经接近有序，则效果会比较好。
+
+### 不同长度的 run 合并，最小化复杂度：哈夫曼树
+
+![ADS](./imgs/2023-06-18-21-41-38.png)
+
+
 ## 错题整理
 
 ### AVL
@@ -1636,3 +1726,11 @@ C. 还是构造单次换边不能得到更优解，但是多次换边可以的�
 ![ADS](./imgs/2023-06-05-15-43-00.png)
 
 P(雇佣第 N 个人) = P(前 N-1 个人中的最大值是前 k 个人中的一个) = $\frac{k}{N-1}=\frac{1}{3}$
+
+### external sorting
+
+1. 
+
+![ADS](./imgs/2023-06-18-22-15-48.png)
+
+每读或者写一个数据都得绕磁带一圈，假设每个算法至少得把所有的数据读出来一次，所以就是 $\Omega(N^2)$，big omega 表示下界。

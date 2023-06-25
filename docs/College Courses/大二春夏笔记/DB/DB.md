@@ -112,6 +112,8 @@ tips: as 的优先级比 natural join 高，`A natural join B as C` C 指代的�
 
 ### ch6 E-R model
 
+考点：题目给出需求，设计一个 E-R 图，并转化成关系数据库模型
+
 #### 设计 E-R model
 
 ![数据库系统概念](./imgs/2023-04-03-10-19-13.png)
@@ -127,9 +129,8 @@ tips: as 的优先级比 natural join 高，`A natural join B as C` C 指代的�
     - 虚线：表示附加属性。比如上课了就会有成绩，需要 `grade` 来记录
 - 减少冗余
     - primary key 相同的所有表都可以合并
-        - 被箭头和双实线连接的 relation 不会出现在 DDL 中，因为其属性可以并入双实线连接的 entity 中。
-    - weak entity set
-        - 比如 section 不用存课程名字、学分等信息，减少冗余。
+    - **被箭头和双实线连接的 relation 不会出现在 DDL 中，因为其属性可以并入双实线连接的 entity 中**。
+    - weak entity set，比如 section 不用存课程名字、学分等信息，减少冗余。
 
 #### E-R model 补充概念
 
@@ -145,8 +146,8 @@ tips: as 的优先级比 natural join 高，`A natural join B as C` C 指代的�
 
 ![数据库系统概念](./imgs/2023-04-03-11-15-38.png)
 
-- multivalued：一个 entity 的同一个 attribute 可以有多个值，比如电话号码
-- cmoposite：多个 attribute 的组合，比如 `first name` 和 `last name` 可以是一组 composite attribute，组成 `name`
+- multivalued：一个 entity 的同一个 attribute 可以有多个值，比如一个人可以拥有多个电话号码
+- composite：多个 attribute 的组合，比如 `first name` 和 `last name` 可以是一组 composite attribute，组成 `name`
 
 e.g. 缩进表示符复合属性，大括号表示多值属性，小括号表示派生属性
 
@@ -164,24 +165,24 @@ one to one, one to many, etc. 用连线的类型表示，比如一对一就是�
 
 #### 将 E-R model 转化为关系数据库的 DDL
 
-- 可以不建表的元素：
-    - 弱实体的 identifying relationship
-    - 一对多的 relationship
+##### 例子
+
+![数据库系统概念](./imgs/2023-04-03-10-19-13.png)
+
+##### 可以不建表的元素
+
+1. 弱实体的 identifying relationship
+1. 一对多的 relation（箭头 + 双实线）
+1. 附加属性：就直接放在附加的那个关系所建的表上就行了
 
 ![数据库系统概念](./imgs/2023-04-03-11-46-01.png)
 
 ![数据库系统概念](./imgs/2023-04-03-11-46-29.png)
 
----
+##### 复合属性 & 多值属性
 
-- 主键的选择
-
----
-
-- composite attribute: 
-    1. flattened out by creating a separate attribute for each component attribute
-    1. 一个表格用于存储 detail，一个用于存储组合后的属性，例如 `time_slot_detail(time_slot_id, day, start_time, end_time)` + `time_slot(time_slot_id)`
-- multivalued attribute: 新建一张表格
+- composite attribute:  一个表格用于存储 detail，一个用于存储组合后的属性，例如 `time_slot_detail(time_slot_id, day, start_time, end_time)` + `time_slot(time_slot_id)`
+- multivalued attribute: 新建一张表格，包含 entity 的主键和多值属性
 
 ---
 
@@ -189,17 +190,18 @@ one to one, one to many, etc. 用连线的类型表示，比如一对一就是�
 
 ![数据库系统概念](./imgs/2023-04-03-12-09-40.png)
 
----
-
-设计原则
+##### 设计原则
 
 - attribute 转化为 entity，可以增强 E-R 图的表达能力。例如新建表可以表达 multivalued attribute。
 - relationship 转化为 entity，可以增强 E-R 图的表达能力。例如把购买关系实体化为订单，可以和用户、支付方式、商品建立关系。
 - 多元联系实体化为 entity，再和原来连接的 entity 之间建立二元联系。
 
----
+##### Specialization(特化) & Generalization（概化）
 
-Specialization(特化) & Generalization（概化）
+1. specialization：把一个集合拆成几个子集，例如把 person 拆成 employee 和 student
+1. generalization：从一堆子集中提取出公共部分
+
+这两者互为反操作。
 
 ![数据库系统概念](./imgs/2023-04-04-21-13-27.png)
 
@@ -208,7 +210,15 @@ Specialization(特化) & Generalization（概化）
 - partial: 展示部分子类，可能存在其他类型
 - total: 展示所有子类
 
-实现方法 * 3-：P278 6.8.6.1
+---
+
+实现方法有两种：
+
+![DB](./imgs/2023-06-19-17-33-15.png)
+
+或者
+
+![DB](./imgs/2023-06-19-17-34-01.png)
 
 #### e.g. 12306 数据库设计
 
@@ -224,6 +234,8 @@ Specialization(特化) & Generalization（概化）
     1. 价格 & 是否被购买
     - 这张表用来存储座位的购买信息，支持查询经过一些区间的车票
 1. 新增关系“订单信息”，在“订单”和“车次_区间_座位”之间建立关系。
+
+![DB](./imgs/2023-06-19-17-12-22.png)
 
 ### ch7 Relational Database Design
 
@@ -494,6 +506,73 @@ why does it make sense?
 1. Buffer tree: ppt 61，有点 lazy 操作的味道，插入的 record 可能存在非叶子节点里，等满了再往下更新
 1. bitmap indices: ppt 62
 
+#### LSM
+
+在 flash 上写操作比读操作慢很多，所以诞生了一种 Write-optimized tree structures，LSM 是其中的一种。
+
+##### LSM 的插入
+
+1. 先插 memory 里的 L0，直到插满
+1. 如果 L0 已经满了，就和 L1 合并成 L1-new 再写回到 L1 里。具体过程如下：
+    1. 使用顺序 IO 把 L1 整个读到内存中
+    1. 合并 L0 和 L1 叶子节点里的数据，并使用 bottom-up 方法构造出一棵新的 B+ 树
+    1. 然后再使用顺序 IO 把新树覆盖到原来 L1 的位置
+1. 如果 L1 也满了，就合并到 L2，以此类推
+
+![DB](./imgs/2023-06-19-19-54-56.png)
+
+##### LSM 的查找
+
+一层一层遍历每一棵树，代价比较大
+
+##### LSM 的删除和更新
+
+- 删除：打删除标签，（然后应该会定期重构）
+- 更新：删除 + 插入
+
+##### LSM 的优缺点
+
+![DB](./imgs/2023-06-19-21-04-38.png)
+
+#### stepped merge LSM
+
+![DB](./imgs/2023-06-19-21-05-02.png)
+
+#### buffer tree
+
+![DB](./imgs/2023-06-19-21-56-00.png)
+
+##### 插入
+
+当一条索引记录要插入到Buffer Tree时，并不是像B+Tree那样从根结点走到对应的叶子结点，而是直接插入到根结点的buffer中。
+
+如果根结点的buffer满了，那么buffer中的每个索引记录就会被下推给下一层的相应孩子结点。（如何下推？就和原来B+Tree上的插入操作一样，比较该索引记录的key和该结点的key，沿pointer下推。）
+
+如果孩子结点仍是非叶子结点，那么就将该索引记录添加到该结点的buffer，如果该结点的buffer也满了，就以同样的方式下推。（buffer中的索引记录是有序排列的）
+
+如果孩子节点是叶子节点，那么索引记录按B+Tree的方式插入到叶子结点中。当叶子结点填满了，就按照和B+Tree一样的方式进行分裂，但注意非叶子结点的分裂多了一步对buffer的分裂。
+
+---
+
+由此看出 buffer tree 是随机 IO，但是写的次数会大大减少。
+
+假设一个非叶子节点上的buffer保存的索引记录数量是孩子节点数量的k倍。那么平均下来，进行buffer下推操作时，每个孩子结点可以批量得到k个索引记录，同时通过排序还保证了下推到不同孩子结点是 **并发执行** 的。这就体现了Buffer Tree的优势，在进行随机写入时，把对每个孩子结点进行磁盘IO的成本平均分摊在k个索引记录之间。（原来在B+Tree上，一个索引记录就要对一个结点进行磁盘IO）。而且当k足够大时，节省还是非常显著的。
+
+##### 查询
+
+和B+Tree的查找方式一样，从根结点开始朝着叶子结点的方向向下遍历，但是它额外需要在遍历每个非叶子结点时，检查一下该结点的buffer中是否包括要查找的目标。范围查询也是如此，需要额外检查涉及到的叶子结点的祖先结点们的buffer。
+
+##### 删除
+
+Buffer Tree上的删除和更新，有两种方式。既可以像LSM Tree那样使用删除项和更新项，也可以按照B+Tree的删除和更新方式来做，只不过后者的磁盘IO代价可能要高一些。
+
+##### 优缺点
+
+- Benefits
+    1. Less overhead on queries
+    1. Can be used with any tree index structure
+- Drawback: more random I/O than LSM tree
+
 ### ch15 Query Processing
 
 #### 基本查询步骤
@@ -572,7 +651,7 @@ worst case: $Cost = t_S + t_T * b_r$，$b_r$ 是用于存放表的磁盘块的�
 非主键上建立的索引，存在重复的键值: $Cost=(h_i+n+m)*(t_T+t_S)$
 
 - 假设最坏情况，n 个记录都在不同的块上
-- n pointers may be stored in m blocks
+- n pointers may be stored in m blocks（红点太多了，一个块存不下）
 
 ![DB](./imgs/2023-05-21-15-38-30.png)
 
@@ -726,7 +805,7 @@ improvement：之前都默认内存只有三个缓冲区，分别给内存循环
 
 使用条件：一个序列已经排好，另一个序列的连接属性上有 secondary-index
 - 先把【有序序列】和【无序序列的索引】连接
-- 然后排序，用线性扫描的方法把索引换成记录
+- 然后排序（按索引对应的记录的实际地址排序），用线性扫描的方法把索引换成记录
 
 ![DB](./imgs/2023-05-22-08-59-55.png)
 
@@ -1309,10 +1388,235 @@ Granularity of locking (level in tree where locking is done):
 
 #### Multiversion Schemes
 
+没讲
+
+### recovery system
+
+#### Failure Classification
+
+![DB](./imgs/2023-06-18-22-50-19.png)
+
+一般的故障可以通过 日志 + repeating history 解决
+
+介质故障可以通过 backup + repeating history 解决
+
+#### Storage Structure
+
+stable storage: 多备份 -> 近似 mythical
+
+![DB](./imgs/2023-06-18-11-34-15.png)
+
+
+#### Recovery and Atomicity
+
+Idempotent(幂等性)：不管执行多少次恢复算法得到的结果都相等。
+
+后面都假设使用 strict 2PL 保证可恢复性(no dirty read)
+
+恢复算法由 2 个部分组成：
+1. 平常要记录信息
+1. 发生故障要根据记录的信息回复数据
+
+![DB](./imgs/2023-06-18-22-51-39.png)
+
+#### Log-Based Recovery
+
+##### 怎么记日志？
+
+1. 日志存储在 stable storage 上
+1. 日志的基本组成部分：
+
+![DB](./imgs/2023-06-18-22-53-18.png)
+
+举个日志的例子：
+
+![DB](./imgs/2023-06-18-22-59-34.png)
+
+##### 先写日志原则
+
+- 先写日志原则(Write-Ahead Logging or WAL)：任何 transaction，一定先写日志再做操作
+- 只要日志写完了，我们就认为一个事务结束了。至于它有没有反映到数据库中我们并不关心。
+
+##### 怎么使用日志进行恢复？
+
+repeating history
+
+1. redo：从上一个确定的 checkpoint 开始无脑执行 log
+1. undo：记录一个 undo list 表示哪些事务还没执行完就发生故障了，这些事务需要被恢复算法 rollback（并记录 compensate log）
+
+![DB](./imgs/2023-06-18-23-05-02.png)
+
+举个例子：
+
+![DB](./imgs/2023-06-18-23-06-21.png)
+
+##### 补偿日志 compensate log
+
+补偿日志分两种：
+
+1. 第一种是正常执行过程中 rollback 了，需要写补偿日志
+1. 第二种是恢复过程中，进行了一半没有结束的事务，需要强制 rollback 并写补偿日志
+
+![DB](./imgs/2023-06-18-22-59-34.png)
+
+还是看这个例子，日志写到 15 条的时候发生故障了，这时候有 1 个事务没有执行完。在进行恢复的时候需要把 T4 事务 undo 了，并在日志的末尾加上补偿日志。
+
+在恢复的过程中会维护一个 undo list。
+
+##### checkpoint
+
+打 checkpoint 需要做哪些事情：
+
+![DB](./imgs/2023-06-18-23-12-23.png)
+
+注意：
+1. 在打 checkpoint 的过程中，正在执行的事务需要先停下来
+1. checkpoint 上有一个活跃事务表。这个表就是恢复过程中 undo list 的初始值
+1. checkpoint 的含义是：在 checkpoint 之前的所有操作，都已经反映到 **磁盘** 上，即真正写入到数据库中
+
+checkpoint 的例子：
+
+![DB](./imgs/2023-06-18-23-24-18.png)
+
+##### log buffer
+
+![DB](./imgs/2023-06-18-23-33-10.png)
+
+- 事务提交之前一定要先把日志从 log buffer 写到 log file 中
+- database buffer 想要替换页（即把脏页写入磁盘）之前一定要保证这些页里的数据，log 已经写入 log file
+
+---
+
+log buffer 和 database buffer 之间尽量减少耦合度（不要互相等待）：
+
+1. no-force policy: commit 之后数据可以在内存中停留一段时间，不一定要马上写入磁盘
+1. steal policy: 内存中一个块上还有未提交的事务，仍可以把这个块写回到磁盘中。（因为恢复算法保证期间发生故障一定可以恢复原状）
+
+![DB](./imgs/2023-06-19-09-06-06.png)
+
+##### fuzzy checkpoint
+
+打 checkpoint 的过程中不停止其他事务的执行。即以下 2 件事情并行：
+
+1. 磁盘 I/O: 把 checkpoint 前的修改写到磁盘里
+1. 内存: 继续执行后续的事务
+
+具体实现方法如下：维护一个 last_checkpoint 指针即可
+
+![DB](./imgs/2023-06-19-09-36-42.png)
+
+![DB](./imgs/2023-06-19-09-37-08.png)
+
+#### Recovery with Early Lock Release and Logical Undo Operations
+
+strict 2PL 限制太多了，例如 B+ 树操作就不是 strict 2PL。
+
+需要一种恢复方法，不依赖 old value 进行恢复，而是使用反操作进行恢复，比如恢复 `a+=100` 就用 `a-=100`，恢复 insertion 就用 deletion。这种恢复方法可以不管别的事务是否在当前事务结束之前读过脏数据。
+
+- physical undo：使用 old value 进行恢复
+- logical undo：使用反操作进行恢复
+
+![DB](./imgs/2023-06-19-09-25-04.png)
+
+举个例子：
+
+![DB](./imgs/2023-06-19-09-42-39.png)
+
+#### ARIES Recovery Algorithm
+
+##### 基本介绍
+
+state of the art!
+
+ARIES 有一些独特的东西：
+
+- log sequance number(LSN)
+- page LSN
+- log record 也和之前的不一样
+- dirty page table
+
+##### LSN
+
+- log sequance number(LSN): 给每个日志编号
+- page LSN：给每个 page 都记录，编号为 page LSN 的日志之前的所有操作都已经反映到当前页（磁盘中的页和内存中的页都有）上了
+
+##### log record
+
+有两种形式：
+
+1. 普通形式：在事务正常执行过程中记录的 log ![DB](./imgs/2023-06-19-10-06-45.png)
+    - PrevLSN: LSN of previous log record of the same transaction（undo 的时候就像遍历链表一样往上跳就行了）
+    - RedoInfo & UndoInfo: 如果要 redo 需要做什么操作，如果要 undo 需要做什么操作
+1. redo-only log：在恢复过程中记录的log，因为肯定不需要 undo，所以就少记一点东西。也叫 compensation log record (CLR) ![DB](./imgs/2023-06-19-10-07-00.png)
+    - UndoNextLSN: next (earlier) record to be undone. 在 LSN 之前 UndoNextLSN 之后的事务都已经被曾经的恢复过程 undo 过了，本次恢复过程不用再重复 undo
+
+##### dirty page table
+
+记录在 checkpoint 里，用于减少 redo 的工作量
+
+对每个页记录 2 个数据：
+
+1. PageLSN: 最新一次修改当前页的 log 编号
+1. RecLSN: an LSN such that log records before this LSN have already been applied to the page version on disk。redo 的时候就直接从 RecLSN 开始 redo 就行了。
+
+![DB](./imgs/2023-06-19-09-54-45.png)
+
+看 PageId = 4894:
+
+1. 磁盘上：PageLSN = 4566, 表示 4566 之后的操作都还没有写入磁盘
+1. 内存中：PageLSN = 7567, 表示最新更新内存中这一页的操作是 7567
+1. dirty page table 上：需要 redo 的操作只存在于 7564 到 7567 之间
+
+---
+
+checkpoint 上需要记录
+
+1. dirty page table
+1. list of active transactions（For each active transaction, LastLSN, the LSN of the last log record written by the transaction）
+
+![DB](./imgs/2023-06-19-10-30-56.png)
+
+##### ARIES Recovery Algorithm
+
+三个步骤：
+
+![DB](./imgs/2023-06-19-09-55-39.png)
+
+执行的方向如下：
+
+![DB](./imgs/2023-06-19-10-50-30.png)
+
+看一个例子：
+
+![DB](./imgs/2023-06-19-10-52-05.png)
+
+容易考 ARIES 算法的流程，需要知道这三个阶段具体在干什么。
+
+1. analysis pass 维护三个东西
+    1. RedoLSN: 从哪句 log 开始 redo（设置为 checkpoint 中记录的最小 RecLSN）
+    1. undo list: 哪些事务需要被 undo，这些事务的最后一个 log LSN 是多少(LastLSN)
+    1. dirty page table: 哪些 page 是脏页面，脏页分别有哪些操作没有反映到磁盘里（RecLSN & PageLSN）
+1. redo pass
+    - 使用 dirty page table 优化 redo 过程：log 要修改的 page 不 dirty 或者当前 LSN 小于 page 的 RecLSN，就不用 redo 这句 log
+1. undo pass 从后往前扫描
+    1. 每次选出 undo list 中 LastLSN 最大的进行 undo（写一条 CLR 并且设置 UndoNextLSN 为被 undo 的 log 中记录的 PrevLSN）
+    1. 然后更新 undo list 中的 LastLSN: 
+        - 如果是一般语句，就把 LastLSN 设置成 PrevLSN
+        - 如果是 CLR，就把 LastLSN 设置成 UndoNextLSN（并且 CLR 本身是不会被 undo 的，只是作为一个跳板找到上一条需要 undo 的日志）
+
+![DB](./imgs/2023-06-19-11-28-42.png)
+
+![DB](./imgs/2023-06-19-11-28-55.png)
+
+![DB](./imgs/2023-06-19-11-29-09.png)
+
+![DB](./imgs/2023-06-19-11-29-30.png)
+
+![DB](./imgs/2023-06-19-11-31-48.png)
 
 ## 错题摘录
 
-### 某次小测（标注章节）
+### ch3 SQL 小测
 
 except 注意加括号，否则运算顺序容易出错。
 
@@ -1334,7 +1638,7 @@ where not exists ((
 
 两张表具有同名但含义不同的列时特别注意，不能直接用 natrual join
 
-### query processing
+### query processing 代价估计
 
 1. 
 

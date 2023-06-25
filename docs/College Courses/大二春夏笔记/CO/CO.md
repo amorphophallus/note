@@ -889,9 +889,38 @@ load stall 对性能产生的影响：
 
 ![CO](./imgs/2023-06-06-14-24-16.png)
 
-##### 加上 forwarding 和 stall 的 dataPATH
+##### 加上 forwarding 和 stall 的 datapath
 
 ![CO](./imgs/2023-06-06-14-19-49.png)
+
+forwarding detection 模块输入信号：
+
+1. ID_EX 的 Rs1_addr 和 Rs2_addr
+1. EX_MEM 的 RegWrite 和 Rd_addr
+1. MEM_WB 的 RegWrite 和 Rd_addr
+
+forwarding detection 模块输出信号：
+
+1. forwardA
+1. forwardB
+
+ALU Source 新增两个 mux，分别增加两个输入（总共 2 个 mux 2 * 2 个新输入）：
+
+1. EX_MEM 的 Rd_data
+1. MEM_WB 的 Rd_data
+
+hazard detection 模块输入：
+
+1. IF_ID 的 Rs1_addr 和 Rs2_addr
+1. ID_EX 的 MemRead 和 Rd_addr
+
+hazard detection 模块输出：
+
+1. PC_Write
+1. IF_ID_Write
+1. NOP_ID_EX
+
+然后新增一个 mux 用于清空 ID_EX（前面的控制模块别忘了画了）
 
 ##### 例题
 
@@ -1008,6 +1037,8 @@ datapath 需要修改：
 1. 发生 exception 的时候，PC 并不是产生 exception 的指令的 PC。如果能确定具体是哪条指令产生 exception，就叫 **precise exception**。一般来说精确中断比较困难，**inprecise exception** 也够用了 ![CO](./imgs/2023-06-06-15-57-32.png)
 
 ### chapter 5 存储结构 Memory Hierarchy
+
+[TODO] 改标题大小
 
 #### Memory Technology
 
@@ -1698,3 +1729,68 @@ end
 ```
 
 (casex 同理，可以用 `?` 代替 `z`)
+
+
+## 复习整理
+
+### ch4-1 单周期
+
+考点：
+1. 控制信号 & datapath 数据流动
+    - 给一个指令，写出所有控制信号的值，数据在 datapath 中怎么流动
+    - 如果要加一个新指令，要加什么模块
+1. 记忆指令类型
+    - 总共有哪些类型？R, I, S, B, U, J
+    - I-type 又分为哪些不同功能？计算、load、jalr、特权指令
+    - 分别用到几个寄存器？3, 2, 2, 2, 1, 1
+    - 计算公式是？
+
+注意：
+1. JAL 和 JALR 的运算一般不经过 ALU，而是单独使用计算模块，方便后续流水线 reduce branch penalty
+1. JALR 是 I-type，PC+4 写回 rd
+
+### ch4-2 流水线
+
+#### 考点
+
+1. 流水线的 5 个阶段
+    - 哪 5 个阶段？IF, ID, EX, MEM, WB
+1. 数据竞争
+    - 哪些指令会产生数据竞争？
+    - 数据竞争在哪里检测？ID 阶段
+    - 数据竞争如何检测？从 IF_ID, ID_EX, EX_MEM 获取数据
+    - 数据竞争控制信号有哪些？PCWrite & IF_IDWrite
+    - 给一串指令判断哪里有 hazard，不处理 hazard 最终的计算结果（**画时序图**），用 stall 处理 hazard 在哪里加 nop（**让前一条指令的 WB 和后一条指令的 ID 在同一个周期进行**）
+1. forwarding
+    - 在哪个阶段 forwarding？EX 阶段
+    - 哪种数据冲突仅用 forwarding 无法解决？用到 load 的冲突，可能需要加入一个 stall
+    - EX hazard & MEM hazard 区别？和前一条指令冲突还是和前前一条指令冲突
+    - forwardA & forwardB 信号？为 2 表示 EX hazard，为 1 表示 MEM hazard，为 0 表示没有 hazard
+        - 题型：给一串代码，画时序图 + 写出每个周期的 forwarding 信号
+        - 题型：看图或者画图 ![CO](./imgs/2023-06-06-14-19-49.png)
+
+注意：
+1. load 用到了全部 5 个阶段
+1. SD 指令的 forwarding：写入内存的数据在 EX 阶段就需要准备好，因为 forwarding 仅在 EX 阶段前做
+
+#### 错题整理
+
+1. 
+
+![CO](./imgs/2023-06-14-08-47-56.png)
+
+![CO](./imgs/2023-06-14-08-48-18.png)
+
+合并 EX 和 MEM 阶段的效果：
+- 不影响时钟周期，因为瓶颈在 ID 阶段
+- stall 减少，处理数据竞争最多只需要一个 nop
+- 但是指令表达能力减弱，需要更多指令才能达到目标
+
+
+[TODO] full forwarding 是什么？
+
+### ch5 存储
+
+[TODO] 第五章习题
+
+把存储结构以及本章的一些名词之间的关系理一下
