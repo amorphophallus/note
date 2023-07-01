@@ -197,12 +197,12 @@ void selection_sort(T arr[], int n, Compare comp)
 
 ---
 
-template 和类的继承：
+**template 和类的继承：**
 
-1. template inherit from non-template
-1. template inherit from template
-1. non-template inherit from non-template
-1. non-template inherit from template
+1. template inherit from non-template：类模板继承自普通类
+1. template inherit from template：类模板继承自类模板
+1. non-template inherit from non-template：普通类继承自普通类
+1. non-template inherit from template：普通类继承自类模板（需要实例化类模板）
 
 四种都可以
 
@@ -329,6 +329,17 @@ public:
 };
 ```
 
+##### 函数匹配 & 调用机制
+
+在有多个函数和函数模板名字相同的情况下，编译器如下处理一条函数调用语句：
+
+1. 先找参数完全匹配的普通函数（非由模板实例化而得的函数）
+2. 再找参数完全匹配的模板函数（只要前面有 `template<>` 就算模板函数，不管尖括号里面有没有东西）。在匹配模板函数的时候，优先匹配特化后的模板函数
+3. 再找经过自动类型转换后能够匹配的普通函数
+4. 都找不到，则报错
+
+源程序**调用**函数模板，才会生成对应参数类型的模板函数的代码。类模板实例化为模板类是要产生相应的代码的，只能在**编译阶段**进行。
+
 #### inline
 
 - inline 函数不会产生函数调用的 jal 语句。
@@ -353,6 +364,16 @@ public:
 ##### 可以重载的运算符
 
 ![OOP](./imgs/2023-05-06-13-26-03.png)
+
+不可以重载的运算符：
+
+1. 成员相关的.和.*
+2. 宣誓主权的::
+3. 三目运算符?:
+4. sizeof和typeid（这两个竟然也算运算符）
+5. 类型转换相关：static_cast, dynamic_cast, const_cast和reinterpret_cast
+
+必须用成员函数重载的运算符：=,[],->,->*,()
 
 ##### 第一种写法：在类外部重载 as global function
 
@@ -775,14 +796,14 @@ struct 就是一个默认所有成员为 public 的 class。是 C++ 为了兼容
 
 派生类不继承的情况：
 
-- 基类的构造函数、析构函数和拷贝构造函数
+- 基类的构造函数（包括拷贝构造函数）、析构函数
 - 基类的重载运算符
 - 基类的友元函数
-- adiitional: name hiding
+- aditional: name hiding
 
 拓展阅读：
 
-- [子类初始化列表不能初始化父类元素的原因 -> 初始化列表和构造函数的关系](https://blog.csdn.net/uestcyms/article/details/103509443)
+- [子类初始化列表不能初始化父类成员变量的原因 -> 初始化列表和构造函数的关系](https://blog.csdn.net/uestcyms/article/details/103509443)
 
 ```cpp
 class Shape{
@@ -809,6 +830,8 @@ public:
 };
 ```
 
+子类构造函数可以调用父类构造函数
+
 ##### Insights: composition & inheritance 组合和继承
 
 - 组合：car **has a** tire.
@@ -821,18 +844,25 @@ public:
 
 ##### Name Hiding
 
-- 派生类中定义的函数会隐藏基类中的同名函数（即使参数列表不一样也会隐藏）
+- 派生类中定义的函数会隐藏基类中的同名函数（**即使参数列表不一样也会隐藏**）
 - 如果派生类中需要调用基类被隐藏的函数，则需要加上 `Base::` 进入基类的命名空间
-- 对 virtual 函数行为不一样（还没看过）
+- virtual 函数不存在 name hiding，具体看多态那块
 
 ```cpp
 class Base{
-    void print();
-    void print(int a, int b);
+public:
+    void print(){
+    	std::cout << "Base::print()" << std::endl;
+	}
+    void print(int a, int b){
+    	std::cout << "Base::print(a,b) " << a << " " << b << std::endl;
+	}
 };
 
 class Derived: public Base{
+public:
     void print(int a){
+    	std::cout << "Derived::print(a)" << std::endl;
         Base::print();
         Base::print(a, a); // 访问基类中的函数
     }
@@ -841,7 +871,10 @@ class Derived: public Base{
 int main()
 {
     Derived d;
-    d.print(); // 报错，因为基类中的同名函数被隐藏了
+    // d.print(); // 报错，因为基类中的同名函数被隐藏了
+    d.print(10); // OK，调用派生类的成员函数
+    Base *b = &d;
+    b->print(); // OK, 调用基类的成员函数
 }
 ```
 
@@ -872,6 +905,8 @@ free 的功能是释放一次 malloc 分配的所有地址，所以不管是分�
 
 但是 delete 新增了功能，可以对动态分配的数组，单独析构和释放一个位置的内存。
 
+**考试中看程序写结果题一定要注意是 delete 还是 delete[]**
+
 ##### new & delete 自定义变量类型
 
 功能：
@@ -893,8 +928,8 @@ new 和 malloc 的区别：
 
 new 和 delete 数组的顺序问题：
 
-- new 先分配空间，再按下标从小到大调用构造函数
-- delete[] 先按下标从大到小调用析构函数，再释放空间
+- new 先分配空间，再按下标**从小到大**调用构造函数
+- delete[] 先按下标**从大到小**调用析构函数，再释放空间
 
 #### 多态 polymorphism & 虚函数virtual & dynamic_cast
 
@@ -953,18 +988,24 @@ std::cout << arr[0]->area << " " << arr[1]->area << std::endl;
     #include <memory>
     std::unique_ptr<Derived> smart_ptr(new Derived);
     ```
+
+tips:
+
+- 构造函数不能是虚函数，因为在对象构造出来之前虚函数指针是不存在的。构造函数需要有虚函数指针指向虚函数表才能做，虚函数表需要构造函数执行完了才有，形成死锁（bushi）
+
 ##### virtual 函数的常规实现方法
 
-*注意：并不是所有编译器都采用这种实现方法*
+*注意：并不是所有编译器都采用这种实现方法*，但是可以用这种方法来理解虚函数的功能
 
 ![OOP](./imgs/2023-04-19-15-13-15.png)
 
-- vptr: 指向 vtable 的指针，**每个对象有一个**，在初始化的时候指向不同 vtable 的不同位置
+- vptr: 指向 vtable 的指针，**每个对象有一个 vptr**，在初始化的时候指向不同 vtable 的不同位置
 - vtable: 一个指针的数组，**每个类有一个 vtable**，指向本类动态链接的函数
 
 ![OOP](./imgs/2023-04-19-15-13-35.png)
 
 - 如果派生类没有重写虚函数，则 vtable 中存的就是基类定义的虚函数（例如 resize），否则会改成派生类自己定义的虚函数（例如：析构函数和 render）
+- 在基类中定义为 virtual 的函数，即使在派生类中没有加 virtual 关键字，也是一个虚函数，可以被派生类的派生类覆写
 
 ```cpp
 #include <iostream>
@@ -1003,11 +1044,11 @@ int main(){
 }
 ```
 
-- 外部指针调用 vtable 中的函数。熟悉 vptr 和 vtable 的存储结构。
+- 上面的例子在干什么？外部指针调用 vtable 中的函数。熟悉 vptr 和 vtable 的存储结构。
 
 ##### vptr 在赋值操作中的行为
 
-vptr 不会复制。b 的 vptr 还是指向 Base 的 vtable。
+vptr 在构造时就已经确定，在赋值语句中不会被覆盖。比如下面的例子，b 的 vptr 还是指向 Base 的 vtable。
 
 ```cpp
 Base b;
@@ -1020,19 +1061,28 @@ b.virtualFunction();
 
 ##### override 覆写虚函数
 
-关键字 override 的含义是，让编译器来检查我们有没有正确覆写父类的虚函数。因此，任何子类覆写虚函数后导致函数签名的变化，都会导致编译器报错。比如在编写子类函数时忘记加了某个变量，忘记加 const 等导致覆写失败，编译器都会报错
+关键字 **override** 的含义是，让编译器来检查我们有没有正确覆写父类的**虚函数**，而覆写要求函数签名完全相同（即所有参数类型以及返回值类型相同）。任何子类覆写虚函数后导致函数签名的变化，都会导致编译器报错。比如在编写子类函数时忘记加了某个变量，忘记加 const 等导致覆写失败，编译器都会报错
 
 ```cpp
  struct Derived : public Base {
-   void doSomething(int i) override {  // ERROR,编译器报警没有正确覆写Base::doSomething
-     std::cout << "This is from Derived with " << i << std::endl;
+   void doSomething(int i) override {  // ERROR, 编译器报警没有正确覆写 Base::doSomething
+     std::cout << "This is from Derived, with " << i << std::endl;
    }
  };
 ```
 
+tips：
+
+- 注意区分虚函数的 override 和普通成员函数的 name hiding
+
 ##### relaxation
 
-对于引用和指针类型的返回值，子类对虚函数的覆写，允许返回值为子类。
+对于返回值为以下两种情况的虚函数
+
+1. 引用自身类型
+2. 指向自身类型的指针
+
+子类对虚函数的覆写，允许返回值为子类。
 
 ![OOP](./imgs/2023-04-21-20-36-42.png)
 
@@ -1117,9 +1167,9 @@ std::ostream& operator << (std::ostream& out, const Student& x){
 
 - 变量可以调用函数的常量版本和变量版本，常量只能调用函数的常量版本。
 
-- 常量函数中不能修改成员值，否则会报错。
+- 常量函数的本质是 this 指针是 const 指针。表现为函数中不能修改成员值，否则会报错。
 
-- 同函数名，同参数列表，但一个函数加了 const 符号，这两个成员函数是不同的成员函数。所以可以做到常量和变量调用同名函数时程序行动不同。
+- 同函数名，同参数列表，但一个函数加了 const 符号，这两个成员函数是不同的成员函数（重载）。所以可以做到常量和变量调用同名函数时程序行动不同。
 
 ![OOP](./imgs/2023-04-07-17-37-46.png)
 
@@ -1134,12 +1184,66 @@ const 成员变量在对象构造时创建（必须在初始化列表里构造�
 - [在 class 中定义 static 成员变量](https://www.cnblogs.com/stevenshen123/p/11555758.html)
 - [C++ 类成员函数中的静态变量的作用域](https://blog.csdn.net/su_787910081/article/details/42213245)
 
+---
+
+- static const 成员变量：在类声明的时候初始化，同一个类只能有一个值。
+- static 成员变量：在 cpp 文件中初始化（&定义），每个文件有一个不同的值。本 cpp 文件中所有该类的实例共用，可以调用和修改
+- const 成员变量：每个对象都有一个，只能在初始化列表中修改。
+
 ![OOP](./imgs/2023-04-07-17-42-39.png)
+
+```cpp
+// static const 成员变量的初始化（在类声明的时候）
+class Scanner {
+public:
+    const static int MAX_SIZE = 0xFFFF;
+    ...
+};
+```
+
+```cpp
+// static 变量的初始化
+// Scanner.hpp
+class Scanner {
+public:
+    static int line;
+    ...
+};
+
+// Scanner.cpp
+#include "Scanner.hpp"
+
+int Scanner::line = 1;
+...
+```
+
+```cpp
+// const 成员变量的初始化
+#include <iostream>
+using namespace std;
+class MyClass{
+   private:
+      const int x;
+   public:
+      MyClass(int a) : x(a){
+      //constructor
+   }
+   void show_x(){
+      cout << "Value of constant x: " << x ;
+   }
+};
+int main() {
+   MyClass ob1(40);
+   ob1.show_x();
+}
+```
+
+
 
 #### class 的多文件实现（声明和定义分离）(.h & .cpp)
 
-- 类外实现成员函数，需要用 `::` 声明函数是成员函数
-- `::` 单独使用用于跳出类，使用全局变量
+- 类外实现成员函数，需要用 `<class name>::<function name>` 声明函数是成员函数
+- `::` 单独使用用于跳出类，使用全局变量。看下面那个例子
 
 ![OOP](./imgs/2023-04-01-13-22-17.png)
 
@@ -1213,6 +1317,24 @@ namespace SEARCH_1{
     // int VAR;
 }
 ```
+
+#### namespace composition
+
+可以处理命名的冲突
+
+```cpp
+namespace mine { 
+    using namespace first; 
+    using namespace second; 
+    using first::y; // resolve clashes
+    void mystuff(); 
+    /* ... */
+}
+```
+
+#### 多文件
+
+![OOP](./imgs/2023-06-28-23-56-56.png)
 
 ### STL 标准模板库
 
@@ -1628,7 +1750,7 @@ caller 可以有以下这些状态：
         }
     }
     ```
-    - 注意这里 `...` 是 C++ 语法
+    - 注意这里 `...` 是 C++ 语法，表示不关心异常的内容，仅需要处理一下异常
 
 ---
 
@@ -1664,7 +1786,8 @@ C++ 哲学：用栈管堆
 class A
 {
 private:
-    unique ptr<int[]>up;
+    unique_pointer<int[]>up; 	// unique_pointer 保证他管理的内存一定被释放
+    							// 即使 A 的析构函数没有被调用，也不会产生内存泄露
 public:
     A():up(new int[10]()){
         cout << "A::A()" << endl;
@@ -1672,8 +1795,8 @@ public:
             throw 2;
         }
     }
-    -A(){
-        cout <"A::~A()"<<endl;
+    ~A(){
+        cout<<"A::~A()"<<endl;
     }
 };
 ```
@@ -1686,9 +1809,20 @@ Throwing an exception in a destructor that is itself being called as the result 
 
 跟数据库的事务类似，如果在事务进行了一半的时候抛出异常了，怎么处理？
 
-```cpp
+roll-back，但不知道具体怎么 roll-back
 
-```
+### 智能指针 smart pointer
+
+1. `unique_pointer<A>`
+    - 管理一个指针，在析构时释放内存，unique 表示别的智能指针不能跟他共享这块内存的管理权
+    1. unique_pointer 构造函数是 explicit 的
+    1. `p1.get()` 返回裸指针
+    1. `p2 = std::move(p1)` 转移控制权
+1. `shared_pointer<A>`
+    - share 表示可以有多个智能指针管理同一块内存
+    1. 实现方法：use_count
+1. `weak_pointer<A>`
+    - weak 是指权限比别的智能指针少，只使用其裸指针但不做管理。
 
 ### 其他
 
@@ -1700,6 +1834,137 @@ Throwing an exception in a destructor that is itself being called as the result 
 #### c++ string
 
 1. `string.data()` 返回一个 char 指针指向字符串的内容
+
+#### named cast
+
+[参考这篇博客](https://blog.csdn.net/yi_chengyu/article/details/121921622)
+
+##### `const_cast`
+
+- 将常量指针转换为普通指针，this 指针也能转
+- 只能调节类型限定符，不能修改基本类型
+
+指针：
+
+```cpp
+const int* p = new int(1);
+*const_cast<int*>(p) = 50;
+char* dd = const_cast<char*>(p)//错误原因：const_cast只能调节类型限定符，不能更改基础类型
+```
+
+引用：
+
+```cpp
+const int& b = a;
+int& c = const_cast<int&>(b);
+```
+
+this 指针：
+
+```cpp
+class Test 
+{
+public:
+	Test() {}
+	void fun()const//此时this指针相当于const Test* const this（这两个 const 含义不同，看前面讲 const 的那里）
+	{
+		//this->val1 = 10;//错误
+		const_cast<Test*>(this)->val1 = 10;//OK
+	}
+private:
+	int val1;
+	int val2;
+};
+```
+
+##### `static_cast`
+
+**相当于把隐式转换给明确写了出来而已。**如果构成继承关系，父类转成子类可以用 static_cast；子类转父类也不会报错，但是会使用未知的内存。
+
+不能使用 static_cast 的场景：
+
+1. 不同类型的指针之间互相转换
+1. 非指针类型和指针类型之间的相互转换
+1. 不同类型的引用之间的转换
+
+
+##### `dynamic_cast`
+
+用于**具有虚函数**的**基类与派生类之间**的**指针或引用**的转换。
+
+虚函数必须存在，转型不成功则返回一个空指针。
+
+转型过程中会运行安全检查，产生额外开销。如果指针指向的确实是父类而不是子类，就会判定不安全。
+
+```cpp
+class Base 
+{
+public:
+	Base() { b_val = 1; }
+	~Base() {}
+	virtual void fun() {}
+	int b_val;
+};
+
+class Son :public Base
+{
+public:
+	Son() { s_val = 2; }
+	~Son() {}
+	int s_val;
+};
+
+int main()
+{
+	Base* b_ptr = new Base();
+	Son* s_ptr = dynamic_cast<Son*>(b_ptr);
+    // 这里转换不成功返回空指针
+
+	return 0;
+}
+```
+
+##### `reinterpret_cast`
+
+相当于强制转换，就是逐字节的拷贝。
+
+1. 不同类型的指针之间的转换
+1. 指针和能容纳指针的整数类型之间的转换（比如将int类型强转成int*类型）
+1. 不同类型的引用之间的转换
+
+#### 多重继承 multiple inherence
+
+格式：
+
+```cpp
+class Consultant:
+    public MTS,
+    public Temporary {
+    /* ... */
+};
+```
+
+可能产生的问题:
+
+1. 命名冲突，使用 `::` 解决
+    ```cpp
+    BaseA::show(); //调用BaseA类的show()函数
+    BaseB::show(); //调用BaseB类的show()函数
+    ```
+1. 菱形继承，即多重继承的几个父类拥有共同的父类，导致重复的空间。可以不处理这个问题，允许重复空间存在，或者使用虚继承解决
+    ```cpp
+    struct B1 { int m_i; }; 
+    struct D1 : virtual public B1 {}; // 虚继承
+    struct D2 : virtual public B1 {}; // 虚继承
+    struct M : public D1, public D2 {}; 
+    int main() { 
+        M m; // OK 
+        m.m_i++; // OK, there is only one B1 in m 
+        B1* p = new M; // OK 
+    }
+    ```
+
+安全的写法：继承自多个接口类型（没有数据，只声明了虚函数），仅继承自一个有数据的类型。
 
 ### 工具
 

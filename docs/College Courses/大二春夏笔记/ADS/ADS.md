@@ -31,24 +31,38 @@
     - 注意 ppt 上的定义 & 重视课上小测中对定义的描述
     - 数据结构所有操作必须非常熟练
 
+## 考前回看
+
+1. AVL 空树树高一般认为是 -1
+1. 左偏树 npl 一般认为是 -1
+
 ## AVL Tree
 
 [图解](https://www.jianshu.com/p/6988699625d5)
 
+- 定义：平衡因子 balance factor 为**左子树**的高度减去**右子树**的高度
 - 性质：递归地定义，所有结点的**平衡因子的绝对值都不超过 1** 的二叉树。
-- 高度：O(logn)，用斐波那契数列证明（令深度为 h 的 AVL）
-- 每个节点记录：子树深度，**balance value(左子树深度 - 右子树深度)**
-- 操作：旋转，命名为 **LL, RR, LR, RL**，根据从旋转根节点到最深的节点的路径前两步往哪个方向走命名。
+- 高度：O(logn) 用斐波那契数列证明
+    - 令深度为 h 的 AVL **最小**节点总数为 N(h)
+    - $n_h = n_{h-1} + n_{h-2} + 1$ 根节点的左右子树深度最多可以相差 1
+- 每个节点记录：子树深度，balance factor(左子树深度 - 右子树深度)
+- 操作：旋转，命名为 **LL, RR, LR, RL**，根据从旋转根节点到最深的节点（新插入的节点）的路径前两步往哪个方向走命名。
 - insertion & rebalance
     - zig-zig: single-rotation，两个点旋转
     - zig-zag: double-rotation，三个点旋转
     - 证明：最多需要旋转一次。因为对 u 旋转之后 u 的深度和插入之前一样，再往上不需要修改子树深度和 balance value。
-- deletion：也是旋转
-    - 证明：最多需要旋转 O(logn) 次。即构造一个路径上每个节点都需要旋转的例子。 ==快来把这个写了==
+    - 复杂度：$O(\log n)$ 得从插入节点往根节点找哪个节点不平衡了
+- deletion：
+    - 操作：把需要删除的节点用前驱结点或者后继节点替换，直到替换到叶子节点。删除叶子节点。再通过旋转平衡整棵二叉树。或者把要删除的节点旋转到叶子上，然后再删除。
+    - 证明：最多需要旋转 **O(logn)** 次。不知道结论正不正确，甚至没有一个标准的删除流程。
+
+---
+
+看看例题：
 
 e.g. Insert 2, 1, 4, 5, 9, 3, 6, 7 into an initially empty AVL tree. 把树画出来。
 
-手算技巧：单旋就挑两个节点交换位置，双旋就挑三个节点交换位置，然后子树（单旋 3 个，双旋 4 个）按照原来从左到右的顺序挂在旋转的节点下面，不用模拟旋转过程，速度快很多。
+手算技巧：单旋就挑两个节点交换位置，双旋就挑三个节点交换位置，然后子树（单旋 3 个，双旋 4 个）按照原来从左到右的顺序挂在旋转的节点下面，不用模拟旋转过程，手算速度会快很多。
 
 e.g. 实现 AVL 树
 
@@ -64,7 +78,7 @@ e.g. 优化 first fit [装箱问题](https://blog.csdn.net/weixin_43886592/artic
 
 ### 操作
 
-把插入、查找的节点(x)都旋转到根
+把插入、查找、删除的节点都旋转到根
 
 - x 的父亲是根：single-rotation
 - x 有父亲(p)和祖父(g)
@@ -72,6 +86,12 @@ e.g. 优化 first fit [装箱问题](https://blog.csdn.net/weixin_43886592/artic
     - zig-zag：double-rotation
 
 **tips. Splay 和 AVL 操作上的区别：单次旋转还是两次旋转**
+
+---
+
+做个例题：
+
+![ADS](./imgs/2023-06-29-20-30-03.png)
 
 ### 复杂度证明
 
@@ -114,15 +134,13 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 
 情景：当表满了之后，新建一个 2 倍大的表并复制所有内容。当表只有 1/2 满时新建一个 1/2 大的表并复制所有内容。
 
-设计 potential function 为两倍的当前表内元素个数，减去表的大小 $$\Phi=2T.num-T.size$$
+设计 potential function 为**两倍**的当前表内元素个数，减去表的大小 $$\Phi=2T.num-T.size$$
 
-初始状态 $\Phi$ 为 0，刚扩张表时 $\Phi$ 为 2，之后每插入一个元素 $\Phi$ 加 2。
-
-首先，可以保证势能永远非负。
+这里设计两倍的目的是保证任意时刻使能都是非负的。初始状态 $\Phi$ 为 0，刚扩张表时 $\Phi$ 为 2，之后每插入一个元素 $\Phi$ 加 2。
 
 其次，对于不产生表扩张的操作，其摊还价值为 $$\hat{c_i}=c_i+\Phi(D_i)-\Phi(D_{i-1})=1+2=3$$
 
-对于产生表扩张的操作，其摊还价值为 $$\hat{c_i}=c_i+\Phi(D_i)-\Phi(D_{i-1})=(1+2n)+2-2n=3$$
+对于产生表扩张的操作，假设扩张前表大小为 n。其实际价值为复制 n 个元素，加上插入一个元素。其摊还价值为 $$\hat{c_i}=c_i+(\Phi(D_i)-\Phi(D_{i-1}))=(1+n)+(2-n)=3$$
 
 所以总复杂度为 $O(1)$
 
@@ -135,7 +153,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 ### 定义
 
 - 二叉查找树
-- 节点染红色或黑色，根黑色，external node 黑色，**红色节点间不能有边连接**
+- 节点染红色或黑色，根黑色，external node 黑色
 - 如果一个节点是红色的，他的儿子都是黑色的
     - 推论 *（不是基本定义）* ：不存在两个相邻的红节点
 - 对于树上的任意节点 u，从 u 到以 u 为根的子树中的叶子的所有路径上，黑色节点的个数相同
@@ -147,7 +165,7 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 - 定义：uncle 节点为和父节点拥有同一个父亲的节点
 - 定义：**black height bh(x)** 为从 x 到子树中任意叶子的路径上黑色节点个数
 - Lemma：A red-black tree with N internal nodes has height at most 2ln(N +1).
-    - 证明：若根节点 black height 为 n，则黑节点个数为 $2^n-1$，整棵树节点最少为 $N=2^n-1$。对于任意红节点，其父节点一定为黑节点，所以红节点个数小于等于整棵树节点数的一半，所以树深度最大为 $h=2n$。由此可以得出 $h_{max}=2\log_2(N+1)$
+    - 证明：若根节点 black height 为 n，则其左右儿子的 black height 都为 n-1，以此类推则黑节点个数为 $2^n-1$，整棵树节点最少为 $N\geq 2^n-1$，即 $n\leq \log_2(N+1)$。对于任意红节点，其父节点一定为黑节点，所以从根到任意叶子的路径上红节点数量不会超过黑节点数量，所以树深度最大为 $h \leq 2n$。由此可以得出 $h \leq 2\log_2(N+1)$，即 $h=O(\log N)$
 
 ### 操作
 
@@ -159,31 +177,54 @@ e.g. multi-pop: 栈的势能定义为内部元素个数。所以摊还代价 pus
 
 #### Insert
 
-- 情景 1 空树：插入黑节点
-- 情景 2 插入节点的父节点为黑节点：插入红节点
-- 情景 3 插入节点的父节点为红节点
+先默认插入的是一个红节点，然后分以下情况：
+
+- 情景 1 空树：红节点变黑节点
+- 情景 2 插入节点的父节点为黑节点：红节点不变，已经平衡
+- 情景 3 插入节点的父节点为红节点（**看父亲的兄弟**）
     - 推论：一定存在祖父，且祖父为黑色
     - 情景 3.1：uncle 存在并为红节点，父亲和 uncle 变黑，祖父变红，然后把祖父作为新插入的节点往上递归。如果祖父是根则直接把祖父变黑，**这是唯一一个会增加树的 black height 的操作**
     - 情景 3.2：uncle 不存在或为黑节点
         - 情景 3.2.1 zig-zig：把父亲变成黑色，祖父变成红色，做一次单旋
-        - 情景 3.2.2 zig-zag：把插入节点变成黑色，祖父变成红色，做一次双旋
+        - 情景 3.2.2 zig-zag：把插入节点变成黑色，祖父变成红色，做一次双旋（或者理解成对父亲做一次单旋，变成 3.2.1 的情况）
+        - 总之就是把插入节点 R，父亲节点 P，祖父节点 G 旋转成平衡的，然后把根变成黑色，剩下两个儿子变成红色。
 
 #### Delete
 
+首先是替换策略：
+
 - 情景 1 删除节点没有儿子：直接删除，自平衡的情景包含在情景 2 中
-- 情景 2 删除节点只有一个儿子：用儿子代替删除节点
-    - 情景 2.1 删除节点是红节点：black height 不变，仍旧平衡
-    - 情景 2.2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行） ![Alt text](./imgs/ADS_red_black_delete.webp)
-        - 情景 2.2.1 S 是红节点
-            - 性质 1：P 一定为黑节点
-            - 性质 2：因为 P 的左子树中有至少 1 个黑节点（R），所以右子树中也至少有 1 个黑节点，所以 S 一定有儿子。因为 S 是红节点，只有一个儿子的情况不存在，所以 S 的左右儿子 SL SR 都为黑节点。
-            - 操作：P 变红，S 变黑，对 P 做一次左旋。*整棵子树 bh 减一，需要继续向上迭代。*
-        - 情景 2.2.2 S 是黑节点
-            - 情景 2.2.2.1 SR 是红节点：S 变成 P 的颜色，P 变成黑色，SR 变成黑色，对 P 做一次左旋。*整棵子树 bh 减一，需要继续向上迭代。*
-            - 情景 2.2.2.2 SL 是红节点 SR 是黑节点：SL 变成黑节点，S 变成红节点，对 S 进行一次右旋，转化为 2.2.2.1 的情景
-            - 情景 2.2.2.3 SL 和 SR 都是黑色节点：直接把 S 变成红色。如果 P 是红色节点，则把 P 变成黑色；如果 P 是黑色节点，则 *整棵子树 bh 减一，需要继续向上迭代*，把 P 当做删除节点。
+- 情景 2 删除节点只有一个儿子：用儿子替换删除节点，然后递归删除儿子节点
 - 情景 3 删除节点有两个儿子：用后继节点代替删除节点，后继节点的右儿子代替后继节点（其中后继节点是右子树中权值最小的点，把后继节点换成前驱节点也一样）
     - **性质：在仅考虑树结构的情况下，替换操作相当于删除替换节点的操作**，所以情景 3 可以转化为情景 2
+
+---
+
+通过一系列替换，删除节点一定是叶子节点，然后再实施删除策略。但因为删除是一个递归的过程，所以在删除策略中不能默认删除节点是叶子节点，而是有两种情况：
+
+1. 删除一个叶子节点，需要平衡
+1. 子树的根节点 black height 减一，需要平衡
+
+两者的实际效果类似，处理方法也差不多：
+
+- 情景 1 删除节点是红节点：black height 不变，仍旧平衡
+- 情景 2 删除节点是黑节点（先假设删除节点是其父节点的左子结点，右子节点同理，只要把整棵子树对称过来看就行）（比较难记忆，可以只记旋转的方式，转完之后怎么调整颜色其实凭感觉也能调出来） ![Alt text](./imgs/ADS_red_black_delete.webp)
+    - 情景 2.1 S 是黑节点（**分类讨论 SL 和 SR 的颜色**）
+        - 情景 2.1.1 SR 是红节点
+            - 性质：P 和 SL 的颜色随意，可以设为 X 和 Y
+            - 操作：对 P 做一次左旋，交换 P 和 S 的颜色，把 SR 设成黑色。
+        - 情景 2.1.2 SL 是红节点 SR 是黑节点
+            - 性质：P 颜色随意，可以设为 X
+            - 操作：对 S 进行一次右旋，交换 SL 和 S 的颜色，转化为 2.1.1 的情景
+        - 情景 2.1.3 SL 和 SR 都是黑色节点：直接把 S 变成红色。如果 P 是红色节点，则把 P 变成黑色；如果 P 是黑色节点，则 *整棵子树 bh 减一，需要继续向上迭代*。
+    - 情景 2.2 S 是红节点
+        - 性质 1：P 一定为黑节点
+        - 性质 2：因为 P 的左子树中有至少 1 个黑节点（R），所以右子树中也至少有 1 个黑节点，所以 S 一定有儿子。因为 S 是红节点，只有一个儿子的情况不存在，所以 S 的左右儿子 SL SR 都为黑节点。
+        - 操作：对 P 做一次左旋，然 后交换 P 和 S 的颜色（P 变成红色，S 变成黑色），转化成 2.1.3 情景。
+
+---
+
+做点例题：
 
 e.g. 空红黑树，依次插入 41; 38; 31; 12; 19; 8，下面哪个不对？
 
@@ -191,6 +232,8 @@ A.38 is the root
 B.19 and 41 are siblings, and they are both red
 C.12 and 31 are siblings, and they are both black
 D.8 is red
+
+![ADS](./imgs/2023-06-29-20-44-04.png)
 
 #### 实现
 
@@ -243,7 +286,7 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
 
 1. 查找
     1. 单点查找
-        - 操作：在节点内进行顺序查找（因为磁盘 IO 已经是线性的了，再用二分也改变不了复杂度）
+        - 操作：在节点内进行顺序查找（因为磁盘 IO 已经是线性的了，再用二分也改变不了复杂度）（二分还是有用的）
         - 复杂度: 树深度 $O(\frac{\log N}{\log M})$, 总复杂度 $O(M\frac{\log N}{\log M})$
     2. 区间查找
         - 操作：用单点查找找到不小于查找下界的最小 key 值，然后向后做顺序查找。
@@ -251,7 +294,7 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
     - 操作：
         1. 查找到叶子节点
         2. 如果节点中元素没有过多，则直接插入 key 值，否则在临时节点 T 中进行插入操作
-        3. 如果节点内元素过多，则进行分裂操作
+        3. 如果节点内元素过多，则进行分裂操作（一般规定左边多右边少）
             - 叶子节点：如果节点内元素个数等于 M，把当前节点分裂成 $\lceil \frac{M}{2}\rceil$ 和 $\lfloor \frac{M}{2}\rfloor$ 两个节点
             - 非叶子节点：如果节点内指针个数等于 M+1，把当前节点分裂成包含 $\lceil \frac{M+1}{2}\rceil$ 个指针和包含 $\lfloor \frac{M+1}{2}\rfloor$ 个指针的两个节点
         4. 把右边节点的最小值插入父节点，并重复分裂步骤，直到有一个节点不需要分裂，或者将根节点分裂成两个，并新建一个根节点。
@@ -260,16 +303,14 @@ node size 一般设置为 disk node 的大小，常见为 4kB。
     - 操作：
         1. 查找到叶子节点，删除 key 值。如果节点中键值没有过少，结束删除过程。
         2. 如果节点中键值过少，则判断是否可以和前驱节点或者后继节点合并成一个节点
-            1. 可以合并（规定两个节点中靠前的为 N，靠后的为 M）
+            1. 可以合并（规定两个节点中靠前的为 N，靠后的为 M）（可以合并就一定合并，不能合并再考虑向兄弟借）
                 - 非叶子节点：把所有键值和指针都存到 N 里，此时有两个指针中间缺少键值，把父亲节点中用于区分 N 和 M 的键值填入其中。删除 M，递归删除父亲节点中指向 M 的指针和父亲节点中用于区分 N 和 M 的键值。
                 - 叶子节点：把所有键值和指针都存到 N 里，删除 M，处理一下指针，递归删除父亲节点中指向 M 的指针和父亲节点中用于区分 N 和 M 的键值
-            2. 不能合并（规定做删除的节点是 N，前驱或者后继节点是 N'）
-                - 非叶子节点：
-                    - N' 是前驱节点：
-                    - N' 是后继节点：
+            2. 不能合并，则找 **同父的** 左右兄弟（规定做删除的节点是 N，前驱或者后继节点是 N'）
+                - 非叶子节点：（假设在以下情况下，右边要向左边借一个指针）![ADS](./imgs/2023-06-29-14-45-49.png) 那么操作是：把Einstein 送到父节点上 Gold 的位置，把 Gold 替换下来放到右边的节点，然后再把左边节点最后的指针送到右边去。可以看成是啊把左边的所有键值和指针、父节点的键值、右边的所有键值和指针排成一个序列，然后在 Einstein 的位置重新切一刀分成两半。
                 - 叶子节点：
-                    - N' 是前驱节点：
-                    - N' 是后继节点：
+                    - N' 是前驱节点：N' 给 N 一个键值对，把父亲节点中用于区分 N 和 N' 的 key 修改成 N 中新的最小值
+                    - N' 是后继节点：N' 给 N 一个键值对，把父亲节点中用于区分 N 和 N' 的 key 修改成 N' 中新的最小值
             3. 当前节点是根节点，并且存了一个指针：删除当前节点，把儿子提上来当根节点
 
 p.s. 操作的时间复杂度没有降低，但是单次操作磁盘 IO 的次数降低为 $\lceil\frac{\log N}{\log M}\rceil-1$，减一是因为根节点一般存放在 buffer 中不需要反复读取。
@@ -312,8 +353,9 @@ D. there are 5 leaf nodes
 - 爬虫：获取信息
 - 索引：存储和查找信息
     - 词法分析：存储短语 or 单词？
-    - word stemming：英语的拼写错误、时态和数的变化，中文的简体繁体
-    - stop words：如何对 stop words 进行搜索？
+    - **word stemming**：英语的拼写错误、时态和数的变化，中文的简体繁体
+    - **stop words**：去除过于常用的词
+        - 拓展问题：如何对 stop words 进行搜索？
     - indexing method: hash（不擅长范围查找）, search tree, etc
     - dynamic indexing: 管理索引的增加和删改，参考 git 的版本控制
     - 分布式存储：document-partitioned, term-partitioned
@@ -324,7 +366,7 @@ D. there are 5 leaf nodes
 
 搜索引擎的性能测试
 
-- 相关性
+- **相关性**
     - 已知数据集 document，一系列 query；对于每个 query 和 document 的组合，已知他们的关系是 relevant 还是 irrelevant（类似于监督学习的数据标签）。对搜索引擎进行测试，对于每个 query 和 document 的组合，有搜到(retriecved)和没搜到(not retrieved)两种情况。于是可以列出如下 2*2 表格。 ![Alt text](./imgs/ADS_relevance.jpg)
     - precision $P = R_R / (R_R + I_R)$ **搜到的结果中有多少相关**
     - recall $R = R_R / (R_R + R_N)$ **相关的结果中有多少被搜到**
@@ -449,14 +491,14 @@ public:
 
 定义和性质：
 
-- 定义：npl(X), Null Path Length, X 到 NULL 的最短路径
+- 定义：**npl(X), Null Path Length**, X 到 NULL 的**最短**路径，**假设 NULL 节点的 NPL 是 -1**
 - 性质：左子树的 npl 大于等于右子树
 - 定义：右路径，从根开始一直找右儿子得到的路径
 - 定理：左偏树的右路径上有 r 个节点，整棵树的节点个数至少有 $2^r-1$
     - 证明：数学归纳法。如果根节点的 npl 是 r，则右子树的 npl 是 r-1，左子树的 npl 大于等于 r-1
 - 推论：右路径长度 $O(\log N)$
 
-合并算法实现：（递归，小根堆）
+**合并**算法实现：（递归，小根堆）
 
 1. `H_ret = Merge(H1->Right, H2)` 小的节点作为根节点，小的节点右子树和另一棵树合并 **（如果其中至少有一个节点是 NULL 就结束递归，和斜堆有区别）**
 1. `Attach(H_ret, H1->Right)`
@@ -467,7 +509,13 @@ public:
 
 删除根节点实现：相当于左儿子和右儿子合并
 
-$O(N)$ 建堆：两两合并，做 $\log N$ 次，复杂度 $O(N)$
+**$O(N)$ 建堆**：两两合并，做 $\log N$ 次，复杂度 $O(N)$
+
+---
+
+做点例题：
+
+![ADS](./imgs/2023-06-29-17-30-09.png)
 
 ## Skew Heap
 
@@ -485,15 +533,16 @@ $O(N)$ 建堆：两两合并，做 $\log N$ 次，复杂度 $O(N)$
 **合并算法：**
 
 1. 如果一个空斜堆与一个非空斜堆合并，**交换非空斜堆的左右节点，向下递归（保证非空堆右路径上所有重节点都变成轻节点，和左倾树不一样）** ，然后返回非空堆的堆顶。
-1. 如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的**右孩子**对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的右孩子，然后交换根节点的左右儿子。（如果先交换后合并，可以做到非递归）
+1. 如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的**右孩子**对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的右孩子，然后交换根节点的左右儿子。
+    - 如果先交换后合并，可以做到非递归。修改为：“如果两个斜堆都非空，那么比较两个根结点，将较小的根结点的**右孩子**对应的子堆和另一个堆去合并，合并得到的新子堆的根结点作为新的**左孩子**。”
 
 tips. 
 - 最后一步交换很关键，对于一个结点来说，合并的数据总是交替地插入自己的左边和右边，那么高度是不是就可以控制住了呢?
-- 为了保证“非空堆右路径上所有重节点都变成轻节点”这个性质，合并中两棵树的右路径上的所有节点必须都做过一次旋转
+- 为了保证“非空堆右路径上所有重节点都变成轻节点”这个性质，**合并中两棵树的右路径上的所有节点必须都做过一次旋转**
 
 复杂度证明：（摊还分析）
 
-- 定义 heavy node：右子树节点个数大于左子树节点个数（不能相等）
+- 定义 **heavy node**：右子树节点个数大于左子树节点个数（不能相等）
 - 定义势能函数：$\Phi(D_i)$ 为整棵树中 heavy node 的个数
 - 定义 $l_a, h_a, l_b, h_b$：a 树右路径上的轻节点个数、重节点个数，b 树右路径上的轻节点个数、重节点个数
 - 证明：
@@ -529,7 +578,9 @@ $$
 \end{align*}
 $$
 
-e.g. The result of inserting keys 1 to $2^{k−1}$ for any k>0 in order into an initially empty skew heap is always a full binary tree.
+---
+
+例题 1：判断 The result of inserting keys 1 to $2^{k−1}$ for any k>0 in order into an initially empty skew heap is always a full binary tree.
 
 数学归纳法。给满二叉树的每条边编号，往右走的为 0，往左走的为 1,。然后给叶子节点编号为从根走到叶子的路径上边的编号组合。例如从根走右右左左，则编号为 0011。
 
@@ -537,11 +588,19 @@ e.g. The result of inserting keys 1 to $2^{k−1}$ for any k>0 in order into an 
 
 可以看出插入深度为 k 的满二叉树，相当于以右左右左的顺序依次插入深度为 k-1 的右子树和左子树。
 
-**从小到大插入节点会构造一颗满二叉树，从大到小插入节点会构造一条往左延伸的链**
+结论：**从小到大插入节点会构造一颗满二叉树，从大到小插入节点会构造一条往左延伸的链**
 
-e.g. 斜堆的右路径长度是 $\Omega(N)$ 的
+---
 
-依次插入：6, 5, 4, 7, 3, 8, 2, 9 ... 右路径长度为 $\frac{N}{2}$
+例题 2：斜堆的右路径长度 worst-case 是 $O(N)$ 的
+
+最坏情况的构造方法，依次插入：5, 6, 4, 7, 3, 8, 2, 9 ... 右路径长度为 $\frac{N}{2}$（记忆方法：依次插入最小、最大、最小、最大 ......）
+
+---
+
+例题 3：skew heap 的合并操作示例
+
+![ADS](./imgs/2023-06-29-17-36-34.png)
 
 ## Bionomial Queue 二项队列
 
@@ -557,21 +616,25 @@ e.g. 斜堆的右路径长度是 $\Omega(N)$ 的
 
 - bionomial queue 是 bionomial tree 构成的森林
 - bionomial tree $B_k$ 高为 $k$
-- $B_k$ 是由两棵 $B_{k-1}$ 组成的，方式为让 $B_{k-1,1}$ 的根成为 $B{k-1,2}$ 的根的儿子
+- $B_k$ 是由两棵 $B_{k-1}$ 组成的，方式为让 $B_{k-1,1}$ 的根成为 $B_{k-1,2}$ 的根的儿子
 - $B_k$ 有 $2^k$ 个节点
 - $B_k$ 深度为 $d$ 的节点有 $\tbinom{k}{d}$ 个
     - 证明：$\tbinom{k}{d}=\tbinom{k-1}{d} + \tbinom{k-1}{d-1}$
 
+### 操作
+
+1. 查找最小值：查找每个 root
+1. 合并：二进制加法 ![ADS](./imgs/2023-06-29-22-45-26.png)
+1. 插入：相当于和一个节点的二项队列合并
+1. 删除最小值：一颗 bionomial tree $B_k$ 去掉根节点之后会变成 k 个子树，组成一个二项队列。原来的二项队列去掉 $B_k$ 之后也是一个二项队列。然后将这两个二项队列合并。 ![ADS](./imgs/2023-06-29-22-47-44.png)
 
 e.g. n 个节点的 bionomial queue 由哪几颗 bionomial tree 组成？
 
 二进制分解
 
-e.g. 两棵 bionomial queue 合并？
+e.g. 这个 decreasing 记一下，考试要考 ![ADS](./imgs/2023-06-29-22-50-26.png)
 
-二进制加法
-
-### 操作
+### 复杂度
 
 [二项队列的操作 参考博客](https://zhuanlan.zhihu.com/p/72854813)
 
@@ -589,29 +652,168 @@ typedef struct BinNode *Position;
 typedef struct Collection *BinQueue;
 typedef struct BinNode *BinTree;  /* missing from p.176 */
 
+// binomial tree 节点类型
 struct BinNode 
 { 
 	ElementType	    Element;
 	Position	    LeftChild;
 	Position 	    NextSibling;
-} ;
+};
 
+// binomial queue 类型
 struct Collection 
 { 
-	int	    	CurrentSize;  /* total number of nodes */
+	int	    	CurrentSize;  /* total number of nodes */ // 记忆这个概念
 	BinTree	TheTrees[ MaxTrees ];
-} ;
+};
 
+BinTree CombineTrees( BinTree T1, BinTree T2 )
+{  /* merge equal-sized T1 and T2 */
+	if ( T1->Element > T2->Element )
+		/* attach the larger one to the smaller one */
+		return CombineTrees( T2, T1 );
+	/* insert T2 to the front of the children list of T1 */
+	T2->NextSibling = T1->LeftChild;
+	T1->LeftChild = T2;
+	return T1;
+}
+
+BinQueue  Merge( BinQueue H1, BinQueue H2 )
+{	BinTree T1, T2, Carry = NULL; 	
+	int i, j;
+	if ( H1->CurrentSize + H2-> CurrentSize > Capacity )  ErrorMessage();
+	H1->CurrentSize += H2-> CurrentSize;
+	for ( i=0, j=1; j<= H1->CurrentSize; i++, j*=2 ) {
+	    T1 = H1->TheTrees[i]; T2 = H2->TheTrees[i]; /*current trees */
+        // 把 T1 T2 和 Carry 三棵树合并到 H1->TheTrees[i] 上
+	    switch( 4*!!Carry + 2*!!T2 + !!T1 ) { 
+		case 0: /* 000 */
+	 	case 1: /* 001 */  break;	
+		case 2: /* 010 */  H1->TheTrees[i] = T2; H2->TheTrees[i] = NULL; break;
+		case 4: /* 100 */  H1->TheTrees[i] = Carry; Carry = NULL; break;
+		case 3: /* 011 */  Carry = CombineTrees( T1, T2 );
+			            H1->TheTrees[i] = H2->TheTrees[i] = NULL; break;
+		case 5: /* 101 */  Carry = CombineTrees( T1, Carry );
+			            H1->TheTrees[i] = NULL; break;
+		case 6: /* 110 */  Carry = CombineTrees( T2, Carry );
+			            H2->TheTrees[i] = NULL; break;
+		case 7: /* 111 */  H1->TheTrees[i] = Carry; 
+			            Carry = CombineTrees( T1, T2 ); 
+			            H2->TheTrees[i] = NULL; break;
+	    } /* end switch */
+	} /* end for-loop */
+	return H1;
+}
+
+ElementType  DeleteMin( BinQueue H )
+{	BinQueue DeletedQueue; 
+	Position DeletedTree, OldRoot;
+	ElementType MinItem = Infinity;  /* the minimum item to be returned */	
+	int i, j, MinTree; /* MinTree is the index of the tree with the minimum item */
+
+	if ( IsEmpty( H ) )  {  PrintErrorMessage();  return –Infinity; }
+
+    // 先 findMin 找到最小值
+	for ( i = 0; i < MaxTrees; i++) {
+	    if( H->TheTrees[i] && H->TheTrees[i]->Element < MinItem ) { 
+		MinItem = H->TheTrees[i]->Element;  MinTree = i;    } /* end if */
+	}
+
+    // 然后在原树中删除最小值所在树
+	DeletedTree = H->TheTrees[ MinTree ];  
+	H->TheTrees[ MinTree ] = NULL;   /* Step 2: remove the MinTree from H => H’ */ 
+	OldRoot = DeletedTree;   /* Step 3.1: remove the root */ 
+	DeletedTree = DeletedTree->LeftChild;   free(OldRoot);
+
+    // 然后用最小值所在树的子树构造一个新的 binomial queue
+	DeletedQueue = Initialize();
+	DeletedQueue->CurrentSize = ( 1<<MinTree ) – 1;  // 这个计算公式重要，MinTree 存储的是删除的 binomial tree 的编号，其中有 2^MinTree 个节点，去掉了一个根之后剩下 2^MinTree-1 个节点构成 binomial queue
+
+    // 下面是依次把 DeletedTree 中的子树取出来放到 DeletedQueue 中
+	for ( j = MinTree – 1; j >= 0; j--) {  
+	    DeletedQueue->TheTrees[j] = DeletedTree;
+	    DeletedTree = DeletedTree->NextSibling;
+	    DeletedQueue->TheTrees[j]->NextSibling = NULL;
+	}
+
+    // 减去 DeletedTree 的大小
+	H->CurrentSize -= DeletedQueue->CurrentSize + 1;
+
+    // 把新构造出来的两棵树合并了
+	H = Merge( H, DeletedQueue ); /* Step 4: merge H’ and H” */ 
+	return MinItem;
+}
 ```
 
 ## backtracking 搜索剪枝
 
+### turnpike reconstruction problem 
+
+- 问题描述：给定 $\frac{N(N-1)}{2}$ 个距离，在数轴上构造一堆一维的点 $0=x_1<x_2<...<x_n$ 使得其两两距离为给定的距离 ![ADS](./imgs/2023-06-29-23-22-32.png)
 - turnpike 搜索复杂度分析 $O(2^nn\log n)$，$2^n$ 是搜索，$n\log n$ 是二分查找比较距离矩阵的包含
+
+[TODO] 看代码，算法流程
+
+```c
+bool Reconstruct ( DistType X[ ], DistSet D, int N, int left, int right )
+{ /* X[1]...X[left-1] and X[right+1]...X[N] are solved */
+    bool Found = false;
+    if ( Is_Empty( D ) )
+        return true; /* solved */
+    D_max = Find_Max( D );
+    /* option 1：X[right] = D_max */
+    /* check if |D_max-X[i]| \in D is true for all X[i]’s that have been solved */
+    OK = Check( D_max, N, left, right ); /* pruning */
+    if ( OK ) { /* add X[right] and update D */
+        X[right] = D_max;
+        for ( i=1; i<left; i++ )  Delete( |X[right]-X[i]|, D);
+        for ( i=right+1; i<=N; i++ )  Delete( |X[right]-X[i]|, D);
+        Found = Reconstruct ( X, D, N, left, right-1 );
+        if ( !Found ) { /* if does not work, undo */
+            for ( i=1; i<left; i++ )  Insert( |X[right]-X[i]|, D);
+            for ( i=right+1; i<=N; i++ )  Insert( |X[right]-X[i]|, D);
+        }
+    }
+    /* finish checking option 1 */
+    if ( !Found ) { /* if option 1 does not work */
+        /* option 2: X[left] = X[N]-D_max */
+        OK = Check( X[N]-D_max, N, left, right );
+        if ( OK ) {
+            X[left] = X[N] – D_max;
+            for ( i=1; i<left; i++ )  Delete( |X[left]-X[i]|, D);
+            for ( i=right+1; i<=N; i++ )  Delete( |X[left]-X[i]|, D);
+            Found = Reconstruct (X, D, N, left+1, right );
+            if ( !Found ) {
+                for ( i=1; i<left; i++ ) Insert( |X[left]-X[i]|, D);
+                for ( i=right+1; i<=N; i++ ) Insert( |X[left]-X[i]|, D);
+            }
+        }
+        /* finish checking option 2 */
+    } /* finish checking all the options */
+    
+    return Found;
+}
+```
+
+### tic-tac-toe
+
+- 问题描述：走井字棋
 - tic-tac-toe 中的 potential win 含义是：用某种棋子把整个盘面铺满，能找到的不同的三连棋的个数。
+- goodness 用 $f(P)$ 来定量描述
+
+比如下面这个例子，人是红色方，电脑是蓝色方。人的 potential win 是 4，电脑的 potential win 是 6。
 
 ![ADS](./imgs/2023-04-05-08-57-53.png)
 
-- $\alpha$-$\beta$ 剪枝算法描述：如果 min 层的值已经小于他父亲 max 层的值，舍去他剩下的子树。如果 max 层的值已经大于他父亲 min 层的点，舍去他剩下的子树。
+![ADS](./imgs/2023-06-29-23-36-49.png)
+
+### $\alpha$-$\beta$ 剪枝
+
+- 使用场景：minimax 搜索
+- $\alpha$-$\beta$ 剪枝算法描述：
+    - $\alpha$: 如果 min 层的值已经小于他父亲 max 层的值，舍去他剩下的子树
+    - $\beta$: 如果 max 层的值已经大于他父亲 min 层的点，舍去他剩下的子树。
+    - 记忆：父亲和祖父商量，把儿子给丢了(bushi)
 
 ![ADS](./imgs/2023-04-05-09-02-39.png)
 
@@ -693,6 +895,12 @@ resources：
 
 ## divide & conquer 分治
 
+### 计算分治复杂度的三种方法
+
+1. 数学归纳法
+1. 分治树法
+1. 主定理
+
 ### 主定理
 
 - [参考博客1](https://www.cnblogs.com/erro/p/12249033.html)：有分治树的图，有详细证明，但是没有讨论带 log 的情况
@@ -701,9 +909,17 @@ resources：
 
 #### 主定理记忆
 
-$c_{crit}=\log_ba$ 对数和底别搞反了。
+- $c_{crit}=\log_ba$ 对数和底别搞反了。
+- 然后**一定要会画分治树**，把分治树的顶层和底层比一下就知道要用哪个公式了
+- 最后记一下 -1 这个分界点
 
-对比 $f(n)$ 的阶数和 $c_{crit}$，大的那个一定是最终复杂度的一部分。
+---
+
+看个例子，用分治树来解这道题：
+
+![ADS](./imgs/2023-06-30-00-05-06.png)
+
+因为每层都是 N 个元素，附加复杂度还是线性的，所以只要算分治树上所有节点个数之和就行了。
 
 #### 主定理详细阐述
 
@@ -766,6 +982,15 @@ $$
 
 [参考博客](https://blog.csdn.net/sinat_35678407/article/details/82874216)：有画图和复杂度证明，比较详细
 
+#### 分治算法设计
+
+看个例子：
+
+还有这种算法设计的题目想不出来就是想不出来（虽然不是 DP 但是不知道放在哪里好）：
+
+![ADS](./imgs/2023-06-30-00-40-08.png)
+
+![ADS](./imgs/2023-06-30-10-26-53.png)
 
 ## 动态规划 DP
 
@@ -774,20 +999,32 @@ $$
 
 tips. 小题的关注点：更新 dp 数组的顺序问题
 
-### Proj 4 红黑树计数
+看两个题目：
 
+![ADS](./imgs/2023-06-30-00-32-55.png)
 
 ## 贪心 Greedy
 
 ### 线段覆盖问题
 
+题目描述：
+
+![ADS](./imgs/2023-06-30-10-30-54.png)
+
 - 算法：选不重叠的线段中结束时间最早的
-- 证明：正确性，最优性
+- 证明：
+    - 正确性：算法给出的线段互不相交
+    - 最优性：证明任何一个子集中，最早结束的线段一定被包含在某个最优解集合中 ![ADS](./imgs/2023-06-30-10-33-58.png)
+- 复杂度：$O(n\log n)$ 排完序就是线性的
 
 ### 哈夫曼编码
 
-- TRIE 树
 - [图解哈夫曼编码](https://blog.csdn.net/fx677588/article/details/70767446)
+- 贪心算法：维护一个小根堆，每次把出现频率最小的两个节点取出来，合并，然后再放回去
+
+做个例题：
+
+
 
 ## NP Completeness
 
@@ -820,11 +1057,14 @@ e.g. SHORTEST-PATH problem relates to PATH problem: given a directed graph G, ve
 - NP: nondeterministic polynomial-time, 非确定图灵机多项式时间求解，即多项式时间验证
 - NP-complete: 两个性质，第一个是必须是一个 NP 问题，第二个是 has the property that any problem in NP can be polynomially reduced to it. ( 证明 P=NP 即找出 NP-complete 的多项式时间解 )
     - e.g. Hamiltonian cycle problem & traveling salesman problem: NP-complete
-    - e.g. 最早证明的 NP-complete 问题——SAT: Input a boolean expression and ask if it has an assignment to the variables that gives the expression a value of 1
+    - e.g. 最早证明的 NP-complete 问题——逻辑电路问题
+    - SAT: Input a boolean expression and ask if it has an assignment to the variables that gives the expression a value of 1
 - NP-hard: 所有 NP 问题都能规约到的问题，但不一定是 NP 问题
-- co-NP: 问题的补问题是 NP 问题（co-NP 和 NP 不是等价关系）
+    - NP-hard 包含 NPC
 
-[Matrix67 将 P, NP, NPC, NPhard](http://www.matrix67.com/blog/archives/105)
+- co-NP: 问题的补问题是 NP 问题（co-NP 和 NP 不是等价关系，为啥，我也不知道）
+
+[Matrix67 讲 P, NP, NPC, NPhard](http://www.matrix67.com/blog/archives/105)
 [知乎：证明 SAT 问题是 NP-complete 问题](https://zhuanlan.zhihu.com/p/73234959)
 [CSDN: 证明 NP-complete 的方法](https://blog.csdn.net/Cplus_ruler/article/details/112390803)
 
@@ -833,7 +1073,13 @@ e.g. 背包问题不是 P 问题，因为 $O(NW)$ W 不是输入的多项式。
 e.g. 证明问题 X 是 NP-complete 问题
 
 1. 证明 X 是 NP 问题
-1. 证明 NP-complete 问题 Y 可以规约到 X，即 $Y\leq_P X$ ![ADS](./imgs/2023-05-10-15-47-10.png)
+1. 证明 NP-complete 问题 Y 可以规约到 X，即 $Y\leq_P X$
+
+举个例子：把汉密顿环问题规约到旅行商问题。
+
+解决方法：把汉密顿环问题条件中 E 包含的边边权设置为 1，其余没有的边边权设置为 2，构造一个完全图。汉密顿环有解，等价于在这个新的完全图上，旅行商问题有 total cost 小于等于汉密顿环中点个数 |V| 的解。
+
+![ADS](./imgs/2023-05-10-15-47-10.png)
 
 e.g. P=NP 对于密码学的冲击
 
@@ -852,26 +1098,29 @@ SAT: 求一组 $\{l_{ij}\}$ 使得 $F(X)=\wedge_{i=1}^m( \vee_{j=1}^n l_{ij})=1$
 ---
 
 - language: 对于 decision problem 来说，language 就是能让问题 Q 的答案为 yes 的输入的集合
-- algorithm & problem：都是从输入到输出的映射，但是 problem 可以看成是标准答案，而 Algorithm 是自己想的，需要用 problem 来检验正确性
-- algorithm A decides language L: 正确的要输出正确，错误的要输出错误，两者缺一不可
-    - 区分 accept & decide
+    - 直观理解：language 就是问题
 
+- algorithm & problem：都是从输入到输出的映射，但是 problem Q 可以看成是标准答案，而 Algorithm 是自己想的，需要用 problem Q 来检验正确性
+- algorithm A decides language L: 正确的要输出正确，错误的要输出错误，两者缺一不可
+    - accept 和 reject 表示一个用来解决 decision problem 的算法拿到输入 X 之后输出是正确还是错误。是算法 A 和字符串 X 之间的关系
+    - decide：是算法 A 和 language L 之间的关系
 
 ![ADS](./imgs/2023-05-10-15-50-48.png)
 
 ![ADS](./imgs/2023-05-10-15-55-29.png)
 
-e.g. 用 formal language 定义 P 问题（见上面的截图）
+e.g. 用 formal language 定义 P 问题（见上面的截图）：P 问题是一堆 language 的集合，这些 language 都有一个多项式复杂度算法 A，A decide L
 
 e.g. 用 formal language 定义 NP 问题
-- 首先定义什么是验证 verification
-- 能在多项式时间验证的问题是 NP 问题（从这里可以看出，NP 问题并不要求多项式时间验证某个输出不是问题的解，只需要验证是解的就行了）
+- 首先定义什么是验证算法 verification algorithm：就是以原问题的输入 x 和输出 y 为输入，验证 y 是不是 x 条件下的问题的一个解
+    - 看 SAT 的例子，certificate 就是一组解
+- 能在多项式时间验证的问题是 NP 问题（从这里可以看出，NP 问题并不要求多项式时间验证某个输出不是问题的解，只需要多项式时间验证某个输出是解就行了）
 
 ![ADS](./imgs/2023-05-10-16-07-33.png)
 
 #### reduction
 
-形式上的理解：A 能规约到 B，则 B 应该是比 A 难的
+直观上的理解：A 能规约到 B，则 B 应该是比 A 难的。
 
 ![ADS](./imgs/2023-05-10-15-32-20.png)
 
@@ -882,8 +1131,9 @@ formal language 的定义：
 [对规约概念的理解](https://zhuanlan.zhihu.com/p/194313998)
 
 e.g. 把 clique 问题多项式规约到 vertex cover problem，说明后者是 NPC 问题
-- clique: 是否存在一个大小为 K 的点集，其中每两个点之间都有连边
+- clique: 是否存在一个大小为 K 的点集，其中每两个点之间都有连边（即是否存在一个大小为 k 的完全子图）
 - vertex cover problem: 能否选出一个大小最大为 K 的点集，使得所有边都至少有一个点在点集里
+- 规约方法：G 上大小为 K 的 clique 问题可以规约为 -> $\overline{G}$ 上大小为 |V|-K 的 vertex cover 问题
 
 ![ADS](./imgs/2023-05-10-16-15-40.png)
 
@@ -893,6 +1143,9 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 - 3-SAT：SAT 问题每个 clause 中都有且仅有 3 个 literal
 
 解法是每个 literal 建对应一个点，构造一个 3k 个点的图。同一个 clause 里的点互相不连边，不同 clause 之间除了 $x_i$ 和 $\overline{x_i}$ 不连边之外，其他都连边。在构造的图中选取一个大小为 K 的 clique，相当于在每个 clause 中选一个 literal 为 1，但是不能 $x_i$ 和 $\overline{x_i}$ 同时为 1。
+
+- 理解 - 连边的含义：表示两个 literal 可以兼容
+- 大小为 k 的 clique 的含义：k 个 literal 两两兼容，构成 3-SAT 问题的一组解
 
 ![ADS](./imgs/2023-05-10-16-32-03.png)
 
@@ -909,6 +1162,8 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 ---
 
 - approxiamation ratio: 评价近似算法的结果，$C \leq \alpha C^{*}$
+  - 其中 C 是近似解，C* 是最优解
+
 - PTAS(polynomial-time approximation scheme): 在输入 N 的多项式时间内求解
 - FPTAS(fully polynomial-time approximation scheme)：在输入 N 和 $\frac{1}{\epsilon}$ 的多项式时间内求解，其中 $1+\varepsilon$ 是近似比。
 
@@ -916,8 +1171,10 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 性质：
 
-- 求 approxiamation ratio(minimization problem)：因为精确最优解求不出来，所以需要估计最优解的一个下界，$\alpha=\sup_I \frac{C(I)}{OPT(I)}\leq\sup_I \frac{C(I)}{C^*(I)}$，其中 $OPT(I)$ 是理论上的最优解，$C^*(I)$ 是 $OPT(I)$ 的一个下界
+- 求 approxiamation ratio(minimization problem)：因为精确最优解求不出来，所以需要估计最优解的一个下界，总而得到近似比的上界
+    -  $\alpha=\sup_I \frac{C(I)}{OPT(I)}\leq\sup_I \frac{C(I)}{C^*(I)}$，其中 $OPT(I)$ 是理论上的最优解，$C^*(I)$ 是 $OPT(I)$ 的一个**下界**
     - for optimization problem: $\alpha=\sup_I \max\{\frac{C(I)}{C^*(I)}, \frac{C^*(I)}{C(I)}\}$
+    
 - FPTAS 一定是 PTAS
 
 ---
@@ -928,13 +1185,21 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 ### Bin Packing
 
+#### 问题条件
+
+一堆物体 $\{a_k\}$，箱子大小 L 为给定值。最少需要几个箱子才能把所有物体都装进去。
+
 #### Bin Packing 是 NP-Complete 问题
 
 证明是 NPC：Partition 可以规约到 Bin Packing
 
+什么是 partition 问题？给出一堆数字，把这些数字分成 A 和 B 两个集合，要求 A 中所有数字的和等于 B 中所有数字的和
+
+一个 $\{a_k\}$ 集合的 partition 问题可以转化成，把 $\{a_k\}$ 放到大小为 $\frac{\sum a_k}{2}$ 的箱子里。如果 bin packing 问题的解等于 2，则 partition 问题有解，否则无解
+
 #### 离线算法
 
-1. Next Fit: : Place each item in a single bin until an item does not fit in. When an item doesn’t fit, **close it** and opens a new one.
+1. Next Fit:  Place each item in a single bin until an item does not fit in. When an item doesn’t fit, **close it** and opens a new one.
 1. Best Fit: Try to place an item in the **fulles**t bin that can accommodate it. If there is no such bin, open a new one.
 1. First Fit: Try to place an item in the **first** bin that accommodates it. If no such bin is found, open a new one.
 1. First Fit Decreasing: Same as FF after sorting the items by decreasing order.
@@ -949,15 +1214,21 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 证明 $\alpha\leq 2$：
 
-相邻两个箱子合并，体积一定大于 1。如果 NF 用了 2M 个箱子，那么最优解一定大于 M ；如果 NF 用了 2M+1 个箱子，那么最优解一定大于等于 M+1 个箱子。
+**相邻两个箱子合并，体积一定大于 1。**如果 NF 用了 2M 个箱子，那么最优解一定大于等于 M+1 ；如果 NF 用了 2M+1 个箱子，那么最优解一定大于等于 M+1 个箱子。
 
 所以 $\alpha \leq \frac{2M+1}{M+1} \leq 2$
 
 ---
 
-举例说明 2 并不是一个很宽松的上界：
+举例说明 2 是一个 tight 的上界：
 
-物体体积依次为: $\frac{1}{2}, \varepsilon, \frac{1}{2}, \varepsilon, \ldots$，近似比是 2
+物体体积依次为: $\frac{1}{2}, \varepsilon, \frac{1}{2}, \varepsilon, \ldots$，总共有 4N 个物体
+
+如果用 NF 做，则每个箱子里放的都是 $\frac{1}{2}, \varepsilon$，答案为 2N
+
+最优解为所有 $\frac{1}{2}$ 两两一组，所有 $\varepsilon$ 放在一个箱子里，答案为 N+1
+
+在 N 趋向于正无穷的时候，近似比趋向于 2
 
 #### 证明在线算法的近似比下界
 
@@ -971,7 +1242,7 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 证明 Bin Packing 不存在 $(1.5-\epsilon)-$approxiamation 的近似算法。
 
-反证法。
+**反证法。**
 
 假设存在 $(1.5-\epsilon)-$approxiamation 算法 ALG。对于一个 partition 问题，令箱子容量为所有物体总体积的一半，转化为一个 Bin Packing 问题。partition 问题有解当且仅当 ALG 的解为 2。因为如果 ALG 的解大于等于 3，精确解就一定严格大于 2，导致 partition 问题无解。
 
@@ -984,6 +1255,8 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 #### 难度
 
 0/1 背包是 NP-hard：Partition 是 0/1 背包的一种特殊情况
+
+0/1 背包问题描述：有一堆物体，每个物体有体积和权值，给定一个体积为 V 的背包，
 
 #### 贪心算法及其近似比
 
@@ -999,7 +1272,7 @@ e.g. 3-SAT 可以规约到 CLIQUE，说明后者是 NPC 问题
 
 先找最优解的下界：按照性价比选，如果最后一个放不下了，就切一部分放进去刚好把背包填满，这样的解一定不差于最优解。
 
-令放入最后一个切了一部分的物体之前，背包中的价值为 x，最后放入的为 y，我们有 $OPT\leq x+y,ALG\geq x,ALG\geq y$，即 $ALG \geq \max(x, y) \geq \frac{1}{2}(x+y) \geq \frac{1}{2}OPT$
+令放入最后一个切了一部分的物体之前，背包中的价值为 x，最后放入的为 y，我们有 $OPT\leq x+y,ALG\geq x,ALG\geq y$，即 $ALG \geq \max(x, y) \geq \frac{1}{2}(x+y) \geq \frac{1}{2}OPT$，注意这是个求最大值的问题，所以近似比是 $\frac{OPT}{ALG}\leq 2$
 
 ### Load Balancing
 
@@ -1038,6 +1311,8 @@ m 个箱子，先放了 (m-1)*m 个体积为 1 的物体，最后再放入一个
 证明 $y \leq \frac{1}{3}OPT$
 
 ### K-center
+
+问题描述：给定二维平面上的一些点，要求找出 k 个中心点，使得所有点到最近的中心点的距离的最大距离最小（距离可以有不同的定义）
 
 例题：考察 lecture note 中 11.4.1 节的定理
 
@@ -1094,7 +1369,7 @@ m 个箱子，先放了 (m-1)*m 个体积为 1 的物体，最后再放入一个
 
 ### Maximum Cut 最大割
 
-问题描述以及应用：
+问题描述以及应用：给定一张图，要求把所有点分到两个集合中，使得跨越两个集合的连边边权总和最大
 
 ![ADS](./imgs/2023-05-29-15-22-55.png)
 
@@ -1439,7 +1714,7 @@ $W(n)$ 的推导：换元，套主定理
 
 number of passes 怎么计算？
 1. 1 是把原数据划分成初始的 run
-1. 后面的 log 是把 log 合并
+1. 后面的 log 是把小 run 合并成大 run
 
 ### 优化 pass 数量：k-way merge
 
