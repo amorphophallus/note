@@ -28,12 +28,17 @@
 4. 启用环境 `conda activate + 环境名` -> 终端前面有 `(环境名)` 提示
     - 退出当前环境 `conda deactivate 环境名`
 5. 在环境中安装包 `conda install 包名称`
+    - 安装指定版本的包 `conda install <package>=<version>`，例如 `conda install pytorch=` 
     - 查看环境中所有包 `conda list`
+    - 查看环境中的指定包 `conda list <包名称>`，例如 `conda list torch`
+    - 搜索可以下载的包和版本 `conda search <包名称>`
     - 可以在 conda 环境中使用 pip `pip install pytorch`
 6. 在环境中运行程序 `python main.py`
+7. 清理空间 [详见这篇博客](https://stackoverflow.com/questions/56266229/is-it-safe-to-manually-delete-all-files-in-pkgs-folder-in-anaconda-python)，`conda clean --all` 简单粗暴，目前没有遇到问题
 
 [更新 conda](https://zhuanlan.zhihu.com/p/121601968)
 [conda 创建新环境](https://zhuanlan.zhihu.com/p/94744929)
+[pip 换源](https://blog.csdn.net/skyyzq/article/details/113417832)！！！
 
 ## Pycharm 中使用 Anaconda
 

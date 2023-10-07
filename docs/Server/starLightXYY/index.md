@@ -54,6 +54,13 @@
 4. whoami + 反向代理
 5. 部署 mkdocs
 
+---
+
+service list:
+
+1. [note.starlightxyy.love](note.starlightxyy.love): 笔记
+1. [blog.starlightxyy.love](blog.starlightxyy.love): 博客
+
 ## TimeLine
 
 1. 2021.8.25 在 bandwagon 租赁服务器一台
@@ -61,10 +68,12 @@
 3. 2022.7.2 在 skyWT 同学的帮助下，星光闪耀的小越越（starlightxyy.cn）正式上线，网站部署的第一个服务是 sharelatex
 4. 2022.7.24 note.starlightxyy.cn 上线
 5. 2022.8.5 受 evergreen note 的启发，给 mkdocs 加上了 tag 和 roamlink，支持用标签搜索和文档内跳转
+6. 2023.9.5 一年服务器到期，域名改为 starlightxyy.love，迁移服务器到阿里云
 
 ## Record
 
-在对 docker 一无所知的情况下，首先选择在网站上部署 overleaf 是一个明智的决定，跟着文档走难度较低，可以当做 docker 学习的第一个 lab。
+1. 在对 docker 一无所知的情况下，首先选择在网站上部署 overleaf 是一个明智的决定，跟着文档走难度较低，可以当做 docker 学习的第一个 lab。
+1. 服务器迁移不需要把所有数据全都迁移过去，即使无脑全部迁移了，系统设置也需要检查，例如 IP 地址肯定要改，如果换域名的话 caddy 的设置也要改。所以更方便的方法是所有服务都用 docker 部署，尽量都放在相同路径下（用户文件夹）、存一个所有服务的清单、写一个脚本把本地数据同步到 github 上。在需要迁移的时候直接把之前部署的服务用于存储数据的文件夹打包传过去或者 git clone，然后重新部署服务；或者把整个用户文件夹打包发过去，然后全部服务重新启动就行。
 
 ## Learning
 

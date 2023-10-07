@@ -21,6 +21,7 @@ mklink /D "C:\Users\allen\AppData\Local\Programs\camscanner-toc" "F:\programfile
 mklink /D "C:\Users\allen\.android" "E:\programfiles\Android\.android"
 mklink /D "C:\Users\allen\.vscode" "F:\programfiles2022\VSCode_UserFiles\.vscode"
 mklink /D "C:\Users\allen\.gradle" "F:\programfiles2022\.gradle"
+mklink /D "C:\Users\allen\.cache" "F:\.cache"
 ```
 
 C 盘下的 program files 和 program files(x86) 无法重命名和移动，就没有办法方便地创建软链接了，里面还有一些应用程序可以考虑重装或者迁移。

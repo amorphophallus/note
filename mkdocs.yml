@@ -148,6 +148,15 @@ nav:
             - '电工训': 'College Courses/大二春夏笔记/电工训/电工训.md'
             - '马原': 'College Courses/大二春夏笔记/马原/马原.md'
             - 'b 站大学 PCB 教程': 'College Courses/大二春夏笔记/PCB/b站大学_PCB绘制.md'
+        - '大三秋冬笔记':
+            - '毛概': 'College Courses/大三秋冬笔记/毛概/毛概.md'
+            - '计网': 'College Courses/大三秋冬笔记/计网/计网.md'
+            - '操作系统': 'College Courses/大三秋冬笔记/OS/OS.md'
+            - '运筹学': 'College Courses/大三秋冬笔记/运筹学/运筹学.md'
+            - '理论计算机科学导引': 'College Courses/大三秋冬笔记/TCS/TCS.md'
+            - '体系结构': 'College Courses/大三秋冬笔记/体系结构/体系结构.md'
+            - '优化': 'College Courses/大三秋冬笔记/优化/优化.md'
+            - 'CV': 'College Courses/大三秋冬笔记/CV/CV.md'
     - 'Others':
         - '经验':
             - '本科毕业出路经验分享': 'Others/经验/本科毕业出路经验分享.md'
@@ -163,6 +172,9 @@ nav:
             - '皇室战争': 'Others/兴趣/皇室战争.md'
             - '数回': 'Others/兴趣/数回.md'
             - '吉他': 'Others/兴趣/吉他.md'
+            - '健身':
+                - '健身笔记': 'Others/兴趣/健身/健身.md'
+                - '暑假健身记录': 'Others/兴趣/健身/暑假健身记录.md'
         - '日常':
             - '发型': 'Others/日常/发型.md'
             # - '每日小结': 'Others/日常/每日小结.md'

@@ -2,9 +2,8 @@
 
 [TOC]
 
-[Python 基础教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/python/python-tutorial.html)
-
-[Python教程 - 廖雪峰的官方网站 (liaoxuefeng.com)](https://www.liaoxuefeng.com/wiki/1016959663602400)
+> [Python 基础教程 | 菜鸟教程 (runoob.com)](https://www.runoob.com/python/python-tutorial.html)
+> [Python教程 - 廖雪峰的官方网站 (liaoxuefeng.com)](https://www.liaoxuefeng.com/wiki/1016959663602400)
 
 
 ## 基础
@@ -532,3 +531,66 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
 
 1. range(a, b) 生成的是左闭右开区间 [a, b-1]
 2. True 和 False 关键字是开头大写的
+
+
+### pytorch & cuda
+
+**注意 python & pytorch & torchvision & cuda 的版本对应关系！！！**
+
+1. 首先，根据显卡型号确定 cuda 的版本，对应关系去 NVIDIA 官网上看。下载好了之后基本就不动了。通过 `nvcc -V` 查看 cuda 版本，这里我的 cuda 版本是 `V10.1`
+1. 然后去 [pytorch 官网](https://pytorch.org/get-started/previous-versions/) 找 cuda 版本对应的 pytorch 版本，可以直接 `ctrl+f` 搜索，这里我找到的版本是 `pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html`
+1. 但是在 conda 和 pip 源里都找不到包，所以采用离线下载。
+    1. 先查看当前环境适配的版本 `pip debug --verbose`，在 `compatible tags` 中就是所有适配的标签，比如我的环境是 python 3.9 ，适配的版本有
+        ```python
+        Compatible tags: 33
+        cp39-cp39-win_amd64
+        cp39-abi3-win_amd64
+        cp39-none-win_amd64
+        cp38-abi3-win_amd64
+        cp37-abi3-win_amd64
+        cp36-abi3-win_amd64
+        cp35-abi3-win_amd64
+        cp34-abi3-win_amd64
+        cp33-abi3-win_amd64
+        cp32-abi3-win_amd64
+        py39-none-win_amd64
+        py3-none-win_amd64
+        py38-none-win_amd64
+        py37-none-win_amd64
+        py36-none-win_amd64
+        py35-none-win_amd64
+        py34-none-win_amd64
+        py33-none-win_amd64
+        py32-none-win_amd64
+        py31-none-win_amd64
+        py30-none-win_amd64
+        cp39-none-any
+        py39-none-any
+        py3-none-any
+        py38-none-any
+        py37-none-any
+        py36-none-any
+        py35-none-any
+        py34-none-any
+        py33-none-any
+        py32-none-any
+        py31-none-any
+        py30-none-any
+        ```
+        实在没有对应的版本，就找个最接近的，然后修改文件名，参考 [这篇博客](https://blog.csdn.net/qq_44832009/article/details/129351554)，但修改文件名后续容易出错。
+    1. 然后在 [pytorch 历史版本](https://download.pytorch.org/whl/torch_stable.html) 页面找到想要的版本，下载。我这次下载的是 `cu101/torch-1.7.1%2Bcu101-cp39-cp39-win_amd64.whl`，具体含义为
+        - cu102:表示cuda版本为10.2
+        - torch-1.7.1:表示torch版本为1.7.1
+        - cp38:表示适用python版本为3.8
+        - linux:表示适用于linux系统
+        - x86_64:表示同时兼容32和64位系统
+    1. 然后进入 whl 文件所在目录，`pip install 文件名.whl` 即可安装到对应环境
+1. 在创建环境之前，先去 [torch 官方仓库](https://github.com/pytorch/vision#installation) 里找 torch 和 python 的对应关系，基本值需要保证版本足够高就可以了；但是也不要太高，太高了 pytorch 可能没有适配的版本
+
+
+其他可能用到的：
+
+- [AssertionError: Torch not compiled with CUDA enabled 报错解决方法](https://blog.csdn.net/m0_74890428/article/details/130184164)：报错原因就是 cuda 和 pytorch 版本不匹配，解决方法就是卸载重装对应版本的 pytorch
+- [查看 torch 是否是 gpu 版本](https://blog.csdn.net/weixin_44498476/article/details/125944962)
+- [pip 换源](https://blog.csdn.net/skyyzq/article/details/113417832)：`-i https://pypi.tuna.tsinghua.edu.cn/simple`
+- 解决 cuda 显存地址不够的问题：RuntimeError: CUDA out of memory. Tried to allocate 20.00 MiB (GPU 0; 2.00 GiB total capacity; 1.23 GiB already allocated; 15.00 MiB free; 1.31 GiB reserved in total by PyTorch) **还没解决**

@@ -439,6 +439,36 @@ int main()
 > texcl=true,           % 设置注释的代码用 latex 解析显示
 > ```
 
+#### 插入伪代码
+
+[参考知乎文章](https://www.zhihu.com/tardis/zm/art/166418214?source_id=1005)
+
+主要的语法都在这张表格里：
+
+![index](./imgs/2023-07-20-22-50-56.png)
+
+最常用的框架可以参考这个：
+
+```latex
+\def\SetClass{article}
+\documentclass{\SetClass}
+\usepackage[ruled,linesnumbered]{algorithm2e}
+\begin{document}
+\begin{algorithm}
+\caption{Simulation-optimization heuristic}\label{algorithm}
+\KwData{current period $t$, initial inventory $I_{t-1}$, initial capital $B_{t-1}$, demand samples}
+\KwResult{Optimal order quantity $Q^{\ast}_{t}$}
+$r\leftarrow t$\;
+$\Delta B^{\ast}\leftarrow -\infty$\;
+\While{$\Delta B\leq \Delta B^{\ast}$ and $r\leq T$}{$Q\leftarrow\arg\max_{Q\geq 0}\Delta B^{Q}_{t,r}(I_{t-1},B_{t-1})$\;
+$\Delta B\leftarrow \Delta B^{Q}_{t,r}(I_{t-1},B_{t-1})/(r-t+1)$\;
+\If{$\Delta B\geq \Delta B^{\ast}$}{$Q^{\ast}\leftarrow Q$\;
+$\Delta B^{\ast}\leftarrow \Delta B$\;}
+$r\leftarrow r+1$\;}
+\end{algorithm}
+\end{document}
+```
+
 
 #### 插入流程图
 

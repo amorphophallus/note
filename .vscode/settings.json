@@ -42,5 +42,7 @@
     "pasteImage.prefix": "./",
     "markdown-preview-enhanced.codeBlockTheme": "atom-light.css",
     "files.autoGuessEncoding": true,
-    "markdown-preview-enhanced.printBackground": false
+    "markdown-preview-enhanced.printBackground": false,
+    "diffEditor.wordWrap": "on",
+    "editor.wordWrap": "on"
 }
