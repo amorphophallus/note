@@ -10,6 +10,8 @@
 
 1. 六行简单上手版本
 
+用户自己的配置文件在 `~/.vimrc`
+
 `expandtab` 是把 `\t` 转换成空格
 
 ```cpp
@@ -28,7 +30,7 @@ cd 到 `~/.vim` 文件夹下，`git clone https://hub.fastgit.org/tomasr/molokai
 把 repo 里的 `molokai.vim` 放到 `~/.vim/colors` 文件夹里
 然后修改 `~/.vimrc` 配置文件
 
-或者手动复制，将 `molokai.vim` 放在 `/.vim/colors` 中
+或者手动复制，将 `molokai.vim` 放在 `~/.vim/colors` 中（最好不要手动复制，从 windows 复制到 linux 会出现格式的问题）
 
 ```cpp
 set mouse=a
@@ -37,7 +39,7 @@ set number
 set shiftwidth=4
 set tabstop=4
 set smartindent
-set expandta
+set expandtab
 
 syntax on
 syntax enable
