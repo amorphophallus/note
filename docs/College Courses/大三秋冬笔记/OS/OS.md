@@ -423,11 +423,11 @@ PCB 是什么？存了哪些东西？什么时候生成，什么时候释放，�
 ![OS](./imgs/2023-11-10-10-29-53.png)
 
 - PCB 存在内存上
-- task_struct: linux 中定义的进程控制块的名字
+- task_struct: linux 中的 PCB
 
 ### Process State
 
-总共五个状态 ![OS](./imgs/2023-10-10-16-54-43.png)
+总共五个状态（**申老板：这个图很关键！**） ![OS](./imgs/2023-10-10-16-54-43.png)
 
 #### Process Creation
 
@@ -468,6 +468,16 @@ fork: create a new process
 举个例子，fork 和 execve 的用法 ![OS](./imgs/2023-11-10-11-25-48.png)
 
 fork & execve 配合的好处和坏处 ![OS](./imgs/2023-11-10-11-42-20.png)
+
+---
+
+再看一个 demo
+
+1. `exec_callee.c`
+1. `exec_nofork.c` 不 fork 子进程，execv 会直接覆盖当前进程。注意：
+	1. pid 是相同的，没有创建新进程
+	1. execv 之后的代码没有被执行，因为整个程序已经被新程序覆盖了
+1. `exec_main.c` fork 了子进程并 execv 子进程
 
 #### Process Termination & signals
 
@@ -807,7 +817,7 @@ p.s. 这俩操作会把所有寄存器都存到内核栈的 pt_regs 里，而 cp
 
 ![OS](./imgs/2023-11-10-21-45-06.png)
 
-fork 结束之后 pc 会跳到 ret_from_fork 这个函数，然后再跳到 ret_to_user，再到 kernel_exit，然后回到 user mode 继续运行
+fork 结束之后 pc 会跳到 **ret_from_fork** 这个函数，然后再跳到 **ret_to_user**，再到 kernel_exit，然后回到 user mode 继续运行
 
 ### others
 
@@ -833,21 +843,522 @@ fork 结束之后 pc 会跳到 ret_from_fork 这个函数，然后再跳到 ret_
 - 进程：隔离程度好，但吃内存且很慢。可以做到让每个进程只使用四个 syscall， read write sigret exit，保证安全。
 - 线程：共用资源，但是隔离程度差。
 
+为什么需要 IPC？因为 process 之间隔离性太好了，所以需要 IPC 进行通信。IPC 对于微内核来说非常重要，是微内核的效率瓶颈。
+
 举个例子：chrome 不同的 tab 拥有不同的进程，所以吃内存且慢也可以解释了。
 
-IPC 的方法
+IPC 的方法，常用的有 5 种：
 
 ![OS](./imgs/2023-11-10-22-03-25.png)
 
+其中 shared memory 和 message passing 的内存结构：
+
 ![OS](./imgs/2023-11-10-22-04-07.png)
 
-#### shared memory
+下面分别介绍
+
+### shared memory
 
 适合用于大量数据的共享，实现方法就是内存重新映射。
 
 ![OS](./imgs/2023-11-10-22-07-49.png)
 
-运行 posix_shm_example.c 并使用 `ipcs -a` 查看所有 shared memory。发现问题就是所有人都可以看到谁在共享内存，所以很不安全。
+1. shmget：在内存中申请一片共享内存，可以在 `/proc/xxxx/maps` 中看到这片申请的空间
+1. shmat：attach 连接到一片已存在的共享内存
+1. shmdt：detach 断开连接
+
+运行 posix_shm_example.c 并使用 `ipcs -a` 查看所有 shared memory。发现问题就是所有人都可以看到谁在共享内存，并且只要 shmat 就可以查看和修改，所以很不安全。
+
+![OS](./imgs/2023-11-26-22-22-55.png)
+
+p.s. [posix 是什么？](https://zhuanlan.zhihu.com/p/392588996)
+
+### message passing
+
+#### intro
+
+message passing 常用于分布式计算
+
+![OS](./imgs/2023-11-26-22-37-14.png)
+
+---
+
+首先需要建立 **link**，link 是一个抽象的概念，可以有很多种实现方式。
+
+然后有两个基本操作：
+
+1. **send**
+1. **recv**
+
+有了上述的 link, send & recv 就可以完成 message passing 了，那么如何自己实现 message passing 呢？可以非常简单：
+
+![OS](./imgs/2023-11-26-22-39-25.png)
+
+#### link
+
+link 的实现有以下这些分类：
+
+![OS](./imgs/2023-11-26-22-38-48.png)
+
+---
+
+direct vs indirect：
+
+- 前者必须指定通信的对象
+- 后者通过 attach 到 mailbox(port) 进行通信
+
+如果有多个进程连接到了相同的 mailbox，又会出现问题，发送到 mailbox 的信息由谁来接收。对于这个问题还是有很多解决方案。
+
+---
+
+Synchronous vs asynchronous：
+
+- 前者等待 send 的信息被接收，或者 recv 到信息之后再执行其后的代码
+- 后者则是 non-blocking 的，在 send 之后马上执行后面的代码，recv 不会等待，如果当前没有信息则用 null 代替
+
+![OS](./imgs/2023-11-26-22-53-07.png)
+
+---
+
+是否有 buffer，即信息是否能被暂存，能暂存多少
+
+### pipes
+
+ordinary pipe vs named pipe:
+
+- 前者只能在 parent process 和 child process 之间通信
+- 后者不要求通信的两个进程之间有特定关系
+
+ordinary pipe 看 `pipe.c` 这个 demo，父进程向子进程发送字符。linux shell 中的 `ls | grep pipe` 此类命令也是用 pipe 实现的，ls 进程会创建一个 pipe 并 fork 一个新进程，新进程被 execve 成 grep 之后双方就可以通信了，ls 的输出会被写入 pipe 变成 grep 的输入。
+
+![OS](./imgs/2023-11-26-23-13-06.png)
+
+named pipe 看 `named_pipe_read.c` 和 `named_pipe_write.c` 两个代码组成的 demo
+
+UNIX 中的 pipe 是 mono-directional 单向的，比如 `ls -R | grep foo | grep -v bar | wc -l`
+
+### 其他
+
+- signals
+- client-server
+	- e.g. socket，在计网中学
+	- RPC, remote process calls，例如 java 的 RMI 就是 JVM 之间的 RPC
+
+## week 5 thread
+
+### 介绍 thread
+
+#### 定义 & 概念
+
+motivation: 如何让 process 跑的更快？multiple execution units!
+
+![OS](./imgs/2023-11-26-23-20-40.png)
+
+每个 thread 独有的部分：PC & register & stack。其他都共享。
+- address space 简单来说就是指内存，比如 code 和 global variable 都存在 address space 中
+- 每个 thread 有 kernel stack 和 user stack。其中 kernel stack 有大小限制，超过限制产生 kernel stack overflow；但 user stack 是 unbounded 的，内存有多大他就可以开多大
+
+![OS](./imgs/2023-11-26-23-26-29.png)
+
+虽然共享 code，但是每个线程运行的代码不一定相同
+
+![OS](./imgs/2023-11-27-10-45-46.png)
+
+#### 优缺点
+
+thread 的优势：主要是快，线程间切换不需要 flush cache，因为 code 和 data 是共享的，context switch 之后很多需要用到的东西已经在 cache 中了，即 cache 还是“热”的
+- 例如 NGINX 通过使用 thread pool 把效率提升了 9 倍
+
+![OS](./imgs/2023-11-26-23-28-11.png)
+
+![OS](./imgs/2023-11-26-23-30-41.png)
+
+thread 的缺点：主要是隔离性太差了，所以一个线程 fail 了或者被攻击了，整个进程就 fail 了或者都被攻击了。而且 debug 之类的变得更复杂了。
+
+---
+
+现在在 linux 中看看线程是什么。使用 `ps -eLf`，其中 LWP(light weight process) 就是 linux 中的线程
+
+#### user thread & kernel thread
+
+user thread vs kernel thread:
+
+- 前者只在 user space 中被支持，kernel space 中不知道有这些线程存在
+- 后者在 kernel space 中被支持。有一些实现 kernel thread 的模型
+	- many-to-one
+	- one-to-one
+	- many-to-many
+	- two-level
+
+![OS](./imgs/2023-11-27-10-57-47.png)
+
+#### thread API(library)
+
+各种语言及其 thread 库，其中 JAVA 的 thread 是使用起来比较方便的
+
+![OS](./imgs/2023-11-27-11-03-58.png)
+
+pthread = posix thread
+
+![OS](./imgs/2023-11-27-11-04-25.png)
+
+看看 pthread 的编程习惯：
+- pthread_attr_init 初始化
+- pthread_create 创建线程
+- pthread_join 等待线程结束
+
+p.s. 命名习惯，linux 中使用小写 + 下划线命名
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+int sum;                   /* this data is shared by the thread(s) */
+
+/* The thread will execute in this function */
+void *runner(void *param)
+{
+    int i, upper = atoi(param);
+    sum = 0;
+    for (i = 1; i <= upper; i++){
+        sum += 1;
+    }
+    pthread_exit(0);
+}
+
+int main(int arge, char *argv[])
+{
+    pthread_t tid;        /* the thread identifier */
+    pthread_attr_t attr; /* set of thread attributes */
+
+    /* set the default attributes of the thread */ 
+    pthread_attr_init(&attr);
+
+    /* create the thread */ 
+    pthread_create(&tid, &attr, runner, argv[1]);
+
+    /* wait for the thread to exit */ 
+    pthread_join(tid, NULL);
+
+    printf("sum = %d\n", sum);
+}
+```
+
+### thread issues
+
+引入 thread 之后，原来的一些功能需要重新声明一下
+
+![OS](./imgs/2023-11-27-11-17-09.png)
+
+#### fork & exec
+
+1. 第一种可能性：fork 出来的新进程只包含执行 fork 的那一个线程
+1. 第二种可能性：fork 出来的出来的新进程包含原进程的所有线程
+
+exec 的概念没什么好界定的，就是把所有线程都覆盖了
+
+![OS](./imgs/2023-11-27-11-15-13.png)
+
+#### safe thread cancellation
+
+1. 禁用 Off：cancellation remains pending until thread enables it
+1. 异步 Asynchronous：线程 A 结束线程 B，B 马上响应
+1. 延迟	Deferred：需要设置检查点，线程仅在 cancellation point 检查是否要 cancel，否则 cancel 信号持续 pending
+
+p.s. On Linux systems, thread cancellation is handled through signals
+
+thread 会产生很多难以 reroduce 的 bug
+
+![OS](./imgs/2023-11-27-11-59-38.png)
+
+### thread 具体例子
+
+#### windows thread
+
+![OS](./imgs/2023-11-27-12-02-14.png)
+
+![OS](./imgs/2023-11-27-12-02-26.png)
+
+![OS](./imgs/2023-11-27-12-02-35.png)
+
+#### linux thread
+
+##### LWP & clone
+
+在 linux 中，thread = LWP(light weight process), clone() syscall 用于父线程创建子线程，`man clone` 查看他的定义
+
+```shell
+int clone(int (*fn)(void *), void *stack, int flags, void *arg, ...
+			/* pid_t *parent_tid, void *tls, pid_t *child_tid */ );
+```
+
+其中有 flag 这个选项，用于控制 clone 的行为。可以发现在 linux 中，各个线程之间不一定会共享 address space，而是受 flag 控制
+
+![OS](./imgs/2023-11-27-14-53-37.png)
+
+然后看 demo `clone.c`，buf 是一个局部变量，如果 `./a.out vm` 运行程序，则父线程和子线程会共享内存空间，子线程对 buf 的修改会体现在父线程中；反之则不会，有点像 fork 的效果。
+
+![OS](./imgs/2023-11-27-14-43-52.png)
+
+##### task_struct 的新含义
+
+task_struct 用来存储 process 和 thread 这两者都可以，linux 不区分 PCB 和 TCB(thread control block)。
+
+linux 中的 multi-threaded：
+
+1. 使用 struct list_head thread_group 连接所有的 thread
+1. process 的 pid 就是 leading thread 的 pid。如果 leading thread fail 了，则整个 process 也 fail
+
+例子：A 进程有 A1, A2, A3 三个线程，则有
+
+- 3 个 task_struct
+- 3 个 user stack & 3 个 kernel stack
+
+##### 验证 thread 的实现
+
+用代码验证 shared & not shared 的部分，看 `hello_lkm` 文件夹中的 demo：
+
+![OS](./imgs/2023-11-27-12-37-51.png)
+
+![OS](./imgs/2023-11-27-12-38-01.png)
+
+想要运行这个 demo 需要 [参考这篇博客编译一个新的内核](https://blog.csdn.net/weixin_45668903/article/details/128019077)。原因是，WSL2的内核是修改过的，无法使用 ubuntu上游的内核头文件和modules文件
+
+p.s. mm_struct 中 mm = memory management，一般代表一个地址空间
+
+p.s. `/proc` 是一个 in-memory file system，只存在于内存中，保存机器运行时的一些状态，关机后不再存在。
+
+![OS](./imgs/2023-11-27-15-08-11.png)
+
+##### 如何理解一个 task
+
+user thread 和 kernel thread 使用 one-to-one mapping，算作同一个 task
+
+![OS](./imgs/2023-11-27-12-40-23.png)
+
+![OS](./imgs/2023-11-27-12-44-27.png)
+
+## week 6 CPU Scheduling
+
+### intro
+
+#### definition
+
+scheduling definition: The decisions made by the OS to figure out which ready processes/threads should run and for how long
+
+#### policy vs mechanism trailer
+
+还会讨论 scheduling 的：
+
+- policy: 不能让 CPU 去等待 I/O 设备，比如去硬盘中存取时，CPU 需要切换到其他进程执行以增加负荷
+- mechanism: dispatcher latency 即 shceduling mechanism 消耗的时间必须非常少
+
+p.s. 还会讨论为什么要把 policy 和 mechanism 分开讨论
+
+p.s.s. dispatch 就是之前的 context switch，dispatcher latency 就是 context switch 消耗的时间 
+
+#### I/O bound process vs CPU bound process
+
+- I/O bound process: 更多地占用 I/O 时间，等待 I/O 响应，例如手机发送消息，就是等待网卡
+- CPU bound process: 更多地占用 CPU 时间，例如渲染视频
+
+![OS](./imgs/2023-11-27-16-02-47.png)
+
+#### Non-preemptive scheduling vs Preemptive scheduling
+
+scheduling policy 的一种分类方式：
+
+- non-preemptive: 非抢占式, a process holds the CPU until it is willing to give it up, 即等待进程自己让出 CPU 控制权
+- preemptive: 抢占式， a process can be preempted even though it could have happily continued executing
+
+一般来说操作系统都是抢占式的，CPU 需要有足够的控制权
+
+#### 什么时候需要 scheduling
+
+![OS](./imgs/2023-11-27-16-16-34.png)
+
+重新复习一下 process state，还有 ready queue & waiting queue:
+
+![OS](./imgs/2023-11-27-16-24-11.png)
+
+![OS](./imgs/2023-11-27-16-24-27.png)
+
+#### scheduling 的目标
+
+![OS](./imgs/2023-11-27-16-21-11.png)
+
+其中的部分目标是自相矛盾的，比如 response time 和 throughput 就矛盾。
+
+比如 linux 基本是用于服务器，所以对 linux 来说 throughput 会比 responsiveness 更重要。但是 android 基于 linux 开发，所以导致 android 有时候反应比较慢，这个问题从操作系统层面就已经出现了
+
+### 六种经典 scheduling algorithm
+
+#### First-Come, First-Served Scheduling
+
+三个考点：
+
+- Gantt chart
+- Waiting time = start time – arrival time
+- Turnaround time = finish time – arrival time
+
+![OS](./imgs/2023-11-27-16-38-23.png)
+
+发现问题就是，如果 long job arrives first，则 waiting time 和 turnaround time 会变得很大
+
+#### Shortest-Job-First Scheduling
+
+非抢占式例子：
+
+![OS](./imgs/2023-11-27-16-40-07.png)
+
+抢占式例子：
+- waiting time = finish time - arrival time - burst time
+
+![OS](./imgs/2023-11-27-16-40-42.png)
+
+问题：不能提前知道 burst duration，只能尝试拟合
+
+#### Round-Robin Scheduling 
+
+算法是这样的：
+
+![OS](./imgs/2023-11-27-16-46-39.png)
+
+举个例子：
+
+![OS](./imgs/2023-11-27-16-48-18.png)
+
+- 优点：response time 更短；no starvation, 即不会有进程被别的进程 block 住，总是会被执行
+- 缺点：更长的等待时间
+
+其中有一个 trade-off, 即 time quantum 的选取
+
+- large quantum: longer response time
+- short quantum: more context switch -> lower throughput
+
+#### Priority Scheduling 
+
+简单粗暴，谁优先级大就谁先做。注意到 SJF 其实也是一种 priority scheduling
+
+![OS](./imgs/2023-11-27-16-53-46.png)
+
+priority scheduling with round robin, 就是如果优先级相同，就使用 RR
+
+![OS](./imgs/2023-11-27-17-06-29.png)
+
+问题：starvation
+
+Textbook anecdote/rumor: “When they shut down the IBM 7094 at MIT in 
+1973, they found a low-priority process that had been submitted in 1967 
+and had yet to run.”
+
+#### Multilevel Queue Scheduling
+
+也有 priority 的概念，但是用 multiple queue 来实现
+
+![OS](./imgs/2023-11-27-17-23-07.png)
+
+![OS](./imgs/2023-11-27-17-26-20.png)
+
+#### Multilevel Feedback Queue Scheduling
+
+不同的 queue 之间可以互相隔离，也可以互相转移。比如下面的例子，如果一个 process 在第一个 queue 中执行并未结束，则可以大致认为它是 CPU bound 的，放入低优先级的 queue；如果它在第二个 queue 中仍未执行完，则放入更低优先级的第三个 queue
+
+![OS](./imgs/2023-11-27-17-24-00.png)
+
+(to be continued)
+
+## 后续
+
+**后面就没有听课了，都是期末考之前速成的，所以这份笔记大概也算是废了。**
+
+### 补天参考
+
+1. [博子复习课](https://classroom.zju.edu.cn/livingroom?course_id=52800&sub_id=1027202&tenant_code=112&sub_public=1)：但是智云容易抽风
+1. [咸鱼暄的速成课](https://space.bilibili.com/18777618/channel/collectiondetail?sid=801384)：和笔记是配套的，可以参考
+1. [咸鱼暄的提纲 & 笔记](https://xuan-insr.github.io/%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/os/15_review/)
+1. [修佬的笔记](https://note.isshikih.top/cour_note/D3QD_OperatingSystem/Unit2-Part1/#%E7%AB%9E%E6%80%81%E6%9D%A1%E4%BB%B6)：写的相对更多，但是文字会更亲切易懂一点，感觉更适合用语言形式表述而不是文字形式
+1. hjh 的 A4 纸：可以作为提纲，但有很多没用的东西，有些补充的也可以再加上去
+1. jjm 的小测和练习题 & 博子的作业题 & 两份不知来源的练习题 & 2020 的期末考回忆：优先刷 jjm 的题，作为出卷人更有参考价值
+1. [jjm 的复习课](https://classroom.zju.edu.cn/livingroom?course_id=54447&sub_id=1026918&room_id=442&tenant_code=112&sub_public=1) & 说是看过试卷的老师 xyj 划的重点
+1. [21-22 OS 回忆卷](https://www.cc98.org/topic/5236920)
+1. [22-23 OS 回忆卷](https://www.cc98.org/topic/5507220)
+
+### jjm 复习课的考纲
+
+![OS](./imgs/2024-01-07-09-29-01.png)
+![OS](./imgs/2024-01-07-09-34-28.png)
+![OS](./imgs/2024-01-07-09-34-53.png)
+![OS](./imgs/2024-01-07-09-35-03.png)
+![OS](./imgs/2024-01-07-10-31-48.png)
+
+1. 四组算法：CPU scheduling 的算法，page replacement 的算法，disk allocation 的策略，free space management 的算法
+	- 需要找几个题练练手
+	- 需要整理到 A4 纸上去
+1. 博子说四个大题的考点：scheduling，synchronization，memory，file system
+
+### jjm 作业小测查漏补缺
+
+#### test 1
+
+1. The context-switch causes overhead by OS. The action affects many objects, but      is not included. 
+	- global variable
+	- memory
+	- 选择 global variable，意思应该是没有修改全局变量，但是 PCB 是在 memory 上的，所以 memory 算是被影响了
+1. 若⼀个⽤户进程通过read系统调⽤读取⼀个磁盘⽂件中的数据，则下列关于此过程的叙述中，正确的是___。
+	Ⅰ. 若该⽂件的数据不在内存，则该进程进⼊等待状态
+	Ⅱ.请求read系统调⽤会导致CPU从⽤户态切换到核⼼态
+	Ⅲ. read系统调⽤的参数应包含⽂件的名称
+	- 第三项注意，虽然不记得 read 的具体参数是什么，但是系统调用还包含文件名就有点太扯了。实际上是用 buffer 地址加长度来标识要读的文件的
+
+#### test 2
+
+1. While a process is blocked on a semaphore's queue, it is engaged in busy waiting.
+	- F
+	- 为什么不在 busy waiting？busy waiting 的前提是占用时间片，但是在队列里的进程处于 waiting 状态，不算 busy waiting
+1. Suppose a shared printer is printing my job currently.While the printer is in use, you seek to print your job. Under any of the modern OS’s which of the following events are likely to happen :
+	- your job will be spooled for printing in the order it arrived
+	- 意思是 FCFS 用的更广泛吧，新任务排队等待
+1. Which of the following scheduling algorithms is based on time-sharing（分时）system?: 
+	- Round-Robin scheduling
+	- 什么是 time-sharing system？应该是指单核 CPU，把不同时间片分给不同进程来执行，所以需要 RR 来防止 starvation
+
+#### test 3
+
+1. A computer system has a device with n mutually exclusiveinstances. Three concurrent processes require 3,4 and 5 instances. To ensuredeadlock not to occur, what is the minimum number n?
+	- 极端状态下：进程1(3台)：申请到2台，无法工作；进程2(4台)：申请到3台，无法工作；进程3(5台)：申请到4台，无法工作；所以只要有 10 台就肯定不会死锁
+1. 总体上说，请求分页(demand-paging)是个很好的虚拟内存管理策略。但是，有些程序设计技术并不适合于这种环境。例如，_________。
+	- 二分法搜索
+	- 按需调页被提出的前提是程序运行的局部性原理。不需要的页会被替换成需要的页。对二分法来说反而会增加磁盘 IO 的次数
+1. 时钟（CLOCK）置换算法
+	- FIFO 和 SCR(second chance replacement) 的改进
+	- 当内存中无对应数据时，访问位为0即可置换之后再变换访问位，访问位为1不置换仍然变换访问位然后指针下移。
+	- 当内存中有对应数据时，对应数据访问位改写为 1，指针不变
+
+#### test 4
+
+1. Consider a file system on a disk that has both logical and physical block sizes of 512bytes. Assume that the information about each file is already in memory.Suppose we use indexed allocation and are currently at the 10th logical block.If we want to access the 3rd logical block, how many disk blocks should we access? 
+	- already in memory，所以不需要 disk IO 了
+1. Contiguous allocation of files is not good for files that change in size because:
+	- the files need to be moved around when they grow in size.
+	- 连续分配，链表分配，索引分配，是 file allocation 的三种策略，考虑的是怎么把文件分配到磁盘的 block 上去
+1. 下列选项中，可能导致当前进程 P阻塞(等待)的事件是
+	Ⅰ.  进程 P申请临界资源
+	Ⅱ. 进程 P从磁盘读数据
+	Ⅲ.系统将 CPU 分配给⾼优先权的进程
+	- 注意区分 waiting 和 ready！CPU scheduling 之后进程会到 ready queue 里面，而不是 waiting queue
+1. 下列优化⽅法中，可以提⾼⽂件访问速度的是（    ）。
+	Ⅰ. 提前读                                      Ⅱ. 为⽂件分配连续的簇
+	Ⅲ. 延迟写                                    Ⅳ.采⽤磁盘⾼速缓存
+	- 全部都是
+	- 需要注意第二条，同一个文件分配在连续的区域里，又因为程序运行也有局部性，会频繁访问相近的块，seeking time 就减少了
+1. 下列选项中，可⽤于⽂件系统管理空闲磁盘块的数据结构是
+	I. 位图                Ⅱ. 索引节点       Ⅲ. 空闲磁盘块链    Ⅳ. ⽂件分配表(FAT)
+	- 答案是 1 3 4
+1. 若多个进程共享同⼀个⽂件F，则下列叙述中，正确的是（    ）。
+	- 各进程只能⽤“读”⽅式打开⽂件F
+	- 这句话是错的。虽然不能同时有两个进程读和写同一个文件，但是一个文件可以被两个进程分别以读和写的方式打开，只是说要尽可能避免这种情况就是了
+
 
 ## lab 记录
 
@@ -893,3 +1404,4 @@ RISCV CSR 参考：
 ### lab2
 
 [riscv ISA 速查](https://msyksphinz-self.github.io/riscv-isadoc/html/index.html)
+

@@ -95,7 +95,7 @@
     - **union-by-size**: 小树合并做大树的儿子，查询 $O(\log_2 N)$，因为从任意节点每往上爬一层，子树大小至少翻一倍
         - array representation: 非根节点，数组中存父亲编号；根节点，数组中存数组大小的相反数
     - union-by-depth: 浅树合并做深树的儿子，查询 $O(\log_2 N)$，因为一棵深度为 n 的树需要 2 棵深度为 n-1 的树合并得到，所以深度为 n 的树大小至少为 $2^n$，树深度为 $O(\log_2 N)$ 级
-    - path compression: 查询和合并的复杂度都是 $O(1)$】
+    - path compression: 查询和合并的复杂度都是 $O(1)$
         - 并查集的非递归写法：
             ```c
             SetType  Find ( ElementType  X, DisjointSet  S )
@@ -240,8 +240,8 @@
         - 例题：LSD 两轮之后的排序，就是拿后两位出来排序的结果
 13. Hash
     - 专有名词：
-        - collision
-        - overflow
+        - collision：表项已经存在
+        - overflow：表放满了
         - loading density = 已经放了几个数到 hash table 里 / 总共可以放几个（**常见题目：第一次发生冲突时的  loading density**）
         - identifier density = 已经放了几个数到 hash table 里 / 可能放到 table 里的数的总个数
         - Hash Function & **key & hash value** (注意区分) : H(key) = hash value.

@@ -537,6 +537,8 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
 
 **注意 python & pytorch & torchvision & cuda 的版本对应关系！！！**
 
+首先讲一下，在某一台不清楚配置的电脑上，怎么确定要安装什么版本的包：
+
 1. 首先，根据显卡型号确定 cuda 的版本，对应关系去 NVIDIA 官网上看。下载好了之后基本就不动了。通过 `nvcc -V` 查看 cuda 版本，这里我的 cuda 版本是 `V10.1`
 1. 然后去 [pytorch 官网](https://pytorch.org/get-started/previous-versions/) 找 cuda 版本对应的 pytorch 版本，可以直接 `ctrl+f` 搜索，这里我找到的版本是 `pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html`
 1. 但是在 conda 和 pip 源里都找不到包，所以采用离线下载。
@@ -586,6 +588,14 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
         - x86_64:表示同时兼容32和64位系统
     1. 然后进入 whl 文件所在目录，`pip install 文件名.whl` 即可安装到对应环境
 1. 在创建环境之前，先去 [torch 官方仓库](https://github.com/pytorch/vision#installation) 里找 torch 和 python 的对应关系，基本值需要保证版本足够高就可以了；但是也不要太高，太高了 pytorch 可能没有适配的版本
+
+最终的配置步骤：
+
+1. conda 创建一个 python 版本为 3.9 的环境：`conda create -n CV2023 python==3.9`
+1. 在 [pytorch 历史版本](https://download.pytorch.org/whl/torch_stable.html) 网站上下载 `cu101/torch-1.7.1%2Bcu101-cp39-cp39-win_amd64.whl` 文件
+1. 进入 whl 文件所在目录，安装到环境中 `pip install torch-1.7.1+cu101-cp39-cp39-win_amd64.whl`
+1. 在 [pytorch 历史版本](https://download.pytorch.org/whl/torch_stable.html) 网站上下载 `cu101/torchvision-0.8.2%2Bcu101-cp39-cp39-win_amd64.whl`
+1. 进入 whl 文件所在目录，安装到环境中 `pip install torchvision-0.8.2+cu101-cp39-cp39-win_amd64.whll`
 
 
 其他可能用到的：
