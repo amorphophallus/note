@@ -540,8 +540,10 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
 首先讲一下，在某一台不清楚配置的电脑上，怎么确定要安装什么版本的包：
 
 1. 首先，根据显卡型号确定 cuda 的版本，对应关系去 NVIDIA 官网上看。下载好了之后基本就不动了。通过 `nvcc -V` 查看 cuda 版本，这里我的 cuda 版本是 `V10.1`
-1. 然后去 [pytorch 官网](https://pytorch.org/get-started/previous-versions/) 找 cuda 版本对应的 pytorch 版本，可以直接 `ctrl+f` 搜索，这里我找到的版本是 `pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html`
-1. 但是在 conda 和 pip 源里都找不到包，所以采用离线下载。
+    - [nvcc -V 和 nvidia-smi cuda 版本不一致](https://blog.csdn.net/sophicchen/article/details/120782209)，和 pytorch 版本对应的是 nvcc -V 看到的 cuda 版本
+2. 然后去 [pytorch 官网](https://pytorch.org/get-started/previous-versions/) 找 cuda 版本对应的 pytorch 版本，可以直接 `ctrl+f` 搜索，这里我找到的版本是 `pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html`
+3. 在创建环境之前，先去 [torch 官方仓库](https://github.com/pytorch/vision#installation) 里找 torch 和 python 的对应关系，一般 3.9, 3.10 就可以了，保证版本足够高就 ok；但是也不要太高，太高了 pytorch 可能没有适配的版本
+4. 如果能够用 pip 下载那么到上一步就结束了。但是在 conda 和 pip 源里都找不到包，所以采用离线下载。
     1. 先查看当前环境适配的版本 `pip debug --verbose`，在 `compatible tags` 中就是所有适配的标签，比如我的环境是 python 3.9 ，适配的版本有
         ```python
         Compatible tags: 33
@@ -580,14 +582,13 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
         py30-none-any
         ```
         实在没有对应的版本，就找个最接近的，然后修改文件名，参考 [这篇博客](https://blog.csdn.net/qq_44832009/article/details/129351554)，但修改文件名后续容易出错。
-    1. 然后在 [pytorch 历史版本](https://download.pytorch.org/whl/torch_stable.html) 页面找到想要的版本，下载。我这次下载的是 `cu101/torch-1.7.1%2Bcu101-cp39-cp39-win_amd64.whl`，具体含义为
+    2. 然后在 [pytorch 历史版本](https://download.pytorch.org/whl/torch_stable.html) 页面找到想要的版本，下载。我这次下载的是 `cu101/torch-1.7.1%2Bcu101-cp39-cp39-win_amd64.whl`，具体含义为
         - cu102:表示cuda版本为10.2
         - torch-1.7.1:表示torch版本为1.7.1
         - cp38:表示适用python版本为3.8
         - linux:表示适用于linux系统
         - x86_64:表示同时兼容32和64位系统
-    1. 然后进入 whl 文件所在目录，`pip install 文件名.whl` 即可安装到对应环境
-1. 在创建环境之前，先去 [torch 官方仓库](https://github.com/pytorch/vision#installation) 里找 torch 和 python 的对应关系，基本值需要保证版本足够高就可以了；但是也不要太高，太高了 pytorch 可能没有适配的版本
+    3. 然后进入 whl 文件所在目录，`pip install 文件名.whl` 即可安装到对应环境
 
 最终的配置步骤：
 
@@ -604,3 +605,15 @@ string = json.dumps(json_data, ensure_ascii=False) // 用于转换非 ascii 的�
 - [查看 torch 是否是 gpu 版本](https://blog.csdn.net/weixin_44498476/article/details/125944962)
 - [pip 换源](https://blog.csdn.net/skyyzq/article/details/113417832)：`-i https://pypi.tuna.tsinghua.edu.cn/simple`
 - 解决 cuda 显存地址不够的问题：RuntimeError: CUDA out of memory. Tried to allocate 20.00 MiB (GPU 0; 2.00 GiB total capacity; 1.23 GiB already allocated; 15.00 MiB free; 1.31 GiB reserved in total by PyTorch) **还没解决**
+
+再举个例子：
+
+- 实验室的 155 服务器。`nvcc -V` 发现 Runtime cuda 版本是 9.1，`nvidia-smi` 发现 Driver cuda 版本是 11.6
+- 先看 Runtime CUDA，在官网只找到 9.0 和 9.2 所以选了 9.2，python 选择 3.10。
+- 但是 pip 找不到 9.2 那么早的了，还是改成 11.6 了，也可以跑
+
+所以最后的命令是：
+
+- `conda create -n NLP python=3.10`
+- `conda activate NLP`
+- `pip install torch==1.7.1+cu92 torchvision==0.8.2+cu92 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html`
