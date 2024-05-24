@@ -21,6 +21,7 @@
     - [github explore](https://github.com/explore)，同页面上还有 topics, trending, collections
 7. [medium](https://medium.com/): 技术 & others 博客平台
 8. [TopTal](https://www.toptal.com/blog): 主打高端的产品技术设计博客平台
+9. [其他一些可以订阅的内容](https://www.zhihu.com/question/33524185)
 
 ## 阅读材料
 
@@ -34,6 +35,7 @@
 [Q 的笔记本](https://note.hobbitqia.cc/)
 [修佬的笔记本](https://note.isshikih.top/)
 [咸鱼暄的笔记本](https://www.yuque.com/xianyuxuan/coding)
+[彭思达：如何成为一个优秀的 researcher](https://github.com/pengsida/learning_research)
 
 ### gay 宝的推荐
 
@@ -64,8 +66,10 @@
 
 ### 其他
 
-[How SHA-256 Works Step-By-Step | Boot.dev](https://blog.boot.dev/cryptography/how-sha-2-works-step-by-step-sha-256/)
-[zhihu on VScode](https://zhuanlan.zhihu.com/p/106057556)
+- [How SHA-256 Works Step-By-Step | Boot.dev](https://blog.boot.dev/cryptography/how-sha-2-works-step-by-step-sha-256/)
+- [zhihu on VScode](https://zhuanlan.zhihu.com/p/106057556)
+- [Zotero 配置](https://zhuanlan.zhihu.com/p/347493385)：感觉还大有可为，等熟练了可以再来看看
+
 
 ## 课程主页 / 网课 / 仓库 / 其他资源
 
@@ -87,3 +91,7 @@
 1. [drafty - csprofessor](https://drafty.cs.brown.edu/csprofessors)：教授数据库
     - [drafty](https://drafty.cs.brown.edu/)：其他数据库
 1. [cs application](https://opencs.app/)：国外项目申请经验分享
+
+## 不是这篇文章为什么这么正经？不应该来点玩的吗？
+
+- [80 个最无聊的网页](https://techcult.com/best-websites-for-boredom/)
