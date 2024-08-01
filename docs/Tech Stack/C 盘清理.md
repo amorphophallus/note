@@ -22,8 +22,10 @@ mklink /D "C:\Users\allen\.android" "E:\programfiles\Android\.android"
 mklink /D "C:\Users\allen\.vscode" "F:\programfiles2022\VSCode_UserFiles\.vscode"
 mklink /D "C:\Users\allen\.gradle" "F:\programfiles2022\.gradle"
 mklink /D "C:\Users\allen\.cache" "F:\.cache"
-mklink /D "C:\Users\allen\AppData\Local\JetBrains" "F:\Link_to_C\JetBrains"
-mklink /D "C:\Users\allen\AppData\Roaming\Tencent" "F:\Link_to_C\Tencent"
+mklink /D "C:\Users\allen\AppData\Local\JetBrains" "E:\Link_to_C\JetBrains"
+mklink /D "C:\Users\allen\AppData\Roaming\Tencent" "E:\Link_to_C\Tencent"
+mklink /j "C:\Program Files\Docker" "F:\programfiles2024\Docker"
+mklink /j "C:\Users\allen\AppData\Local\Docker" "F:\programfiles2024\Docker_Image"
 ```
 
 C 盘下的 program files 和 program files(x86) 无法重命名和移动，就没有办法方便地创建软链接了，里面还有一些应用程序可以考虑重装或者迁移。
