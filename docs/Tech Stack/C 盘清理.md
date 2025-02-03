@@ -39,6 +39,9 @@ rmdir "C:\Users\allen\AppData\Local\JetBrains"
 rmdir "C:\Users\allen\AppData\Roaming\Tencent"
 ```
 
-## 查看磁盘空间占用情况
+## 清理应用和数据
 
-使用 spacesniffer
+使用 spacesniffer + deepseek 搞清楚每块存储是干什么的，从大往小排查，删除或者转移 Roaming 和 Local 里面的数据、装在 C 盘的应用。目前清理了这些：
+
+- Appdata/Local/pip/cache
+- Appdata/Local/Microsoft/vscode-cpptools
